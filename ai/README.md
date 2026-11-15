@@ -10,16 +10,14 @@ This directory contains the local LLM configuration and fine-tuning scripts for 
 
 The server uses the int4 fine-tuned Qwen3-8B model (`astrovitals-triage-ft-v2`, 88 of 106 held-out accuracy). Falls back to the rule engine if unavailable.
 
+The model is not in git (6.9 GB). Ollama 0.40.16 stores it as 405 separate files, not one GGUF, so it ships as a tar of Ollama's own model folder: `astrovitals-triage-ft-v2.tar`, SHA-256 `8974843a21d3ac87aaa13813022c3b2133204255d2b98d7d5e670613a8ba1052`, in `gs://guardian-models-1c55f5a5/triage-ft-v2/`. It needs Ollama 0.40.16 or later.
+
 ```bash
-# 1. Pull Qwen3-8B
-ollama pull qwen3:8b
-
-# 2. Create the fine-tuned int4 model (from training pipeline; see README-PC.md)
-ollama create astrovitals-triage-ft-v2 -f ai/Modelfile.ft-v2
-
-# 3. Start Ollama and run the server
-ollama serve                  # background
-npm run dev                   # connects to http://localhost:11434
+gcloud storage cp gs://guardian-models-1c55f5a5/triage-ft-v2/astrovitals-triage-ft-v2.tar .
+shasum -a 256 astrovitals-triage-ft-v2.tar      # must match the hash above
+tar -xf astrovitals-triage-ft-v2.tar -C ~/.ollama/models   # or $OLLAMA_MODELS if set
+ollama list                                     # shows astrovitals-triage-ft-v2, ID 69eaefd2e927
+ollama serve                                    # then npm run dev; the server uses http://localhost:11434
 ```
 
 **For Mac development only (97 of 106 accuracy):** Use the MLX fine-tuned model. See [Fine-tuning on a Mac](#fine-tuning-on-a-mac) below.
