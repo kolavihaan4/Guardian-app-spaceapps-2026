@@ -14,4 +14,69 @@ ollama pull qwen3:8b
 ollama create astrovitals-triage -f ai/Modelfile
 
 # 2. The Express server automatically calls astrovitals-triage (or qwen3:8b) on POST /api/ai/triage
-```
+```---
+# AstroVitals — Overarching AI Triage & Crew Telemetry Layer (`ai/`)
+
+**Live Interactive Prototype:** https://teal-salmiakki-2ec212.netlify.app  
+*(Exploratory NASA Space Apps crew decision-support prototype only; not a medical device and does not diagnose or treat.)*
+
+---
+
+## 1. Architecture & Clinical Design Principles
+
+AstroVitals integrates continuous wearable vitals, daily ocular ultrasound, and pupillometry (eye dilation) into an evidence-based clinical triage engine designed for deep-space transit (`0g`), lunar (`1/6g`), and Martian (`3/8g`) missions:
+
+1. **Personal Earth Preflight Baselines (No Synthetic Offsets):**  
+   Every crew member is compared strictly against their own personal Earth preflight medians (`preflight_hr_median`, `preflight_temp_median`, `preflight_onsd_mm`) rather than generic population averages or synthetic radiation/gravity vital-sign formulas.
+2. **Pre-Escalation Data Quality & Artifact Guardrails:**  
+   Clinical escalation to a Flight Surgeon is automatically suppressed (`ARTIFACT_BLOCKED`) whenever hardware acquisition quality is unverified:
+   - `vitals.sensor_verified === false` (loose wearable strap / motion artifact)
+   - `daily_ultrasound.probe_contact_verified === false` (unverified ocular acoustic window)
+   - `pupillometry.lighting_lux_verified === false` (uncalibrated ambient cabin lighting)
+3. **Non-Deterministic Environmental Context:**  
+   Mission location (`earth_preflight`, `deep_space_transit`, `lunar_surface`, `mars_surface`) and space weather (`quiet` vs. `storm` / Kp 7 / SEP) are logged as contextual differential factors alongside crew dosimetry—never used to fabricate deterministic BPM or SpO₂ shifts.
+
+---
+
+## 2. Files in `ai/`
+
+| File | Role | Key Responsibilities |
+| :--- | :--- | :--- |
+| **`ai/astrovitals_tracker.html`** | Standalone Interactive Dashboard | Zero-dependency web UI displaying Mission Days 1–7, wearable vitals, side-by-side **Daily Ocular Ultrasound** and **Eye Dilation (Pupillometry)** panels, 4-quadrant triage reasoning, and the **Live Fitbit / Custom JSON Import** modal. |
+| **`ai/triage_shared.ts`** | Shared Zod Schemas & Triage Engine | Defines `TriageRequestSchema`, `TriageDecisionSchema`, and `evaluateDeterministicTriage()` with personal baseline delta math, artifact suppression, and Flight Surgeon escalation rules. |
+| **`ai/triage_route.ts`** | Next.js API Route (`POST`) | Validates incoming telemetry payloads, automatically normalizes raw Fitbit Web API intraday payloads via `normalizeIncomingPayload()`, and returns structured `TriageDecision` responses. |
+| **`ai/daily_crew_telemetry.json`** | Reference Mission Dataset | Structured 7-day longitudinal mission log demonstrating nominal baselines (Days 1–4), unverified sensor/probe artifact blocking (Day 5), mild cephalad fluid drift (Day 6), and verified Flight Surgeon escalation (Day 7). |
+
+---
+
+## 3. Neuro-Ocular & Cardiopulmonary Triage Rules
+
+When all active channels report verified acquisition quality, `evaluateDeterministicTriage()` classifies crew status into `NOMINAL`, `MONITOR_AND_RETEST`, or `FLIGHT_SURGEON_ESCALATION`:
+
+| Modality | Parameters Tracked | Mild Drift (`MONITOR_AND_RETEST`) | Verified Red Flag (`FLIGHT_SURGEON_ESCALATION`) |
+| :--- | :--- | :--- | :--- |
+| **Wearable Vitals** | `hr_bpm`, `spo2_pct`, `temp_c`, `sleep_hours` | `hr_delta_bpm >= +12` vs. personal preflight median | `hr_delta_bpm >= +35`, `spo2_pct <= 91%`, or `temp_c >= 38.0 °C` |
+| **Daily Ocular Ultrasound** | `onsd_mm`, `ijv_flow_status` | `onsd_delta_mm >= +0.4 mm` or `mild_stasis` | `onsd_mm >= 5.5 mm`, `onsd_delta_mm >= +0.8 mm`, or `stagnant_retrograde` IJV flow |
+| **Pupillometry (Eye Dilation)** | `left_pupil_mm`, `right_pupil_mm`, `plr_constriction_pct` | `plr_constriction_pct < 20%` (sluggish light reflex) | `anisocoria_mm >= 1.0 mm` (`|L - R|`) or `plr_constriction_pct < 15%` |
+
+---
+
+## 4. Fitbit Web API Payload Mapping
+
+Both `ai/triage_route.ts` and the **Import Fitbit / JSON** modal in `ai/astrovitals_tracker.html` accept raw Fitbit Web API responses and map them directly into `TriageRequestSchema`:
+
+| Fitbit Web API Endpoint | Fitbit JSON Path | AstroVitals Target Field |
+| :--- | :--- | :--- |
+| `GET /1/user/-/activities/heart/date/today/1d/1min.json` | `activities-heart-intraday.dataset[last].value` | `vitals.hr_bpm` |
+| `GET /1/user/-/activities/heart/date/today/1d/1min.json` | `activities-heart[0].value.restingHeartRate` | `vitals.preflight_hr_median` |
+| `GET /1/user/-/spo2/date/today.json` | `spo2.value.avg` | `vitals.spo2_pct` |
+| `GET /1.2/user/-/sleep/date/today.json` | `sleep[0].summary.totalMinutesAsleep / 60` | `vitals.sleep_hours` |
+
+---
+
+## 5. Quick Demo Walkthrough (For Live Presentation)
+
+1. **Day 3 (`Post-EVA`):** Shows normal post-activity heart rate elevation (`+10 bpm` over personal preflight baseline) with verified ocular ultrasound (`4.9 mm` ONSD) and symmetric pupillometry (`0.0 mm` anisocoria) — stays `NOMINAL`.
+2. **Day 5 (`Sensor Artifact`):** Simulates a loose wearable strap (`118 bpm`, `88% SpO₂`), unverified ultrasound probe (`5.9 mm`), and uncalibrated cabin lux — triggers `ARTIFACT_BLOCKED` so noisy hardware never causes false Flight Surgeon alarms.
+3. **Day 7 (`Escalation`):** Combines verified cardiopulmonary strain (`+37 bpm`, `94% SpO₂`), elevated ONSD (`5.7 mm`) with retrograde IJV flow, and asymmetric pupillometry (`1.3 mm` anisocoria, `14%` PLR) — triggers `FLIGHT_SURGEON_ESCALATION`.
+4. **`📡 Import Fitbit / JSON` Button:** Demonstrates live ingestion of raw Fitbit Web API intraday telemetry into the triage engine in real time.
