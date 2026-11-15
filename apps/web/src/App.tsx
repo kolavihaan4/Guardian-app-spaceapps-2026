@@ -68,6 +68,13 @@ export function App() {
       <header className="topbar">
         <Brand />
         <nav className="nav" aria-label="Main">
+          {/* The team's public home page, a separate static site served from public/home. */}
+          <a href="/home/index.html" aria-label="Guardian home page" title="Guardian home page">
+            <svg viewBox="0 0 24 24" aria-hidden>
+              <path d="M3 11.5 12 4l9 7.5M5.5 10v9.5h13V10" />
+            </svg>
+            Home
+          </a>
           {ROUTES.map((r, i) => (
             <Fragment key={r.path}>
               {r.group === 'account' && ROUTES[i - 1]?.group !== 'account' ? <span className="nav-divider" aria-hidden /> : null}
