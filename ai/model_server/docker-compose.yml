@@ -4,7 +4,8 @@
 #   BIND_IP=<the machine's internal address> MODEL_DIR=<folder with model-q4_k_m.gguf and Modelfile> docker compose up -d
 services:
   ollama:
-    image: ollama/ollama:latest
+    # The version the model store was exported from (ai/README.md); a newer one may format answers differently.
+    image: ollama/ollama:0.40.16
     restart: unless-stopped
     environment:
       OLLAMA_HOST: 0.0.0.0
