@@ -54,15 +54,8 @@
 
   // the crew health app (triage, vitals, hazards) shares this origin; its pages sit in the same nav
   const APP = { triage: '/#/assessment', vitals: '/#/dashboard', hazards: '/#/space' };
-  const NAV = [
-    { key: 'dashboard', href: '#/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    // one entry for the health assistant keeps the bar from crowding; its own header lists its pages
-    { key: 'crew', href: APP.triage, label: 'Crew health', icon: 'heart' },
-    { key: 'cards', href: '#/cards', label: 'My cards', icon: 'cards', badge: true },
-    { key: 'collections', href: '#/collections', label: 'Collections', icon: 'layers' },
-    { key: 'library', href: '#/library', label: 'Card library', icon: 'library' },
-    { key: 'settings', href: '#/settings', label: 'Settings', icon: 'settings' }
-  ];
+  // the navigation bar is shared with the health app: js/sitenav.js
+  const NAV = window.GuardianNav.pages;
 
   /* ---------------------------------------------------------------- dates */
   const dayKey = t => { const d = new Date(t); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
@@ -543,23 +536,13 @@
       pill.setAttribute('aria-label', `Environment: ${env.name}. Change environment`);
       if (r.key === 'environment') pill.setAttribute('aria-current', 'page'); else pill.removeAttribute('aria-current');
     }
-    NAV.forEach(n => {
-      const a = topbar.querySelector(`[data-nav="${n.key}"]`);
-      if (!a) return;
-      if (n.key === r.key) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-      const b = a.querySelector('.badge');
-      if (b) b.textContent = s.cards.length;
-    });
+    window.GuardianNav.mark(r.key);
     if (keepSearch) { const i = $('#cardSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
   }
 
   function buildTopbar() {
-    $('#nav').innerHTML = NAV.map((n, i) => `<a class="nav__link" href="${n.href}" data-nav="${n.key}" style="--d:${120 + i * 45}ms">${icon(n.icon)}<span>${n.label}</span>${n.badge ? '<span class="badge">0</span>' : ''}</a>`).join('');
-    $('#actions').innerHTML =
-      `<a class="env-pill" id="envPill" href="#/environment" title="Change environment" style="--d:320ms"></a>
-       <button class="icon-btn" data-action="search" aria-label="Search (Ctrl+K)" title="Search  Ctrl K" style="--d:360ms">${icon('search')}</button>
-       <button class="icon-btn icon-btn--help" data-action="guide" aria-label="Quick guide" title="Quick guide" style="--d:400ms">${icon('help')}</button>
-       <button class="btn btn--primary btn--add" data-action="add-card" style="--d:440ms">${icon('plus')}<span>Add card</span></button>`;
+    $('#nav').innerHTML = window.GuardianNav.navHtml();
+    $('#actions').innerHTML = window.GuardianNav.actionsHtml();
     $('.brand__word').style.setProperty('--d', '60ms');
     // the home page's own header: section links and the way in
     const land = document.createElement('div');
@@ -1129,6 +1112,12 @@ Possible cause: short sleep before the EVA</p>
     const photos = Promise.all(wanted.map(src => { const img = new Image(); img.src = src; return img.decode ? img.decode().catch(() => {}) : Promise.resolve(); }));
     const ready = Promise.all([S.scenery.render($('#scenery')), fonts, loaded, photos]);
     intro.finish(ready);
+    // the health app's header has the same search, guide and add-card buttons; they are carried out here
+    const asked = window.GuardianNav.takeRequest();
+    if (asked && !gated()) {
+      const run = () => { if (asked === 'search') openSearch(); else if (asked === 'guide') openGuide(); else if (asked === 'add-card') cardForm({}); };
+      if (S.introDone) run(); else document.addEventListener('still:intro-done', run, { once: true });
+    }
   }
   boot();
 })();
