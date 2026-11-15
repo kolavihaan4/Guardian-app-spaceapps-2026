@@ -381,9 +381,6 @@
       <header class="env__head">
         <p class="eyebrow">${first ? 'Mission setup' : esc(s.workspace)}</p>
         <h1 class="env__title" id="page-title">${first ? 'Where is your crew?' : 'Change environment'}</h1>
-        <p class="sub">${first
-          ? 'Pick the environment you are monitoring. Your dashboard opens set up for it, and you can change it any time.'
-          : 'Your cards stay as they are. The dashboard switches to the environment you pick.'}</p>
       </header>
       <form class="env__form" data-form="env" data-first="${first}">
         <fieldset class="env__grid">
