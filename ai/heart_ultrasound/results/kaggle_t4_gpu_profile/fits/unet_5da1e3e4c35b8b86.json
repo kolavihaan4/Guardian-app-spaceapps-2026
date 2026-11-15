@@ -1,0 +1,505 @@
+{
+ "key": "5da1e3e4c35b8b86",
+ "cfg": {
+  "model": "unet16-32-64-gn",
+  "size": 192,
+  "epochs": 25,
+  "batch": 12,
+  "lr": 0.0003,
+  "opt": "adam",
+  "loss": "ce+softdice",
+  "stop_frac": 0.1,
+  "aug": {
+   "rot_deg": 10,
+   "scale": 0.1,
+   "shift": 0.05
+  },
+  "seed": 42,
+  "min_steps": 3375
+ },
+ "epochs_run": 50,
+ "train_patients": [
+  "patient0001",
+  "patient0006",
+  "patient0008",
+  "patient0010",
+  "patient0012",
+  "patient0014",
+  "patient0016",
+  "patient0017",
+  "patient0018",
+  "patient0024",
+  "patient0028",
+  "patient0029",
+  "patient0031",
+  "patient0032",
+  "patient0034",
+  "patient0035",
+  "patient0039",
+  "patient0040",
+  "patient0041",
+  "patient0043",
+  "patient0045",
+  "patient0049",
+  "patient0050",
+  "patient0053",
+  "patient0054",
+  "patient0060",
+  "patient0061",
+  "patient0063",
+  "patient0065",
+  "patient0070",
+  "patient0074",
+  "patient0077",
+  "patient0079",
+  "patient0081",
+  "patient0082",
+  "patient0084",
+  "patient0089",
+  "patient0091",
+  "patient0093",
+  "patient0094",
+  "patient0095",
+  "patient0096",
+  "patient0097",
+  "patient0101",
+  "patient0108",
+  "patient0109",
+  "patient0113",
+  "patient0114",
+  "patient0116",
+  "patient0118",
+  "patient0120",
+  "patient0121",
+  "patient0124",
+  "patient0128",
+  "patient0130",
+  "patient0131",
+  "patient0132",
+  "patient0133",
+  "patient0134",
+  "patient0135",
+  "patient0139",
+  "patient0142",
+  "patient0144",
+  "patient0145",
+  "patient0153",
+  "patient0154",
+  "patient0156",
+  "patient0158",
+  "patient0160",
+  "patient0161",
+  "patient0163",
+  "patient0165",
+  "patient0166",
+  "patient0167",
+  "patient0168",
+  "patient0171",
+  "patient0172",
+  "patient0173",
+  "patient0175",
+  "patient0176",
+  "patient0177",
+  "patient0178",
+  "patient0180",
+  "patient0181",
+  "patient0183",
+  "patient0186",
+  "patient0190",
+  "patient0192",
+  "patient0193",
+  "patient0203",
+  "patient0204",
+  "patient0210",
+  "patient0212",
+  "patient0222",
+  "patient0229",
+  "patient0230",
+  "patient0232",
+  "patient0245",
+  "patient0256",
+  "patient0257",
+  "patient0264",
+  "patient0270",
+  "patient0272",
+  "patient0274",
+  "patient0277",
+  "patient0278",
+  "patient0281",
+  "patient0284",
+  "patient0289",
+  "patient0296",
+  "patient0300",
+  "patient0304",
+  "patient0305",
+  "patient0312",
+  "patient0314",
+  "patient0316",
+  "patient0317",
+  "patient0318",
+  "patient0322",
+  "patient0323",
+  "patient0325",
+  "patient0326",
+  "patient0332",
+  "patient0333",
+  "patient0336",
+  "patient0338",
+  "patient0341",
+  "patient0343",
+  "patient0345",
+  "patient0347",
+  "patient0349",
+  "patient0350",
+  "patient0352",
+  "patient0353",
+  "patient0354",
+  "patient0355",
+  "patient0365",
+  "patient0366",
+  "patient0371",
+  "patient0372",
+  "patient0374",
+  "patient0375",
+  "patient0376",
+  "patient0378",
+  "patient0379",
+  "patient0381",
+  "patient0384",
+  "patient0389",
+  "patient0390",
+  "patient0392",
+  "patient0394",
+  "patient0395",
+  "patient0396",
+  "patient0398",
+  "patient0399",
+  "patient0402",
+  "patient0403",
+  "patient0405",
+  "patient0407",
+  "patient0408",
+  "patient0409",
+  "patient0416",
+  "patient0419",
+  "patient0423",
+  "patient0424",
+  "patient0427",
+  "patient0428",
+  "patient0432",
+  "patient0434",
+  "patient0435",
+  "patient0437",
+  "patient0440",
+  "patient0441",
+  "patient0444",
+  "patient0446",
+  "patient0447",
+  "patient0451",
+  "patient0452",
+  "patient0453",
+  "patient0455",
+  "patient0456",
+  "patient0457",
+  "patient0460",
+  "patient0462",
+  "patient0465",
+  "patient0467",
+  "patient0468",
+  "patient0473",
+  "patient0474",
+  "patient0475",
+  "patient0476",
+  "patient0478",
+  "patient0479",
+  "patient0480",
+  "patient0482",
+  "patient0485",
+  "patient0486",
+  "patient0489",
+  "patient0491",
+  "patient0492",
+  "patient0496",
+  "patient0497",
+  "patient0500"
+ ],
+ "stop_patients": [
+  "patient0076",
+  "patient0085",
+  "patient0086",
+  "patient0112",
+  "patient0136",
+  "patient0141",
+  "patient0195",
+  "patient0205",
+  "patient0236",
+  "patient0253",
+  "patient0280",
+  "patient0298",
+  "patient0306",
+  "patient0320",
+  "patient0344",
+  "patient0356",
+  "patient0360",
+  "patient0362",
+  "patient0370",
+  "patient0459",
+  "patient0488",
+  "patient0499"
+ ],
+ "best_epoch": 49,
+ "best_stop_dice": 0.8494946129607656,
+ "history": [
+  {
+   "epoch": 1,
+   "train_loss": 1.7445764294986068,
+   "stop_dice": 0.1979440028287935
+  },
+  {
+   "epoch": 2,
+   "train_loss": 1.5016022621117202,
+   "stop_dice": 0.2230561755152516
+  },
+  {
+   "epoch": 3,
+   "train_loss": 1.3675051099561117,
+   "stop_dice": 0.4316226091698792
+  },
+  {
+   "epoch": 4,
+   "train_loss": 1.2375946685011163,
+   "stop_dice": 0.48443163069716927
+  },
+  {
+   "epoch": 5,
+   "train_loss": 1.1323270433642008,
+   "stop_dice": 0.5603696987107387
+  },
+  {
+   "epoch": 6,
+   "train_loss": 1.0238832029803047,
+   "stop_dice": 0.6582439126317504
+  },
+  {
+   "epoch": 7,
+   "train_loss": 0.9242261874264684,
+   "stop_dice": 0.650663536349789
+  },
+  {
+   "epoch": 8,
+   "train_loss": 0.8384870933781704,
+   "stop_dice": 0.7087785114833747
+  },
+  {
+   "epoch": 9,
+   "train_loss": 0.7831636608527799,
+   "stop_dice": 0.7318788845223017
+  },
+  {
+   "epoch": 10,
+   "train_loss": 0.7229675403956709,
+   "stop_dice": 0.7299779737655993
+  },
+  {
+   "epoch": 11,
+   "train_loss": 0.667259493191254,
+   "stop_dice": 0.7500971467455647
+  },
+  {
+   "epoch": 12,
+   "train_loss": 0.634903678165868,
+   "stop_dice": 0.7737095430779599
+  },
+  {
+   "epoch": 13,
+   "train_loss": 0.5931040767965645,
+   "stop_dice": 0.7860064017357876
+  },
+  {
+   "epoch": 14,
+   "train_loss": 0.5691718341681757,
+   "stop_dice": 0.7836569145693809
+  },
+  {
+   "epoch": 15,
+   "train_loss": 0.5452047736186699,
+   "stop_dice": 0.7771113116570145
+  },
+  {
+   "epoch": 16,
+   "train_loss": 0.5177793024208746,
+   "stop_dice": 0.79101419712102
+  },
+  {
+   "epoch": 17,
+   "train_loss": 0.5002105638311414,
+   "stop_dice": 0.7915946336429275
+  },
+  {
+   "epoch": 18,
+   "train_loss": 0.48155783960971926,
+   "stop_dice": 0.7864671578648018
+  },
+  {
+   "epoch": 19,
+   "train_loss": 0.48460761255818635,
+   "stop_dice": 0.7931801865484687
+  },
+  {
+   "epoch": 20,
+   "train_loss": 0.46099527070087754,
+   "stop_dice": 0.8104073853702719
+  },
+  {
+   "epoch": 21,
+   "train_loss": 0.4435888449546739,
+   "stop_dice": 0.8002120061407723
+  },
+  {
+   "epoch": 22,
+   "train_loss": 0.4367264303667792,
+   "stop_dice": 0.7619287449810902
+  },
+  {
+   "epoch": 23,
+   "train_loss": 0.42073760332145127,
+   "stop_dice": 0.8149144124090152
+  },
+  {
+   "epoch": 24,
+   "train_loss": 0.411052522988155,
+   "stop_dice": 0.8174470507594147
+  },
+  {
+   "epoch": 25,
+   "train_loss": 0.4038082082283321,
+   "stop_dice": 0.8159005728057592
+  },
+  {
+   "epoch": 26,
+   "train_loss": 0.3940927139643965,
+   "stop_dice": 0.7803154138151426
+  },
+  {
+   "epoch": 27,
+   "train_loss": 0.3877481436494536,
+   "stop_dice": 0.8234826614520754
+  },
+  {
+   "epoch": 28,
+   "train_loss": 0.383208604281759,
+   "stop_dice": 0.807389185289145
+  },
+  {
+   "epoch": 29,
+   "train_loss": 0.38027745015515485,
+   "stop_dice": 0.8247898096835372
+  },
+  {
+   "epoch": 30,
+   "train_loss": 0.3762994408607483,
+   "stop_dice": 0.8270242460356036
+  },
+  {
+   "epoch": 31,
+   "train_loss": 0.3603857018677472,
+   "stop_dice": 0.8242885942206657
+  },
+  {
+   "epoch": 32,
+   "train_loss": 0.3566012705488158,
+   "stop_dice": 0.8254873786312898
+  },
+  {
+   "epoch": 33,
+   "train_loss": 0.3548033804141829,
+   "stop_dice": 0.8368123389314496
+  },
+  {
+   "epoch": 34,
+   "train_loss": 0.35102925746898933,
+   "stop_dice": 0.8360993336081058
+  },
+  {
+   "epoch": 35,
+   "train_loss": 0.35049791993765994,
+   "stop_dice": 0.8325458852773211
+  },
+  {
+   "epoch": 36,
+   "train_loss": 0.3472305650781528,
+   "stop_dice": 0.8326977348719585
+  },
+  {
+   "epoch": 37,
+   "train_loss": 0.34174343429762744,
+   "stop_dice": 0.8378871890157832
+  },
+  {
+   "epoch": 38,
+   "train_loss": 0.3372715876020234,
+   "stop_dice": 0.8393496297437315
+  },
+  {
+   "epoch": 39,
+   "train_loss": 0.33559571257952986,
+   "stop_dice": 0.8314775898327452
+  },
+  {
+   "epoch": 40,
+   "train_loss": 0.322854801058182,
+   "stop_dice": 0.8364376158433139
+  },
+  {
+   "epoch": 41,
+   "train_loss": 0.32810072064986956,
+   "stop_dice": 0.8376160823055148
+  },
+  {
+   "epoch": 42,
+   "train_loss": 0.31771129868887915,
+   "stop_dice": 0.8350369086990348
+  },
+  {
+   "epoch": 43,
+   "train_loss": 0.3349133307123419,
+   "stop_dice": 0.8389965541091631
+  },
+  {
+   "epoch": 44,
+   "train_loss": 0.3201902038945353,
+   "stop_dice": 0.8306784885793402
+  },
+  {
+   "epoch": 45,
+   "train_loss": 0.32520708045348745,
+   "stop_dice": 0.8411885735613761
+  },
+  {
+   "epoch": 46,
+   "train_loss": 0.3230449287174958,
+   "stop_dice": 0.8396322639418784
+  },
+  {
+   "epoch": 47,
+   "train_loss": 0.3177777396634294,
+   "stop_dice": 0.8465124007857788
+  },
+  {
+   "epoch": 48,
+   "train_loss": 0.31393668716176976,
+   "stop_dice": 0.8361425956975941
+  },
+  {
+   "epoch": 49,
+   "train_loss": 0.3203884671474325,
+   "stop_dice": 0.8494946129607656
+  },
+  {
+   "epoch": 50,
+   "train_loss": 0.3063870034194345,
+   "stop_dice": 0.8475387864275411
+  }
+ ],
+ "minutes": 5.843656647205353
+}

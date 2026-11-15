@@ -1,0 +1,37 @@
+{
+  "features": [
+    "area_2CH_ED",
+    "area_2CH_ES",
+    "area_4CH_ED",
+    "area_4CH_ES",
+    "length_2CH_ED",
+    "length_2CH_ES",
+    "length_4CH_ED",
+    "length_4CH_ES",
+    "area_ratio_2CH",
+    "area_ratio_4CH",
+    "length_ratio_2CH",
+    "length_ratio_4CH",
+    "edv_ml",
+    "esv_ml",
+    "geom_ef"
+  ],
+  "units": {
+    "area_2CH_ED": "mm2",
+    "area_2CH_ES": "mm2",
+    "area_4CH_ED": "mm2",
+    "area_4CH_ES": "mm2",
+    "length_2CH_ED": "mm",
+    "length_2CH_ES": "mm",
+    "length_4CH_ED": "mm",
+    "length_4CH_ES": "mm",
+    "area_ratio_2CH": "ES/ED ratio",
+    "area_ratio_4CH": "ES/ED ratio",
+    "length_ratio_2CH": "ES/ED ratio",
+    "length_ratio_4CH": "ES/ED ratio",
+    "edv_ml": "mL",
+    "esv_ml": "mL",
+    "geom_ef": "percent"
+  },
+  "source": "predicted masks only; reference masks and EF are never inputs"
+}
