@@ -46,6 +46,8 @@ npm install
 
 If the repository is already on the PC, run `git fetch` and `git checkout model-training` in it instead of cloning.
 
+`npm install` may warn that some packages' install scripts were not run. The steps in this guide do not need them.
+
 ## 3. Build the training data
 
 ```powershell
