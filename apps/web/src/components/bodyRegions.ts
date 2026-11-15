@@ -79,15 +79,16 @@ export interface SkinLandmarks {
 }
 
 /** The smaller parts of the body that can be picked on the 3D figure, inside the app's regions. */
-const SIDED_KINDS = ['shoulder_front', 'shoulder_back', 'upper_arm_front', 'upper_arm_back', 'forearm_front', 'forearm_back', 'palm', 'hand_back', 'chest_upper', 'chest_lower', 'abdomen', 'upper_back', 'lower_back', 'glute', 'quad', 'hamstring', 'knee', 'shin', 'calf', 'foot'] as const
+const SIDED_KINDS = ['shoulder_front', 'shoulder_back', 'upper_arm_front', 'upper_arm_back', 'forearm_front', 'forearm_back', 'palm', 'hand_back', 'chest', 'abdomen_upper', 'abdomen_lower', 'upper_back', 'lower_back', 'glute', 'quad', 'hamstring', 'knee', 'shin', 'calf', 'foot'] as const
 type SidedKind = (typeof SIDED_KINDS)[number]
-export type BodyZoneId = 'head' | 'eyes' | 'neck' | 'spine' | `${SidedKind}_${'l' | 'r'}`
+export type BodyZoneId = 'head' | 'eyes' | 'neck' | 'spine' | 'lumbar' | `${SidedKind}_${'l' | 'r'}`
 
-const KIND_INFO: Record<SidedKind | 'head' | 'eyes' | 'neck' | 'spine', { label: string; region: BodyRegionId }> = {
+const KIND_INFO: Record<SidedKind | 'head' | 'eyes' | 'neck' | 'spine' | 'lumbar', { label: string; region: BodyRegionId }> = {
   head: { label: 'Head', region: 'head_neuro' },
   eyes: { label: 'Eyes', region: 'eyes_sans' },
   neck: { label: 'Neck', region: 'head_neuro' },
   spine: { label: 'Spine', region: 'spine_bone' },
+  lumbar: { label: 'Lower back, centre (lumbar)', region: 'spine_bone' },
   shoulder_front: { label: 'front shoulder', region: 'upper_limbs' },
   shoulder_back: { label: 'back shoulder', region: 'upper_limbs' },
   upper_arm_front: { label: 'upper arm (front)', region: 'upper_limbs' },
@@ -96,9 +97,9 @@ const KIND_INFO: Record<SidedKind | 'head' | 'eyes' | 'neck' | 'spine', { label:
   forearm_back: { label: 'forearm (back)', region: 'upper_limbs' },
   palm: { label: 'palm', region: 'upper_limbs' },
   hand_back: { label: 'back of hand', region: 'upper_limbs' },
-  chest_upper: { label: 'upper chest', region: 'chest_cardio' },
-  chest_lower: { label: 'lower chest', region: 'chest_cardio' },
-  abdomen: { label: 'abdomen', region: 'abdomen_nutrition' },
+  chest: { label: 'chest', region: 'chest_cardio' },
+  abdomen_upper: { label: 'upper abdomen', region: 'abdomen_nutrition' },
+  abdomen_lower: { label: 'lower abdomen', region: 'abdomen_nutrition' },
   upper_back: { label: 'upper back', region: 'spine_bone' },
   lower_back: { label: 'lower back', region: 'spine_bone' },
   glute: { label: 'glute', region: 'lower_limbs' },
@@ -113,7 +114,7 @@ const KIND_INFO: Record<SidedKind | 'head' | 'eyes' | 'neck' | 'spine', { label:
 const bothSides = (kinds: readonly SidedKind[]) => kinds.flatMap((k) => [`${k}_l`, `${k}_r`] as BodyZoneId[])
 
 /** Every part, in head-to-foot order. */
-export const BODY_ZONES: BodyZoneId[] = ['head', 'eyes', 'neck', ...bothSides(SIDED_KINDS.slice(0, 13)), 'spine', ...bothSides(SIDED_KINDS.slice(13))]
+export const BODY_ZONES: BodyZoneId[] = ['head', 'eyes', 'neck', ...bothSides(SIDED_KINDS.slice(0, 13)), 'spine', 'lumbar', ...bothSides(SIDED_KINDS.slice(13))]
 
 function kindOf(zone: BodyZoneId): keyof typeof KIND_INFO {
   return zone.replace(/_[lr]$/, '') as keyof typeof KIND_INFO
@@ -137,14 +138,27 @@ type DepthLine = { y0: number; z0: number; y1: number; z1: number }
 interface PartMarks {
   /** The top of the collarbones: the neck is above. */
   neckBase?: number
-  /** The shoulder is the cap outside `inner` (distance from the midline) and above `yMin`. */
-  shoulder?: { inner: number; yMin: number }
+  /** The shoulder is the cap outside `inner` (distance from the midline) and above `yMin`; `midZ` is the middle of the deltoid from front to back. */
+  shoulder?: { inner: number; yMin: number; midZ: number }
+  /** Half-way down the abdominal muscles (upper abdomen above, lower abdomen below) and the lower edge of the chest muscles (abdomen below). */
+  abdomenMid?: number
+  chestBottom?: number
+  /**
+   * Points on the surface muscles of the trunk, shoulders and upper arms. Where these are known, a
+   * point on the skin is on the shoulder or upper arm when one of their muscles is the nearest.
+   */
+  muscles?: { kind: MuscleKind; points: Float32Array }[]
   /** Each arm's elbow and wrist, and the direction from one to the other. */
   arms: Partial<Record<'l' | 'r', { elbow: Point; wrist: Point; along: Point }>>
   /** The middle of the trunk, thigh and lower leg from front to back: front parts are ahead of it. */
   trunkMid?: DepthLine
   thighMid?: DepthLine
   lowerLegMid?: DepthLine
+  /**
+   * The centre of the lower back: within `halfWidth` of the midline (a little beyond the muscles
+   * beside the backbone) and below `yMax` (the tip of the breastbone), down to the glutes.
+   */
+  lumbar?: { halfWidth: number; yMax: number }
   /** The heights the gluteal muscles span. */
   glute?: { yMin: number; yMax: number }
   /** The band of height around the kneecaps, and the top of the foot bones. */
@@ -152,7 +166,15 @@ interface PartMarks {
   footTop?: number
 }
 
-const PART_STRUCTURES = /^((clavicle|deltoid|humerus|forearm|lower_leg|gluteal|patella|foot|ribs|femur)_[lr]|pelvis)$/
+const PART_STRUCTURES = /^((clavicle|deltoid|humerus|forearm|lower_leg|gluteal|patella|foot|ribs|femur|chest_muscles|back_muscles|trapezius)_[lr]|pelvis)$/
+
+type MuscleKind = 'shoulder' | 'upper_arm' | 'trunk'
+const SURFACE_MUSCLES: [MuscleKind, RegExp][] = [
+  ['shoulder', /^deltoid_[lr]$/],
+  ['upper_arm', /^upper_arm_muscles_[lr]$/],
+  ['trunk', /^((chest_muscles|back_muscles|trapezius)_[lr]|abdominal_muscles)$/],
+]
+const MUSCLE_SAMPLES_PER_PART = 700
 
 // The chest, back and shoulder muscles are left out: they run from the trunk onto the arm, so they
 // would blur the line between the two.
@@ -186,17 +208,8 @@ export function skinLandmarks(structures: Record<string, Float32Array | undefine
   const femur = structures.femur_l
   if (!mandible || !sternum || !eyeL || !eyeR || !ribs || !femur || !spine) return null
 
-  const sample = (pattern: RegExp) => {
-    const points: number[] = []
-    for (const [key, vertices] of Object.entries(structures)) {
-      if (!vertices || !pattern.test(key)) continue
-      const stride = Math.max(1, Math.ceil(vertices.length / 3 / SAMPLES_PER_PART))
-      for (let i = 0; i + 2 < vertices.length; i += stride * 3) points.push(vertices[i]!, vertices[i + 1]!, vertices[i + 2]!)
-    }
-    return new Float32Array(points)
-  }
-  const armParts = sample(ARM_PARTS)
-  const trunkParts = sample(TRUNK_PARTS)
+  const armParts = sample(structures, ARM_PARTS, SAMPLES_PER_PART)
+  const trunkParts = sample(structures, TRUNK_PARTS, SAMPLES_PER_PART)
   if (!armParts.length || !trunkParts.length) return null
   let armReach = Infinity
   for (let i = 0; i < armParts.length; i += 3) armReach = Math.min(armReach, Math.abs(armParts[i]!))
@@ -219,6 +232,17 @@ export function skinLandmarks(structures: Record<string, Float32Array | undefine
     leftSign: (extent(femur, 0).min + extent(femur, 0).max) / 2 >= 0 ? 1 : -1,
     parts: partMarks(structures),
   }
+}
+
+/** An even selection of up to `perPart` vertices from each structure whose name matches. */
+function sample(structures: Record<string, Float32Array | undefined>, pattern: RegExp, perPart: number): Float32Array {
+  const points: number[] = []
+  for (const [key, vertices] of Object.entries(structures)) {
+    if (!vertices || !pattern.test(key)) continue
+    const stride = Math.max(1, Math.ceil(vertices.length / 3 / perPart))
+    for (let i = 0; i + 2 < vertices.length; i += stride * 3) points.push(vertices[i]!, vertices[i + 1]!, vertices[i + 2]!)
+  }
+  return new Float32Array(points)
 }
 
 function nearest(points: Float32Array, x: number, y: number, z: number): number {
@@ -278,20 +302,68 @@ function partMarks(structures: Record<string, Float32Array | undefined>): PartMa
   }
   // The knee is the kneecap and a little above and below it, all the way round the leg.
   const kneecap = patella ? extent(patella, 1) : undefined
-  const kneePad = kneecap ? (kneecap.max - kneecap.min) * 0.45 : 0
+  const kneePad = kneecap ? (kneecap.max - kneecap.min) * 0.6 : 0
   const cap = deltoid ? extent(deltoid, 1) : undefined
+  const pectoral = structures.chest_muscles_l ? extent(structures.chest_muscles_l, 1) : undefined
+  const muscles = SURFACE_MUSCLES.map(([kind, pattern]) => ({ kind, points: sample(structures, pattern, MUSCLE_SAMPLES_PER_PART) }))
   return {
+    lumbar: structures.back_muscles_l && structures.sternum ? { halfWidth: Math.max(Math.abs(extent(structures.back_muscles_l, 0).min), Math.abs(extent(structures.back_muscles_l, 0).max)) + 0.03, yMax: extent(structures.sternum, 1).min } : undefined,
+    abdomenMid: structures.abdominal_muscles ? (extent(structures.abdominal_muscles, 1).min + extent(structures.abdominal_muscles, 1).max) / 2 : undefined,
+    chestBottom: pectoral ? pectoral.min + (pectoral.max - pectoral.min) * 0.08 : undefined,
+    // The muscles divide the skin only when the model has all of them; otherwise it is divided by position.
+    muscles: muscles.every((m) => m.points.length) ? muscles : undefined,
     neckBase: clavicle ? extent(clavicle, 1).max : undefined,
-    shoulder: cap && humerus ? { inner: Math.min(Math.abs(extent(humerus, 0).min), Math.abs(extent(humerus, 0).max)) - 0.01, yMin: cap.min + (cap.max - cap.min) * 0.35 } : undefined,
+    shoulder: cap && humerus ? { inner: Math.min(Math.abs(extent(humerus, 0).min), Math.abs(extent(humerus, 0).max)) - 0.01, yMin: cap.min + (cap.max - cap.min) * 0.35, midZ: (extent(deltoid!, 2).min + extent(deltoid!, 2).max) / 2 } : undefined,
     arms,
     trunkMid: ribs && pelvis ? depthLine(mid(ribs), mid(pelvis)) : undefined,
     thighMid: femur ? depthLine(endOf(femur, 'high'), endOf(femur, 'low')) : undefined,
     lowerLegMid: lowerLeg ? depthLine(endOf(lowerLeg, 'high'), endOf(lowerLeg, 'low')) : undefined,
     // Some source glute meshes extend far down the thigh; stop the selectable glute at the upper quarter of the femur.
-    glute: gluteal ? { yMin: Math.max(extent(gluteal, 1).min, femur ? extent(femur, 1).max - (extent(femur, 1).max - extent(femur, 1).min) * 0.25 : -Infinity), yMax: extent(gluteal, 1).max } : undefined,
+    glute: gluteal ? { yMin: Math.max(extent(gluteal, 1).min, femur ? extent(femur, 1).max - (extent(femur, 1).max - extent(femur, 1).min) * 0.25 : -Infinity), yMax: extent(gluteal, 1).max - (extent(gluteal, 1).max - extent(gluteal, 1).min) * 0.15 } : undefined,
     knee: kneecap ? { yMin: kneecap.min - kneePad, yMax: kneecap.max + kneePad } : undefined,
     footTop: foot ? extent(foot, 1).max : undefined,
   }
+}
+
+type Side = 'l' | 'r'
+type Arm = NonNullable<PartMarks['arms'][Side]>
+
+/** Whether a point is on the front of an arm: ahead of the line from elbow to wrist. */
+function armFront(arm: Arm | undefined, y: number, z: number): boolean {
+  if (!arm) return true
+  const t = Math.max(0, Math.min(1, (y - arm.elbow[1]) / (arm.wrist[1] - arm.elbow[1])))
+  return z >= arm.elbow[2] + t * (arm.wrist[2] - arm.elbow[2])
+}
+
+function trunkFront(parts: PartMarks, y: number, z: number): boolean {
+  return !parts.trunkMid || z >= depthAt(parts.trunkMid, y)
+}
+
+function shoulderZone(parts: PartMarks, s: Side, y: number, z: number): BodyZoneId {
+  return `shoulder_${(parts.shoulder ? z >= parts.shoulder.midZ : trunkFront(parts, y, z)) ? 'front' : 'back'}_${s}`
+}
+
+function abdomenZone(marks: SkinLandmarks, s: Side, y: number): BodyZoneId {
+  return `${y >= (marks.parts.abdomenMid ?? (marks.chestBase + marks.legTop) / 2) ? 'abdomen_upper' : 'abdomen_lower'}_${s}`
+}
+
+/** Whether a point is in the centre of the lower back: behind the middle of the trunk, near the midline, between the breastbone's tip and the glutes. */
+function inLumbar(marks: SkinLandmarks, x: number, y: number, z: number): boolean {
+  const { lumbar, glute } = marks.parts
+  return lumbar !== undefined && Math.abs(x) < lumbar.halfWidth && y < lumbar.yMax && y > (glute?.yMax ?? marks.legTop) && !trunkFront(marks.parts, y, z)
+}
+
+/** The part for a point on the trunk itself, once the neck, spine strip, shoulders and arms are ruled out. */
+function trunkZone(marks: SkinLandmarks, s: Side, x: number, y: number, z: number): BodyZoneId {
+  const { parts } = marks
+  if (trunkFront(parts, y, z)) return y >= (parts.chestBottom ?? marks.chestBase) ? `chest_${s}` : abdomenZone(marks, s, y)
+  if (parts.glute && y <= parts.glute.yMax) return `glute_${s}`
+  if (inLumbar(marks, x, y, z)) return 'lumbar'
+  return backZone(marks, s, y)
+}
+
+function backZone(marks: SkinLandmarks, s: Side, y: number): BodyZoneId {
+  return `${y >= marks.chestBase ? 'upper_back' : 'lower_back'}_${s}`
 }
 
 /**
@@ -300,44 +372,109 @@ function partMarks(structures: Record<string, Float32Array | undefined>): PartMa
  *
  * A point is on an arm when a bone or muscle of the arm is nearer to it than any bone or muscle of
  * the trunk or thighs. That follows the arm all the way down, including a hand hanging beside the
- * thigh. The arm is cut across at the elbow and wrist. The trunk and legs are divided into front
- * and back at the bones in their middle, and by height: the neck above the collarbones, chest and
- * upper back above the lower ribs, the glutes where the gluteal muscles are, the knee around the
- * kneecap and the foot below the ankle. A strip down the middle of the back is the spine.
+ * thigh. The arm is cut across at the elbow and wrist. The shoulder and upper arm are
+ * where the deltoid or an upper-arm muscle is the nearest surface muscle. The trunk is divided into
+ * front and back at its middle, the chest ends at the lower edge of the chest muscles, and the
+ * glutes are where the gluteal muscles are. The legs are divided into front and back at the bones in
+ * their middle, with the knee around the kneecap and the foot below the ankle. The neck is above
+ * the collarbones and a strip down the middle of the back is the spine.
  */
 export function zoneForSkinPoint(x: number, y: number, z: number, marks: SkinLandmarks): BodyZoneId {
   const side = Math.abs(x)
-  const s = x * marks.leftSign >= 0 ? 'l' : 'r'
+  const s: Side = x * marks.leftSign >= 0 ? 'l' : 'r'
   if (y >= marks.headBase) {
     const { eyes } = marks
     return z > eyes.zMin && side < eyes.halfWidth && y >= eyes.yMin && y <= eyes.yMax ? 'eyes' : 'head'
   }
   const { parts } = marks
-  const onShoulder = parts.shoulder !== undefined && side > parts.shoulder.inner && y > parts.shoulder.yMin
-  if (side > marks.armReach && y > marks.armFloor && nearest(marks.armParts, x, y, z) < nearest(marks.trunkParts, x, y, z)) {
-    const arm = parts.arms[s]
-    if (!arm) return `upper_arm_front_${s}`
+  const arm = parts.arms[s]
+  const onArm = side > marks.armReach && y > marks.armFloor && nearest(marks.armParts, x, y, z) < nearest(marks.trunkParts, x, y, z)
+  if (onArm && arm) {
     const past = (from: Point) => (x - from[0]) * arm.along[0] + (y - from[1]) * arm.along[1] + (z - from[2]) * arm.along[2] > 0
-    const t = Math.max(0, Math.min(1, (y - arm.elbow[1]) / (arm.wrist[1] - arm.elbow[1])))
-    const front = z >= arm.elbow[2] + t * (arm.wrist[2] - arm.elbow[2])
-    if (past(arm.wrist)) return `${front ? 'palm' : 'hand_back'}_${s}`
-    if (past(arm.elbow)) return `forearm_${front ? 'front' : 'back'}_${s}`
-    return `${onShoulder ? 'shoulder' : 'upper_arm'}_${front ? 'front' : 'back'}_${s}`
+    if (past(arm.wrist)) return `${armFront(arm, y, z) ? 'palm' : 'hand_back'}_${s}`
+    if (past(arm.elbow)) return `forearm_${armFront(arm, y, z) ? 'front' : 'back'}_${s}`
   }
-  if (y < marks.legTop) {
+  if (!onArm && y < marks.legTop) {
     if (parts.footTop !== undefined && y < parts.footTop) return `foot_${s}`
     if (parts.knee && y >= parts.knee.yMin && y <= parts.knee.yMax) return `knee_${s}`
     if (parts.knee && y < parts.knee.yMin) return !parts.lowerLegMid || z >= depthAt(parts.lowerLegMid, y) ? `shin_${s}` : `calf_${s}`
     if (!parts.thighMid || z >= depthAt(parts.thighMid, y)) return `quad_${s}`
     return parts.glute && y >= parts.glute.yMin ? `glute_${s}` : `hamstring_${s}`
   }
-  if (parts.neckBase !== undefined && y > parts.neckBase) return 'neck'
-  if (z < marks.spineDepth && side < 0.04) return 'spine'
-  if (onShoulder) return `shoulder_${z >= (parts.trunkMid ? depthAt(parts.trunkMid, y) : 0) ? 'front' : 'back'}_${s}`
-  const upper = y >= marks.chestBase
-  if (!parts.trunkMid || z >= depthAt(parts.trunkMid, y)) return `${upper ? (y >= (marks.chestBase + (parts.neckBase ?? marks.headBase)) / 2 ? 'chest_upper' : 'chest_lower') : 'abdomen'}_${s}`
-  if (parts.glute && y <= parts.glute.yMax) return `glute_${s}`
-  return `${upper ? 'upper_back' : 'lower_back'}_${s}`
+  if (!onArm && parts.neckBase !== undefined && y > parts.neckBase) return 'neck'
+  if (!onArm && z < marks.spineDepth && side < 0.04) return inLumbar(marks, x, y, z) ? 'lumbar' : 'spine'
+  const upperArm: BodyZoneId = `upper_arm_${armFront(arm, y, z) ? 'front' : 'back'}_${s}`
+  if (parts.muscles) {
+    let best = Infinity
+    let kind: MuscleKind = 'trunk'
+    // The upper-arm muscles begin under the deltoid, so they only count below the top of the arm.
+    const armTop = parts.shoulder?.yMin ?? Infinity
+    for (const muscle of parts.muscles) {
+      if (muscle.kind === 'upper_arm' && y > armTop) continue
+      const d = nearest(muscle.points, x, y, z)
+      if (d < best) {
+        best = d
+        kind = muscle.kind
+      }
+    }
+    return kind === 'shoulder' ? shoulderZone(parts, s, y, z) : kind === 'upper_arm' ? upperArm : trunkZone(marks, s, x, y, z)
+  }
+  // Without the muscles, divide by position alone.
+  const onShoulder = parts.shoulder !== undefined && side > parts.shoulder.inner && y > parts.shoulder.yMin
+  if (onArm) return onShoulder ? shoulderZone(parts, s, y, z) : upperArm
+  if (onShoulder) return `shoulder_${trunkFront(parts, y, z) ? 'front' : 'back'}_${s}`
+  return trunkZone(marks, s, x, y, z)
+}
+
+/**
+ * Decides the part for a point on a muscle or bone of the anatomy models, from the structure's key
+ * in anatomyStructures.ts. A structure stays whole wherever one part covers it (the deltoid is the
+ * shoulder, the quadriceps the front thigh); it is divided only where the parts divide it, such as
+ * the abdominal wall into its four quarters and the leg muscles where they pass the knee.
+ */
+export function zoneForStructurePoint(key: string, x: number, y: number, z: number, marks: SkinLandmarks): BodyZoneId {
+  const { parts } = marks
+  const byPosition = () => zoneForSkinPoint(x, y, z, marks)
+  const within = (allowed: RegExp, fallback: BodyZoneId) => {
+    const zone = byPosition()
+    return allowed.test(zone) ? zone : fallback
+  }
+  const sided = /^(.*)_([lr])$/.exec(key)
+  if (sided) {
+    const base = sided[1]!
+    const s = sided[2] as Side
+    // The knee has no muscle of its own: it is the stretch of every leg muscle and bone that passes the kneecap.
+    if (parts.knee && y >= parts.knee.yMin && y <= parts.knee.yMax && /^(quadriceps|adductors|hamstrings|calf|shin_muscles|femur|lower_leg|patella|knee)$/.test(base)) return `knee_${s}`
+    const front = armFront(parts.arms[s], y, z) ? 'front' : 'back'
+    // Every layer of the centre of the lower back lights with it: the muscles beside the backbone, the sheet of muscle over them and the ribs under them.
+    if (/^(back_muscles|shoulder_muscles|trapezius|ribs|intercostals)$/.test(base) && inLumbar(marks, x, y, z)) return 'lumbar'
+    if (/^(deltoid|shoulder_muscles|rotator_cuff|scapula|clavicle|shoulder)$/.test(base)) return shoulderZone(parts, s, y, z)
+    if (/^(humerus|upper_arm_muscles|elbow)$/.test(base)) return `upper_arm_${front}_${s}`
+    if (/^(forearm|forearm_muscles|wrist)$/.test(base)) return `forearm_${front}_${s}`
+    if (/^(hand|hand_muscles)$/.test(base)) return `${front === 'front' ? 'palm' : 'hand_back'}_${s}`
+    if (base === 'chest_muscles') return `chest_${s}`
+    if (/^(ribs|intercostals)$/.test(base)) return within(new RegExp(`^(chest|abdomen_upper|abdomen_lower|upper_back|lower_back)_${s}$`), trunkFront(parts, y, z) ? `chest_${s}` : backZone(marks, s, y))
+    if (base === 'back_muscles') return backZone(marks, s, y)
+    if (base === 'trapezius') return backZone(marks, s, y)
+    if (/^(gluteal|hip)$/.test(base)) return `glute_${s}`
+    if (/^(quadriceps|adductors|iliopsoas)$/.test(base)) return `quad_${s}`
+    if (base === 'hamstrings') return `hamstring_${s}`
+    if (base === 'femur') return within(new RegExp(`^(quad|hamstring|knee|glute)_${s}$`), `quad_${s}`)
+    if (/^(patella|knee)$/.test(base)) return `knee_${s}`
+    if (base === 'shin_muscles') return `shin_${s}`
+    if (base === 'calf') return `calf_${s}`
+    if (base === 'lower_leg') return within(new RegExp(`^(shin|calf|knee|foot)_${s}$`), `shin_${s}`)
+    if (/^(foot|foot_muscles|ankle)$/.test(base)) return `foot_${s}`
+    if (base === 'neck_muscles') return 'neck'
+    if (base === 'eye') return 'eyes'
+  }
+  const s: Side = x * marks.leftSign >= 0 ? 'l' : 'r'
+  if (key === 'abdominal_muscles') return abdomenZone(marks, s, y)
+  if (key === 'sternum') return `chest_${s}`
+  if (key === 'spine_cervical') return 'neck'
+  if (/^(spine_|spinal_cord)/.test(key)) return key !== 'spine_cervical' && inLumbar(marks, x, y, z) ? 'lumbar' : 'spine'
+  if (/^(skull|mandible|teeth)$/.test(key)) return 'head'
+  return byPosition()
 }
 
 /** The app region for a point on the skin of the anatomy models: the region of the part it is in. */

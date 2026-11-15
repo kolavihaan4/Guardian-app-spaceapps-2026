@@ -6,7 +6,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { ANATOMY_STRUCTURES, type AnatomySystem } from './anatomyStructures'
-import { BODY_ZONES, zoneLabel, regionForZone, zoneForSkinPoint, isSkinLandmarkPart, regionForStructure, skinLandmarks, type SkinLandmarks, type BodyZoneId } from './bodyRegions'
+import { BODY_ZONES, zoneLabel, regionForZone, zoneForSkinPoint, zoneForStructurePoint, isSkinLandmarkPart, regionForStructure, skinLandmarks, type SkinLandmarks, type BodyZoneId } from './bodyRegions'
 import { HIDDEN_STRUCTURES, smoothModestSkin } from './modestSkin'
 
 export type AnatomySex = 'male' | 'female'
@@ -14,11 +14,11 @@ export type AnatomySex = 'male' | 'female'
 // Skin colours follow the Still palette in styles.css, as on the simpler 3D figure.
 const COLOR = {
   body: new THREE.Color('#e6eeec'),
-  hover: new THREE.Color('#b4cdc8'),
-  selected: new THREE.Color('#3a655e'),
+  // Neutral slate, used on the skin only when the muscles and skeleton are hidden.
+  hover: new THREE.Color('#c3ced9'),
+  selected: new THREE.Color('#7f93a8'),
   painMild: new THREE.Color('#f1c4ae'),
   painSevere: new THREE.Color('#c9532c'),
-  glowSelected: new THREE.Color('#3f8f84'),
   faded: new THREE.Color('#dde5e6'),
   glowPain: new THREE.Color('#c9532c'),
 }
@@ -70,7 +70,10 @@ interface Part {
   region: BodyRegionId
   label: string
   layer: LayerId
+  /** The structure's name in anatomyStructures.ts. */
+  key: string
   points: Float32Array
+  /** The body part of each vertex. */
   zones: BodyZoneId[]
 }
 
@@ -202,11 +205,13 @@ export default function Anatomy3D({ sex, selected, zonePain, selectedZone, onZon
         part.zones.forEach((z, i) => {
           const severity = live.current.zonePain[z] ?? hurt[regionForZone(z)] ?? 0
           const active = chosen(z)
+          // The chosen part keeps its own colour at full strength and the rest is faded back.
           tint.copy(part.base)
-          if (active) tint.lerp(COLOR.selected, 0.75)
-          else if (z === hov?.zone) tint.lerp(COLOR.hover, 0.6)
-          else tint.lerp(COLOR.faded, 0.35)
-          if (severity > 0) tint.lerp(COLOR.painSevere, 0.4)
+          if (active) {
+            // full colour
+          } else if (z === hov?.zone) tint.lerp(COLOR.faded, 0.25)
+          else tint.lerp(COLOR.faded, 0.45)
+          if (severity > 0) tint.lerp(COLOR.painSevere, 0.35 + 0.4 * (Math.min(severity, 10) / 10))
           colors.setXYZ(i, tint.r, tint.g, tint.b)
         })
         colors.needsUpdate = true
@@ -215,13 +220,16 @@ export default function Anatomy3D({ sex, selected, zonePain, selectedZone, onZon
       skin.visible = shown.skin
       const colors = skin.geometry.getAttribute('color') as THREE.BufferAttribute
       const byRegion = new Map<BodyZoneId, THREE.Color>()
+      const skinOnly = !shown.muscles && !shown.skeleton
       skinRegions.forEach((region, i) => {
         let c = byRegion.get(region)
         if (!c) {
           const severity = live.current.zonePain[region] ?? hurt[regionForZone(region)] ?? 0
           c = new THREE.Color()
           if (severity > 0) c.lerpColors(COLOR.painMild, COLOR.painSevere, Math.min(severity, 10) / 10)
-          else c.copy(chosen(region) ? COLOR.selected : region === hov?.zone ? COLOR.hover : COLOR.body)
+          // A selected part shows through the skin in the full colour of its muscles and bones, so
+          // the skin itself is marked only when it is the one layer on show.
+          else c.copy(skinOnly && chosen(region) ? COLOR.selected : skinOnly && region === hov?.zone ? COLOR.hover : COLOR.body)
           if (severity > 0 && chosen(region)) c.lerp(tint.set('#5b2a1a'), 0.35)
           byRegion.set(region, c)
         }
@@ -303,7 +311,7 @@ export default function Anatomy3D({ sex, selected, zonePain, selectedZone, onZon
           }
           const material = new THREE.MeshPhysicalMaterial({ color: '#ffffff', vertexColors: true, ...FINISH[layer.id] })
           o.material = material
-          parts.push({ mesh: o, material, base: new THREE.Color(info.color), region: regionForStructure(name), label: info.label, layer: layer.id, points: worldPoints(), zones: [] })
+          parts.push({ mesh: o, material, base: new THREE.Color(info.color), region: regionForStructure(name), label: info.label, layer: layer.id, key: name, points: worldPoints(), zones: [] })
         })
         marks = skinLandmarks(landmarkParts)
         if (!skin || !skinPoints || !marks) {
@@ -315,7 +323,7 @@ export default function Anatomy3D({ sex, selected, zonePain, selectedZone, onZon
         const found: SkinLandmarks = marks
         skinRegions = Array.from({ length: points.length / 3 }, (_, i) => zoneForSkinPoint(points[i * 3]!, points[i * 3 + 1]!, points[i * 3 + 2]!, found))
         for (const part of parts) {
-          part.zones = Array.from({ length: part.points.length / 3 }, (_, i) => zoneForSkinPoint(part.points[i * 3]!, part.points[i * 3 + 1]!, part.points[i * 3 + 2]!, found))
+          part.zones = Array.from({ length: part.points.length / 3 }, (_, i) => zoneForStructurePoint(part.key, part.points[i * 3]!, part.points[i * 3 + 1]!, part.points[i * 3 + 2]!, found))
           part.mesh.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(part.points.length), 3))
         }
         // Centre the figure on its own height and scale it to fill the view.
@@ -371,7 +379,7 @@ export default function Anatomy3D({ sex, selected, zonePain, selectedZone, onZon
       const part = hit && parts.find((p) => p.mesh === hit.object)
       if (!part || !hit || !figure || !marks) return null
       figure.worldToLocal(local.copy(hit.point))
-      const zone = zoneForSkinPoint(local.x, local.y, local.z, marks)
+      const zone = zoneForStructurePoint(part.key, local.x, local.y, local.z, marks)
       return { region: regionForZone(zone), zone, label: zoneLabel(zone) }
     }
 
@@ -457,7 +465,7 @@ export default function Anatomy3D({ sex, selected, zonePain, selectedZone, onZon
         <select value={selectedZone ?? ''} onChange={(e) => {
           const zone = e.target.value as BodyZoneId
           live.current.onZoneSelect(zone)
-          live.current.turnTo(/back|glute|hamstring|calf|spine/.test(zone) ? Math.PI : 0)
+          live.current.turnTo(/back|lumbar|glute|hamstring|calf|spine/.test(zone) ? Math.PI : 0)
         }}>
           <option value="" disabled>Choose a part</option>
           {BODY_ZONES.map((z) => <option key={z} value={z}>{zoneLabel(z)}</option>)}
