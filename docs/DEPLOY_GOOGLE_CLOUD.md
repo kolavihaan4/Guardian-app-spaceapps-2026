@@ -113,12 +113,16 @@ day or two.
 
 ### 2. Upload the model files
 
-The model is the two files from step 5 of `ai/training/README-PC.md`: `model-q4_k_m.gguf`
-(about 5 GB) and `Modelfile`. From the machine that has them:
+The scored model (int4, 88 of 106 held-out cases) is on the Mac as an Ollama model. Ollama stores
+it as 405 files, not one GGUF, so it is exported as a tar of Ollama's own store with its hash
+(`ai/README.md` has how it was made and checked). From the Mac:
 
 ```bash
-gcloud storage cp model-q4_k_m.gguf Modelfile gs://guardian-models-1c55f5a5/triage-ft-v2/
+gcloud storage cp ~/guardian-model-export/astrovitals-triage-ft-v2.tar ~/guardian-model-export/astrovitals-triage-ft-v2.tar.sha256 gs://guardian-models-1c55f5a5/triage-ft-v2/
 ```
+
+The script also still accepts `model-q4_k_m.gguf` and `Modelfile` from step 5 of
+`ai/training/README-PC.md` instead, if the tar is not in the folder. That GGUF has not been scored.
 
 ### 3. Create the GPU VM
 

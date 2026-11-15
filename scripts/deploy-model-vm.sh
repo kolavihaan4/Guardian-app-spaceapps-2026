@@ -4,9 +4,10 @@
 #
 #   bash scripts/deploy-model-vm.sh gs://guardian-models-1c55f5a5/triage-ft-v2
 #
-# The bucket folder holds the two files that make up the model: model-q4_k_m.gguf and Modelfile
-# (ai/training/README-PC.md, step 5). The script downloads them, starts Ollama in Docker with the
-# GPU, registers the model and warms it up. Safe to run again.
+# The bucket folder holds either astrovitals-triage-ft-v2.tar and its .sha256 (Ollama's own model
+# store, exported from the Mac; ai/README.md) or model-q4_k_m.gguf and Modelfile (README-PC.md,
+# step 5). The script downloads them, starts Ollama in Docker with the GPU, registers the model and
+# warms it up. Safe to run again.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -36,9 +37,21 @@ if ! $docker run --rm --gpus all ubuntu:22.04 true >/dev/null 2>&1; then
 fi
 
 mkdir -p "$dir"
-if [ ! -f "$dir/model-q4_k_m.gguf" ] || [ ! -f "$dir/Modelfile" ]; then
-  echo "Downloading the model files from $src (about 5 GB)..."
-  gcloud storage cp "$src/model-q4_k_m.gguf" "$src/Modelfile" "$dir/"
+# Either Ollama's own store as a tar (the int4 build scored 88 of 106), or a GGUF and Modelfile.
+tar_name="$name.tar"
+if [ -f "$dir/$tar_name" ] || gcloud storage ls "$src/$tar_name" >/dev/null 2>&1; then
+  kind=tar
+  if [ ! -f "$dir/$tar_name" ]; then
+    echo "Downloading $tar_name from $src (about 7 GB)..."
+    gcloud storage cp "$src/$tar_name" "$src/$tar_name.sha256" "$dir/"
+  fi
+  (cd "$dir" && sha256sum -c "$tar_name.sha256")
+else
+  kind=gguf
+  if [ ! -f "$dir/model-q4_k_m.gguf" ] || [ ! -f "$dir/Modelfile" ]; then
+    echo "Downloading the model files from $src (about 5 GB)..."
+    gcloud storage cp "$src/model-q4_k_m.gguf" "$src/Modelfile" "$dir/"
+  fi
 fi
 
 # Serve on the machine's internal address only. Google Cloud's metadata server knows it; otherwise take the first local address.
@@ -48,7 +61,13 @@ cd ai/model_server
 BIND_IP="$ip" MODEL_DIR="$dir" $docker compose up -d
 for _ in $(seq 1 60); do curl -fs "http://$ip:11434/api/version" >/dev/null && break; sleep 2; done
 echo "Registering the model with Ollama..."
-$docker compose exec -T ollama sh -c "cd /models && ollama create $name -f Modelfile"
+if [ "$kind" = tar ]; then
+  $docker compose exec -T ollama tar -xf "/models/$tar_name" -C /root/.ollama/models
+  $docker compose restart ollama
+  for _ in $(seq 1 60); do curl -fs "http://$ip:11434/api/version" >/dev/null && break; sleep 2; done
+else
+  $docker compose exec -T ollama sh -c "cd /models && ollama create $name -f Modelfile"
+fi
 echo "Loading it onto the GPU..."
 curl -fs "http://$ip:11434/api/generate" -d "{\"model\":\"$name\",\"prompt\":\"ok\",\"stream\":false,\"think\":false,\"keep_alive\":-1}" >/dev/null
 $docker compose exec -T ollama ollama ps
