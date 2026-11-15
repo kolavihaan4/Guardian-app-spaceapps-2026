@@ -1,0 +1,58 @@
+{
+ "cfg": {
+  "model": "unet24-48-96-192-gn",
+  "classes": 4,
+  "crop": 224,
+  "spacing_mm": 0.25,
+  "epochs": 60,
+  "train_stride": 1,
+  "batch": 12,
+  "lr": 0.0003,
+  "weight_decay": 0.0001,
+  "opt": "adamw+cosine",
+  "loss": "ce+softdice",
+  "folds": 4,
+  "stop_subjects": 2,
+  "empty_cap": 0.2,
+  "aug": {
+   "flip": 0.5,
+   "rot_deg": 20,
+   "scale": [
+    0.7,
+    1.5
+   ],
+   "shift": 0.08,
+   "elastic": 0.03,
+   "gamma": 0.25,
+   "contrast": 0.25,
+   "brightness": 0.1,
+   "speckle": 0.15,
+   "blur_p": 0.25,
+   "wedge_p": 0.3,
+   "wedge_width": 0.25
+  },
+  "seed": 42
+ },
+ "device": "cuda",
+ "torch": "2.11.0+cu130",
+ "platform": "Linux-6.18.55+-x86_64-with-glibc2.39",
+ "volumes": 31,
+ "subjects": [
+  "001",
+  "002",
+  "003",
+  "005",
+  "006",
+  "007",
+  "008",
+  "011",
+  "014",
+  "015",
+  "020",
+  "021",
+  "024",
+  "026",
+  "028",
+  "029"
+ ]
+}
