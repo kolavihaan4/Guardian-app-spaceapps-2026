@@ -1,1441 +1,329 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AstroVitals — Daily Crew Health & Ultrasound Tracker</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          colors: {
-            space: {
-              950: '#040812',
-              900: '#091124',
-              850: '#0e1830',
-              800: '#152242',
-            }
-          }
-        }
-      }
-    };
-  </script>
+  <title>AstroVitals — Daily Crew Health, Ultrasound & Pupillometry Tracker</title>
   <style>
+    :root {
+      --bg: #070b14;
+      --panel: #0f1626;
+      --panel-alt: #141d31;
+      --border: #23304d;
+      --text: #e6edf7;
+      --muted: #8fa3c4;
+      --accent: #38bdf8;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --purple: #a78bfa;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      background-color: #040812;
-      background-image:
-        radial-gradient(circle at 15% 15%, rgba(6, 182, 212, 0.08), transparent 40%),
-        radial-gradient(circle at 85% 20%, rgba(99, 102, 241, 0.08), transparent 40%),
-        radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.05), transparent 50%);
-      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 20px;
     }
-    .glass-card {
-      background: rgba(14, 24, 48, 0.72);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(148, 163, 184, 0.14);
+    .container { max-width: 1220px; margin: 0 auto; }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
     }
-    .glass-card-elevated {
-      background: rgba(21, 34, 66, 0.78);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(148, 163, 184, 0.22);
+    .title-block h1 { font-size: 1.45rem; letter-spacing: 0.3px; }
+    .title-block p { color: var(--muted); font-size: 0.88rem; }
+    .controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
     }
-    input[type="range"] {
-      accent-color: #22d3ee;
+    select, button {
+      background: var(--panel-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+    select:hover, button:hover { border-color: var(--accent); }
+    .btn-primary {
+      background: #0ea5e9;
+      color: #031525;
+      font-weight: 600;
+      border-color: #38bdf8;
+    }
+    .btn-primary:hover { background: #38bdf8; }
+    .day-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .day-pill {
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .day-pill.active {
+      background: rgba(56, 189, 248, 0.16);
+      border-color: var(--accent);
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .day-pill.custom-pill.active {
+      background: rgba(167, 139, 250, 0.18);
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+    .banner {
+      padding: 14px 18px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      border-left: 5px solid var(--ok);
+      background: var(--panel);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .banner.warn { border-left-color: var(--warn); }
+    .banner.danger { border-left-color: var(--danger); background: rgba(239, 68, 68, 0.08); }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge.ok { background: rgba(34, 197, 94, 0.15); color: var(--ok); }
+    .badge.warn { background: rgba(245, 158, 11, 0.15); color: var(--warn); }
+    .badge.danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .badge.info { background: rgba(56, 189, 248, 0.15); color: var(--accent); }
+
+    .vitals-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .card h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .metric-val { font-size: 1.75rem; font-weight: 700; }
+    .metric-sub { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+
+    .neuro-ocular-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-header h2 { font-size: 1.02rem; }
+    .sub-metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .sub-box {
+      background: var(--panel-alt);
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .sub-box label {
+      display: block;
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .sub-box .val { font-size: 1.2rem; font-weight: 700; }
+
+    .triage-box {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      margin-bottom: 18px;
+    }
+    .triage-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+      margin-top: 12px;
+    }
+    .triage-item {
+      background: var(--panel-alt);
+      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid var(--border);
+    }
+    .triage-item h4 {
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .triage-item ul { padding-left: 18px; font-size: 0.88rem; }
+    .triage-item p { font-size: 0.88rem; }
+
+    .disclaimer {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: center;
+      padding-top: 10px;
+    }
+
+    /* Modal Styles */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 7, 18, 0.82);
+      z-index: 50;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      max-width: 680px;
+      width: 100%;
+      padding: 20px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .modal-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 210px;
+      background: #060a12;
+      color: #a5f3fc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.82rem;
+      margin-bottom: 12px;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .error-msg {
+      color: var(--danger);
+      font-size: 0.84rem;
+      margin-bottom: 10px;
+      display: none;
     }
   </style>
 </head>
-<body class="min-h-screen font-sans antialiased selection:bg-cyan-500/30 selection:text-cyan-200 pb-12">
-
-  <!-- Top Mission Control Header -->
-  <header class="sticky top-0 z-30 border-b border-slate-800/80 bg-space-950/90 backdrop-blur-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-      <div class="flex items-center gap-3">
-        <!-- Mission Patch SVG Icon -->
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-indigo-600/30 border border-cyan-400/30 flex items-center justify-center shrink-0 shadow-lg shadow-cyan-950/50">
-          <svg class="w-6 h-6 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <circle cx="12" cy="12" r="9" stroke-opacity="0.4" />
-            <path d="M3.5 12h4l2-4 3 8 2-4h6" stroke-linecap="round" stroke-linejoin="round" />
-            <circle cx="18.5" cy="5.5" r="1.5" fill="currentColor" stroke="none" />
-          </svg>
-        </div>
-        <div>
-          <div class="flex flex-wrap items-center gap-2">
-            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">
-              AstroVitals — Daily Crew Health &amp; Ultrasound Tracker
-            </h1>
-            <span class="px-2 py-0.5 text-[11px] font-mono font-semibold uppercase tracking-wider rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-              Board #4 • Overarching AI
-            </span>
-          </div>
-          <p class="text-xs text-slate-400 mt-0.5">
-            Personalized Preflight Baseline Comparison &amp; Deterministic Non-Diagnostic Triage
-          </p>
-        </div>
+<body>
+  <div class="container">
+    <header>
+      <div class="title-block">
+        <h1>AstroVitals — Crew Health, Ultrasound & Pupillometry Tracker</h1>
+        <p>Anchored strictly to personal Earth preflight baselines • Non-deterministic environmental context</p>
       </div>
+      <div class="controls-bar">
+        <select id="locationSelect" aria-label="Mission Location">
+          <option value="mars_surface">Mars Surface (3/8g)</option>
+          <option value="deep_space_transit">Deep-Space Transit (0g)</option>
+          <option value="lunar_surface">Lunar Surface (1/6g)</option>
+          <option value="earth_preflight">Earth Preflight (1.0g)</option>
+        </select>
+        <select id="weatherSelect" aria-label="Space Weather Context">
+          <option value="quiet">Space Weather: Quiet (Kp 2)</option>
+          <option value="storm">Space Weather: Geomagnetic Storm (Kp 7 / SEP)</option>
+        </select>
+        <button class="btn-primary" id="openModalBtn">📡 Import Fitbit / JSON</button>
+      </div>
+    </header>
 
-      <!-- Crew Selector & Preflight Baseline Strip -->
-      <div class="flex flex-wrap items-center gap-2.5">
-        <div class="flex items-center bg-space-900/90 border border-slate-700/70 rounded-xl p-1">
-          <button id="crewBtnC001" onclick="selectCrew('C001')" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
-            C001 • Crew 01
-          </button>
-          <button id="crewBtnC002" onclick="selectCrew('C002')" class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all text-slate-400 hover:text-slate-200 border border-transparent">
-            C002 • Crew 02
-          </button>
-        </div>
+    <div class="day-pills" id="dayPills"></div>
 
-        <div id="baselineSummaryPill" class="px-3 py-1.5 rounded-xl bg-space-900/80 border border-slate-800 text-[11px] font-mono text-slate-300 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span class="text-slate-400">Personal Preflight Baseline:</span>
-          <span>HR <strong id="baseHrLabel" class="text-cyan-300">60 bpm</strong></span>
-          <span>Temp <strong id="baseTempLabel" class="text-cyan-300">36.7°C</strong></span>
-          <span>ONSD <strong id="baseOnsdLabel" class="text-cyan-300">4.4 mm</strong></span>
-          <span class="text-slate-600">|</span>
-          <span class="text-indigo-300">Anchor: <strong class="text-white">Unshifted Personal Median</strong></span>
-        </div>
+    <div class="banner" id="statusBanner">
+      <div>
+        <strong id="bannerTitle">Mission Day 1 — Nominal Baseline</strong>
+        <div id="bannerSub" style="font-size:0.86rem; color:var(--muted);">All wearable, ultrasound, and pupillometry checks verified.</div>
+      </div>
+      <span class="badge ok" id="bannerBadge">NOMINAL</span>
+    </div>
+
+    <!-- Wearable Vitals Row -->
+    <div class="vitals-grid">
+      <div class="card">
+        <h3>Heart Rate (Fitbit / Wearable)</h3>
+        <div class="metric-val" id="hrVal">64 bpm</div>
+        <div class="metric-sub" id="hrSub">Preflight median: 62 bpm (+2 bpm)</div>
+      </div>
+      <div class="card">
+        <h3>Blood Oxygen (SpO₂)</h3>
+        <div class="metric-val" id="spo2Val">98%</div>
+        <div class="metric-sub" id="spo2Sub">Target ≥ 95% • Sensor verified</div>
+      </div>
+      <div class="card">
+        <h3>Core / Skin Temp</h3>
+        <div class="metric-val" id="tempVal">36.8 °C</div>
+        <div class="metric-sub" id="tempSub">Preflight median: 36.7 °C (+0.1 °C)</div>
+      </div>
+      <div class="card">
+        <h3>Sleep Duration</h3>
+        <div class="metric-val" id="sleepVal">7.4 hrs</div>
+        <div class="metric-sub" id="sleepSub">Source: Simulated Mission Log</div>
       </div>
     </div>
-  </header>
 
-  <!-- Main Workspace -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
-
-    <!-- Mission Environment / Gravity & Radiation Context Selector -->
-    <section class="glass-card rounded-2xl p-4 sm:p-5 shadow-xl border-cyan-500/20">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-3.5">
-        <div>
-          <h2 class="text-sm font-semibold uppercase tracking-wider text-cyan-300 flex items-center gap-2">
-            <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M3.6 9h16.8M3.6 15h16.8M12 3a14.5 14.5 0 010 18M12 3a14.5 14.5 0 000 18" stroke-linecap="round" />
-            </svg>
-            Mission Environment &amp; Radiation Context (Non-Offset Telemetry)
-          </h2>
-          <p id="locationNarrative" class="text-xs text-slate-300 mt-1">
-            Mars Surface (3/8 g • Elevated GCR + Perchlorate Dust): Monitored as environmental context alongside personal dosimeter feeds. Personal preflight baselines remain unshifted (no artificial radiation BPM/SpO₂ formulas).
-          </p>
+    <!-- Side-by-Side Daily Ultrasound & Eye Dilation (Pupillometry) -->
+    <div class="neuro-ocular-grid">
+      <div class="card">
+        <div class="panel-header">
+          <h2>👁️ Daily Ocular Ultrasound (SANS Check)</h2>
+          <span class="badge ok" id="usBadge">Probe Verified</span>
         </div>
-        <div class="shrink-0 flex items-center gap-2 text-[11px] font-mono bg-space-950/80 px-3 py-2 rounded-xl border border-slate-800">
-          <span class="text-slate-400">Background Dose Rate:</span>
-          <span id="locRadRate" class="text-amber-300 font-semibold">~0.64 mSv/day (Contextual)</span>
-        </div>
-      </div>
-
-      <div id="locationTabsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-        <!-- Populated dynamically by JS -->
-      </div>
-
-      <!-- Scientific Guardrail Banner (NASA/CSA & HHS/REMM Evidence Standard) -->
-      <div class="mt-3.5 pt-3 border-t border-slate-800/80 flex items-start gap-2.5 text-xs text-slate-300">
-        <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold uppercase bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 shrink-0 mt-0.5">
-          Evidence Guardrail
-        </span>
-        <p class="leading-relaxed text-slate-300">
-          Per <strong class="text-white">NASA/CSA</strong> and <strong class="text-white">U.S. HHS/REMM</strong> radiological guidance, routine space radiation does not apply fixed BPM or SpO₂ offsets. AstroVitals evaluates vitals strictly against each astronaut's <span class="font-mono text-cyan-300">personal preflight median</span> and tracks dosimeter/space-weather telemetry separately as a contextual stressor (recommending fever &amp; lymphocyte checks only during acute Solar Particle Events).
-        </p>
-      </div>
-    </section>
-
-    <!-- Mission Day Switcher & Playback / Simulator Bar -->
-    <section class="glass-card rounded-2xl p-4 sm:p-5 shadow-xl">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-        <div>
-          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-            Mission Day Telemetry Selector (Days 1–7)
-          </h2>
-          <p class="text-xs text-slate-400 mt-0.5">
-            Select a mission day to inspect daily vitals &amp; eye ultrasound scans, or toggle What-If Simulator mode.
-          </p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-          <button id="playTimelineBtn" onclick="toggleTimelinePlayback()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-500/40 transition-all flex items-center gap-1.5">
-            <svg id="playIcon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-            <span id="playBtnText">Play 7-Day Timeline</span>
-          </button>
-
-          <button id="simToggleBtn" onclick="toggleSimulatorMode()" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 border border-indigo-500/40 transition-all flex items-center gap-1.5">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6" stroke-linecap="round" />
-            </svg>
-            <span id="simBtnText">What-If Simulator: OFF</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 7-Day Selector Pills -->
-      <div id="dayTabsContainer" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
-        <!-- Populated dynamically by JS -->
-      </div>
-
-      <!-- Custom What-If Simulator Drawer (Hidden by default) -->
-      <div id="simulatorDrawer" class="hidden mt-4 pt-4 border-t border-slate-700/60">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <span class="text-xs font-mono uppercase tracking-wider text-indigo-300 font-semibold">
-            Interactive Guardrail Sandbox — Adjust Live Telemetry &amp; Sensor Fit
-          </span>
-          <button onclick="resetToCurrentDay()" class="text-xs text-slate-400 hover:text-cyan-300 underline">
-            Reset to Day <span id="resetDayNum">1</span> Values
-          </button>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 bg-space-950/60 p-4 rounded-xl border border-indigo-500/25">
-          <!-- HR Slider -->
-          <div>
-            <div class="flex justify-between text-xs font-mono mb-1">
-              <span class="text-slate-300">Heart Rate (hr_bpm)</span>
-              <span id="simHrVal" class="text-cyan-300 font-bold">62 bpm</span>
-            </div>
-            <input id="simHrInput" type="range" min="45" max="140" value="62" oninput="onSimulatorChange()" class="w-full cursor-pointer" />
-            <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-0.5">
-              <span>45</span>
-              <span>Normal ≤+15</span>
-              <span>Alert ≥+35</span>
-              <span>140</span>
-            </div>
-          </div>
-
-          <!-- SpO2 Slider -->
-          <div>
-            <div class="flex justify-between text-xs font-mono mb-1">
-              <span class="text-slate-300">Blood Oxygen (spo2_pct)</span>
-              <span id="simSpo2Val" class="text-cyan-300 font-bold">98%</span>
-            </div>
-            <input id="simSpo2Input" type="range" min="82" max="100" value="98" oninput="onSimulatorChange()" class="w-full cursor-pointer" />
-            <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-0.5">
-              <span>82%</span>
-              <span>Alert ≤91%</span>
-              <span>Normal 96–100%</span>
-            </div>
-          </div>
-
-          <!-- Temp Slider -->
-          <div>
-            <div class="flex justify-between text-xs font-mono mb-1">
-              <span class="text-slate-300">Core Temp (temp_c)</span>
-              <span id="simTempVal" class="text-cyan-300 font-bold">36.7°C</span>
-            </div>
-            <input id="simTempInput" type="range" min="35.8" max="39.5" step="0.1" value="36.7" oninput="onSimulatorChange()" class="w-full cursor-pointer" />
-            <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-0.5">
-              <span>35.8°C</span>
-              <span>Alert ≥38.0°C</span>
-              <span>39.5°C</span>
-            </div>
-          </div>
-
-          <!-- ONSD Slider -->
-          <div>
-            <div class="flex justify-between text-xs font-mono mb-1">
-              <span class="text-slate-300">Eye Ultrasound ONSD (mm)</span>
-              <span id="simOnsdVal" class="text-cyan-300 font-bold">4.5 mm</span>
-            </div>
-            <input id="simOnsdInput" type="range" min="3.8" max="6.5" step="0.1" value="4.5" oninput="onSimulatorChange()" class="w-full cursor-pointer" />
-            <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-0.5">
-              <span>3.8</span>
-              <span>Mild 5.0</span>
-              <span>Alert ≥5.5</span>
-              <span>6.5</span>
-            </div>
-          </div>
-
-          <!-- IJV Flow Select -->
-          <div>
-            <label class="block text-xs font-mono text-slate-300 mb-1">Jugular Vein Flow (ijv_flow_status)</label>
-            <select id="simIjvInput" onchange="onSimulatorChange()" class="w-full bg-space-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-400">
-              <option value="normal_forward">normal_forward</option>
-              <option value="mild_stasis">mild_stasis</option>
-              <option value="stagnant_retrograde">stagnant_retrograde</option>
-              <option value="indeterminate">indeterminate</option>
-            </select>
-          </div>
-
-          <!-- Sensor & Probe Verified Toggles -->
-          <div class="flex flex-col justify-center gap-2">
-            <label class="inline-flex items-center gap-2.5 cursor-pointer">
-              <input id="simSensorVerified" type="checkbox" checked onchange="onSimulatorChange()" class="w-4 h-4 rounded border-slate-600 text-cyan-400 focus:ring-0 bg-space-900" />
-              <span class="text-xs font-mono text-slate-200">Wearable Sensor Verified</span>
-            </label>
-            <label class="inline-flex items-center gap-2.5 cursor-pointer">
-              <input id="simProbeVerified" type="checkbox" checked onchange="onSimulatorChange()" class="w-4 h-4 rounded border-slate-600 text-cyan-400 focus:ring-0 bg-space-900" />
-              <span class="text-xs font-mono text-slate-200">Ultrasound Probe Verified</span>
-            </label>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Primary Telemetry Cards (4 Columns) -->
-    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-      <!-- Card 1: Heart Rate -->
-      <div id="cardHr" class="glass-card rounded-2xl p-5 transition-all duration-300">
-        <div class="flex items-start justify-between gap-2">
-          <div>
-            <span class="text-xs font-mono uppercase tracking-wider text-slate-400">Heart Rate</span>
-            <div class="flex items-baseline gap-2 mt-1">
-              <span id="valHr" class="text-3xl font-bold font-mono text-white">62</span>
-              <span class="text-sm font-mono text-slate-400">bpm</span>
-              <span id="deltaHr" class="px-2 py-0.5 rounded-md text-xs font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                +2 bpm
-              </span>
-            </div>
-          </div>
-          <span id="badgeHr" class="px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold uppercase bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-            Nominal
-          </span>
-        </div>
-
-        <div class="mt-4">
-          <div class="flex justify-between text-[11px] font-mono text-slate-400 mb-1">
-            <span>Personal Preflight: <strong id="cardBaseHr" class="text-cyan-300">60 bpm</strong></span>
-            <span>Alert: <strong class="text-rose-300">≥ +35 bpm</strong></span>
-          </div>
-          <div class="w-full h-2 bg-space-950 rounded-full overflow-hidden border border-slate-800">
-            <div id="barHr" class="h-full bg-emerald-400 transition-all duration-300" style="width: 28%"></div>
-          </div>
-          <p id="noteHr" class="text-[11px] text-slate-400 mt-2">
-            Normal band: within <span class="font-mono text-slate-300">+15 bpm</span> of personal preflight baseline (<span class="font-mono text-cyan-300">60 bpm</span>).
-          </p>
-        </div>
-      </div>
-
-      <!-- Card 2: Blood Oxygen (SpO2) -->
-      <div id="cardSpo2" class="glass-card rounded-2xl p-5 transition-all duration-300">
-        <div class="flex items-start justify-between gap-2">
-          <div>
-            <span class="text-xs font-mono uppercase tracking-wider text-slate-400">Blood Oxygen (SpO₂)</span>
-            <div class="flex items-baseline gap-2 mt-1">
-              <span id="valSpo2" class="text-3xl font-bold font-mono text-white">98</span>
-              <span class="text-sm font-mono text-slate-400">%</span>
-              <span id="deltaSpo2" class="px-2 py-0.5 rounded-md text-xs font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                Optimal
-              </span>
-            </div>
-          </div>
-          <span id="badgeSpo2" class="px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold uppercase bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-            Nominal
-          </span>
-        </div>
-
-        <div class="mt-4">
-          <div class="flex justify-between text-[11px] font-mono text-slate-400 mb-1">
-            <span>Nominal: <strong class="text-slate-200">96–100%</strong></span>
-            <span>Alert: <strong class="text-rose-300">≤ 91%</strong></span>
-          </div>
-          <div class="w-full h-2 bg-space-950 rounded-full overflow-hidden border border-slate-800">
-            <div id="barSpo2" class="h-full bg-emerald-400 transition-all duration-300" style="width: 90%"></div>
-          </div>
-          <p id="noteSpo2" class="text-[11px] text-slate-400 mt-2">
-            Mild drift band: <span class="font-mono text-slate-300">92–95%</span> (re-test after 5 min rest &amp; check planetary dust/cabin CO₂).
-          </p>
-        </div>
-      </div>
-
-      <!-- Card 3: Core Body Temperature -->
-      <div id="cardTemp" class="glass-card rounded-2xl p-5 transition-all duration-300">
-        <div class="flex items-start justify-between gap-2">
-          <div>
-            <span class="text-xs font-mono uppercase tracking-wider text-slate-400">Core Body Temp</span>
-            <div class="flex items-baseline gap-2 mt-1">
-              <span id="valTemp" class="text-3xl font-bold font-mono text-white">36.7</span>
-              <span class="text-sm font-mono text-slate-400">°C</span>
-              <span id="deltaTemp" class="px-2 py-0.5 rounded-md text-xs font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                0.0°C
-              </span>
-            </div>
-          </div>
-          <span id="badgeTemp" class="px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold uppercase bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-            Nominal
-          </span>
-        </div>
-
-        <div class="mt-4">
-          <div class="flex justify-between text-[11px] font-mono text-slate-400 mb-1">
-            <span>Personal Preflight: <strong id="cardBaseTemp" class="text-cyan-300">36.7°C</strong></span>
-            <span>Alert: <strong class="text-rose-300">≥ 38.0°C</strong></span>
-          </div>
-          <div class="w-full h-2 bg-space-950 rounded-full overflow-hidden border border-slate-800">
-            <div id="barTemp" class="h-full bg-emerald-400 transition-all duration-300" style="width: 30%"></div>
-          </div>
-          <p class="text-[11px] text-slate-400 mt-2">
-            Normal within <span class="font-mono text-slate-300">±0.3°C</span> of preflight; acute fever alert at <span class="font-mono text-rose-300">≥ 38.0°C</span> (monitored during SPEs).
-          </p>
-        </div>
-      </div>
-
-      <!-- Card 4: Daily Eye Ultrasound (ONSD + IJV Flow) -->
-      <div id="cardOnsd" class="glass-card rounded-2xl p-5 transition-all duration-300">
-        <div class="flex items-start justify-between gap-2">
-          <div>
-            <span class="text-xs font-mono uppercase tracking-wider text-cyan-300">Daily Eye Ultrasound</span>
-            <div class="flex items-baseline gap-2 mt-1">
-              <span id="valOnsd" class="text-3xl font-bold font-mono text-white">4.5</span>
-              <span class="text-sm font-mono text-slate-400">mm</span>
-              <span id="deltaOnsd" class="px-2 py-0.5 rounded-md text-xs font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                +0.1 mm
-              </span>
-            </div>
-          </div>
-          <span id="badgeOnsd" class="px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold uppercase bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-            Nominal
-          </span>
-        </div>
-
-        <div class="mt-3">
-          <div class="flex justify-between text-[11px] font-mono text-slate-400 mb-1">
-            <span>Personal Preflight: <strong id="cardBaseOnsd" class="text-cyan-300">4.4 mm</strong></span>
-            <span>Alert: <strong class="text-rose-300">≥ 5.5 mm</strong></span>
-          </div>
-          <div class="w-full h-2 bg-space-950 rounded-full overflow-hidden border border-slate-800">
-            <div id="barOnsd" class="h-full bg-emerald-400 transition-all duration-300" style="width: 32%"></div>
-          </div>
-          <div class="mt-2.5 flex items-center justify-between text-[11px] font-mono bg-space-950/70 px-2.5 py-1.5 rounded-lg border border-slate-800">
-            <span class="text-slate-400">IJV Flow:</span>
-            <span id="valIjv" class="font-semibold text-emerald-300">normal_forward</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Secondary Context Strip: Hardware Verification, Space Weather, Onboard Tools -->
-    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <!-- Hardware Verification Gate -->
-      <div id="hardwareGateCard" class="glass-card rounded-2xl p-4 flex items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <div id="hardwareGateIconBox" class="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-300 shrink-0">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          </div>
-          <div>
-            <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400">Hardware Fit &amp; Probe Gate</div>
-            <div id="hardwareGateTitle" class="text-sm font-semibold text-emerald-300 mt-0.5">
-              Sensor &amp; Probe Verified
-            </div>
-            <div id="hardwareGateSub" class="text-xs text-slate-400">
-              Strap contact &amp; acoustic window confirmed
-            </div>
-          </div>
-        </div>
-        <span id="hardwareGatePill" class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-          PASS
-        </span>
-      </div>
-
-      <!-- Space Weather Context -->
-      <div class="glass-card rounded-2xl p-4 flex items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-300 shrink-0">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="4" />
-              <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41" stroke-linecap="round" />
-            </svg>
-          </div>
-          <div>
-            <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400">Radiation &amp; Space Weather Context</div>
-            <div class="text-sm font-semibold text-slate-100 mt-0.5 font-mono">
-              Kp: <span id="valKp" class="text-cyan-300">2</span> &bull; Flare: <span id="valFlare" class="text-amber-300">None</span> &bull; Env: <span id="valEnvShort" class="text-indigo-300">Mars (3/8g)</span>
-            </div>
-            <div class="text-xs text-slate-400">
-              Correlated for GCR/SPE oxidative stress &amp; sensor EMI noise
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Onboard Available Tools -->
-      <div class="glass-card rounded-2xl p-4">
-        <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-2">
-          Onboard Available Tools (Action-Plan Bound)
-        </div>
-        <div class="flex flex-wrap gap-1.5">
-          <span class="px-2.5 py-1 rounded-lg text-xs font-mono bg-cyan-500/15 text-cyan-200 border border-cyan-500/30">Ultrasound</span>
-          <span class="px-2.5 py-1 rounded-lg text-xs font-mono bg-slate-800/90 text-slate-200 border border-slate-700">Pulse Oximeter</span>
-          <span class="px-2.5 py-1 rounded-lg text-xs font-mono bg-slate-800/90 text-slate-200 border border-slate-700">Blood Pressure Cuff</span>
-          <span class="px-2.5 py-1 rounded-lg text-xs font-mono bg-slate-800/90 text-slate-200 border border-slate-700">Hydration Pack</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Bottom Grid: 7-Day Trend Chart + Live Overarching AI Triage Output -->
-    <section class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-
-      <!-- Left 5 Cols: 7-Day Heart Rate & Ultrasound ONSD Trend Chart -->
-      <div class="xl:col-span-5 glass-card rounded-2xl p-5 flex flex-col justify-between">
-        <div>
-          <div class="flex items-center justify-between gap-2 mb-1">
-            <h3 class="text-sm font-semibold text-white">7-Day Mission Trend: Heart Rate &amp; Eye ONSD</h3>
-            <span class="text-[11px] font-mono text-slate-400">Days 1–7</span>
-          </div>
-          <p class="text-xs text-slate-400 mb-4">
-            Tracks daily heart rate (<span class="text-cyan-400 font-mono">bpm</span>) and optic nerve sheath diameter (<span class="text-indigo-400 font-mono">mm</span>) against escalation thresholds. Day 5 spike is flagged as unverified sensor/probe artifact.
-          </p>
-
-          <!-- Responsive SVG Chart Container -->
-          <div class="w-full bg-space-950/80 rounded-xl border border-slate-800/90 p-3">
-            <svg id="trendSvg" viewBox="0 0 460 230" class="w-full h-auto overflow-visible">
-              <!-- Rendered dynamically by JS -->
-            </svg>
-          </div>
-        </div>
-
-        <!-- Legend & Quick Reference -->
-        <div class="mt-4 pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-slate-400">
-          <div class="flex items-center gap-3">
-            <span class="inline-flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span> Heart Rate (bpm)
-            </span>
-            <span class="inline-flex items-center gap-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span> ONSD (mm)
-            </span>
-          </div>
-          <span class="text-rose-300">Dashed Red = Escalation Limit</span>
-        </div>
-      </div>
-
-      <!-- Right 7 Cols: Live Overarching AI Triage Output Panel -->
-      <div id="triagePanel" class="xl:col-span-7 glass-card-elevated rounded-2xl p-5 sm:p-6 border-l-4 border-l-emerald-400 transition-all duration-300">
-        <!-- Triage Header & Escalation Pill -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-700/60">
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-mono uppercase tracking-wider text-cyan-300 font-semibold">
-                Overarching AI Triage Output
-              </span>
-              <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-300 border border-slate-700">
-                triage_route.ts
-              </span>
-            </div>
-            <h3 id="triageHeadline" class="text-lg font-bold text-emerald-300 mt-1">
-              NOMINAL — All Vitals &amp; Ultrasound Within Baseline
-            </h3>
-          </div>
-
-          <div class="shrink-0">
-            <div id="escalationBadge" class="px-3.5 py-2 rounded-xl font-mono text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 flex items-center gap-2">
-              <span id="escalationDot" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-              <span id="escalationText">contact_ground_support: FALSE</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Structured Schema Fields -->
-        <div class="mt-4 space-y-3.5 text-xs sm:text-sm">
-          <!-- Data Quality Check -->
-          <div class="bg-space-950/60 rounded-xl p-3.5 border border-slate-800/90">
-            <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
-              1. data_quality_check
-            </div>
-            <p id="outDataQuality" class="text-slate-200 leading-relaxed"></p>
-          </div>
-
-          <!-- Baseline Comparison -->
-          <div class="bg-space-950/60 rounded-xl p-3.5 border border-slate-800/90">
-            <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
-              2. baseline_comparison
-            </div>
-            <p id="outBaseline" class="font-mono text-xs sm:text-sm text-cyan-200 leading-relaxed"></p>
-          </div>
-
-          <!-- Two-Column: Common Causes & Onboard Tool Action Plan -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            <div class="bg-space-950/60 rounded-xl p-3.5 border border-slate-800/90">
-              <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1.5">
-                3. common_causes (Non-Diagnostic)
-              </div>
-              <ul id="outCauses" class="list-disc list-inside space-y-1.5 text-xs text-slate-300 leading-relaxed"></ul>
-            </div>
-
-            <div class="bg-space-950/60 rounded-xl p-3.5 border border-slate-800/90">
-              <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1.5">
-                4. available_tool_action_plan
-              </div>
-              <ol id="outActionPlan" class="list-decimal list-inside space-y-1.5 text-xs text-emerald-200 leading-relaxed"></ol>
-            </div>
-          </div>
-
-          <!-- Confirmation Prompt & Ground Support Reason -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            <div class="bg-space-950/60 rounded-xl p-3.5 border border-slate-800/90">
-              <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
-                5. confirmation_prompt
-              </div>
-              <p id="outPrompt" class="text-xs text-slate-200 italic leading-relaxed"></p>
-            </div>
-
-            <div id="groundReasonBox" class="bg-space-950/60 rounded-xl p-3.5 border border-slate-800/90">
-              <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1">
-                6. ground_support_reason
-              </div>
-              <p id="outGroundReason" class="text-xs font-mono text-slate-400 leading-relaxed">
-                null (No Flight Surgeon escalation required)
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Expandable Raw JSON Inspector for Technical Judges -->
-        <div class="mt-4 pt-3 border-t border-slate-700/60">
-          <button onclick="toggleRawJson()" class="text-xs font-mono text-cyan-300 hover:text-cyan-200 flex items-center gap-1.5">
-            <svg id="jsonChevron" class="w-4 h-4 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-            <span>Inspect Raw JSON Payload &amp; Zod-Validated Response</span>
-          </button>
-
-          <div id="rawJsonDrawer" class="hidden mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">Input Telemetry Payload</div>
-              <pre id="rawInputPre" class="bg-space-950 p-3 rounded-xl border border-slate-800 text-[11px] font-mono text-slate-300 overflow-x-auto max-h-56"></pre>
-            </div>
-            <div>
-              <div class="text-[10px] font-mono uppercase text-slate-400 mb-1">TriageResponseSchema Output</div>
-              <pre id="rawOutputPre" class="bg-space-950 p-3 rounded-xl border border-slate-800 text-[11px] font-mono text-cyan-200 overflow-x-auto max-h-56"></pre>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Non-Diagnostic Safety Disclaimer Footer -->
-    <footer class="glass-card rounded-2xl px-4 py-3 border border-amber-500/25 bg-amber-950/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-slate-300">
-      <div class="flex items-center gap-2">
-        <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/30">
-          Safety Guardrail
-        </span>
-        <span>
-          Exploratory crew decision-support prototype only — compares daily telemetry against personal preflight baselines; does not diagnose or treat.
-        </span>
-      </div>
-      <span class="font-mono text-[11px] text-slate-400 shrink-0">
-        100% Guardrail Benchmark (n=50)
-      </span>
-    </footer>
-  </main>
-
-  <script>
-    // Crew Preflight Baselines
-    const CREW_PROFILES = {
-      C001: {
-        id: 'C001',
-        label: 'Crew 01',
-        preflight_hr_median: 60,
-        preflight_temp_median: 36.7,
-        preflight_onsd_mm: 4.4,
-      },
-      C002: {
-        id: 'C002',
-        label: 'Crew 02',
-        preflight_hr_median: 64,
-        preflight_temp_median: 36.8,
-        preflight_onsd_mm: 4.6,
-      }
-    };
-
-    // Mission Environment Profiles (Purely Contextual — Zero Artificial BPM/ONSD Offsets)
-    const MISSION_LOCATIONS = {
-      earth_preflight: {
-        id: 'earth_preflight',
-        name: 'Earth Preflight',
-        shortLabel: 'Earth (1.0g)',
-        gravity: '1.0 g',
-        radiationLevel: 'Low Rad (Magnetosphere)',
-        doseRate: '~0.01 mSv/day (Ground)',
-        contextTag: 'Baseline Anchor • 1.0g',
-        narrative:
-          'Earth Preflight (1.0 g • Full Magnetosphere Shielding): Establishes each astronaut’s personal preflight median before microgravity or deep-space radiation exposure.',
-      },
-      deep_space_transit: {
-        id: 'deep_space_transit',
-        name: 'Deep-Space Transit',
-        shortLabel: 'Transit (0g)',
-        gravity: '0.0 g (Microgravity)',
-        radiationLevel: 'High GCR + SPE Watch',
-        doseRate: '~1.80 mSv/day (Contextual)',
-        contextTag: '0g Fluid Shift • SPE Watch',
-        narrative:
-          'Deep-Space Transit (0 g • Unshielded GCR/SPE Watch): Microgravity promotes headward fluid shift (tracked via daily ONSD/IJV scans); dosimeter telemetry is monitored separately for acute Solar Particle Events without altering numeric vital baselines.',
-      },
-      lunar_surface: {
-        id: 'lunar_surface',
-        name: 'Lunar Surface',
-        shortLabel: 'Moon (1/6g)',
-        gravity: '0.16 g (1/6 g)',
-        radiationLevel: 'Surface Rad + Regolith',
-        doseRate: '~1.37 mSv/day (Contextual)',
-        contextTag: '1/6g • Regolith & SPE Watch',
-        narrative:
-          'Lunar Surface (1/6 g • Surface Radiation & Sharp Regolith): Vitals are evaluated strictly against personal preflight baselines while lunar dust exposure and solar particle alerts are flagged as contextual stressors.',
-      },
-      mars_surface: {
-        id: 'mars_surface',
-        name: 'Mars Surface',
-        shortLabel: 'Mars (3/8g)',
-        gravity: '0.38 g (3/8 g)',
-        radiationLevel: 'Elevated GCR + Perchlorates',
-        doseRate: '~0.64 mSv/day (Contextual)',
-        contextTag: '3/8g • GCR & Dust Context',
-        narrative:
-          'Mars Surface (3/8 g • Elevated GCR + Perchlorate Dust): Monitored as environmental context alongside personal dosimeter feeds. Personal preflight baselines remain unshifted (no artificial radiation BPM/SpO₂ formulas).',
-      },
-    };
-
-    const AVAILABLE_TOOLS = [
-      'Ultrasound',
-      'Pulse Oximeter',
-      'Blood Pressure Cuff',
-      'Hydration Pack',
-    ];
-
-    // Exact 7-Day Mission Profiles (Deltas applied strictly to personal preflight baseline)
-    const MISSION_DAYS = [
-      {
-        day: 1,
-        hr_offset: 2,
-        spo2_pct: 98,
-        temp_offset: 0.0,
-        onsd_offset: 0.1,
-        ijv_flow_status: 'normal_forward',
-        sensor_verified: true,
-        probe_contact_verified: true,
-        kp_index: 2,
-        solar_flare: 'None',
-      },
-      {
-        day: 2,
-        hr_offset: 4,
-        spo2_pct: 98,
-        temp_offset: 0.1,
-        onsd_offset: 0.2,
-        ijv_flow_status: 'normal_forward',
-        sensor_verified: true,
-        probe_contact_verified: true,
-        kp_index: 2,
-        solar_flare: 'None',
-      },
-      {
-        day: 3,
-        hr_offset: 3,
-        spo2_pct: 97,
-        temp_offset: 0.0,
-        onsd_offset: 0.2,
-        ijv_flow_status: 'mild_stasis',
-        sensor_verified: true,
-        probe_contact_verified: true,
-        kp_index: 3,
-        solar_flare: 'C1.4',
-      },
-      {
-        day: 4,
-        hr_offset: 5,
-        spo2_pct: 97,
-        temp_offset: 0.1,
-        onsd_offset: 0.3,
-        ijv_flow_status: 'mild_stasis',
-        sensor_verified: true,
-        probe_contact_verified: true,
-        kp_index: 3,
-        solar_flare: 'None',
-      },
-      {
-        day: 5,
-        hr_offset: 42,
-        spo2_pct: 86,
-        temp_offset: 0.0,
-        onsd_offset: 1.4,
-        ijv_flow_status: 'indeterminate',
-        sensor_verified: false,
-        probe_contact_verified: false,
-        kp_index: 5,
-        solar_flare: 'M2.1',
-      },
-      {
-        day: 6,
-        hr_offset: 19,
-        spo2_pct: 94,
-        temp_offset: 0.4,
-        onsd_offset: 0.6,
-        ijv_flow_status: 'mild_stasis',
-        sensor_verified: true,
-        probe_contact_verified: true,
-        kp_index: 4,
-        solar_flare: 'C4.0',
-      },
-      {
-        day: 7,
-        hr_offset: 46,
-        spo2_pct: 90,
-        temp_offset: 1.5,
-        onsd_offset: 1.3,
-        ijv_flow_status: 'stagnant_retrograde',
-        sensor_verified: true,
-        probe_contact_verified: true,
-        kp_index: 6,
-        solar_flare: 'X1.2',
-      },
-    ];
-
-    // Application State
-    let selectedCrewId = 'C001';
-    let selectedLocationId = 'mars_surface';
-    let selectedDay = 1;
-    let simulatorMode = false;
-    let playbackTimer = null;
-    let customTelemetry = null;
-
-    // Build payload for a given crew, location context, and day (strictly anchored to personal preflight baseline)
-    function getRecordForCrewAndDay(crewId, dayNum) {
-      const crew = CREW_PROFILES[crewId];
-      const loc = MISSION_LOCATIONS[selectedLocationId];
-      const profile = MISSION_DAYS.find((d) => d.day === dayNum) || MISSION_DAYS[0];
-
-      const hrVal = crew.preflight_hr_median + profile.hr_offset;
-      const onsdVal = +(crew.preflight_onsd_mm + profile.onsd_offset).toFixed(2);
-      const tempVal = +(crew.preflight_temp_median + profile.temp_offset).toFixed(1);
-
-      return {
-        mission_day: profile.day,
-        mission_location: loc.id,
-        crew_id: crew.id,
-        vitals: {
-          hr_bpm: hrVal,
-          preflight_hr_median: crew.preflight_hr_median,
-          spo2_pct: profile.spo2_pct,
-          temp_c: tempVal,
-          preflight_temp_median: crew.preflight_temp_median,
-          sensor_verified: profile.sensor_verified,
-        },
-        daily_ultrasound: {
-          onsd_mm: onsdVal,
-          preflight_onsd_mm: crew.preflight_onsd_mm,
-          ijv_flow_status: profile.ijv_flow_status,
-          probe_contact_verified: profile.probe_contact_verified,
-        },
-        space_weather: {
-          kp_index: profile.kp_index,
-          solar_flare: profile.solar_flare,
-          background_dose_rate: loc.doseRate,
-        },
-        available_tools: AVAILABLE_TOOLS,
-      };
-    }
-
-    // Evidence-Based Triage: Personal Preflight Baseline Comparison + Contextual Radiation Monitoring
-    function runDeterministicTriage(input) {
-      const { vitals, daily_ultrasound, space_weather, available_tools } = input;
-      const loc = MISSION_LOCATIONS[input.mission_location || selectedLocationId];
-
-      // Deltas evaluated strictly against each astronaut's personal preflight baseline
-      const hrDelta = vitals.hr_bpm - vitals.preflight_hr_median;
-      const tempDelta = +(vitals.temp_c - vitals.preflight_temp_median).toFixed(1);
-      const onsdDelta = +(daily_ultrasound.onsd_mm - daily_ultrasound.preflight_onsd_mm).toFixed(2);
-
-      const vitalsMultiDrift =
-        vitals.sensor_verified &&
-        (hrDelta >= 35 || vitals.spo2_pct <= 91 || vitals.temp_c >= 38.0);
-
-      const ultrasoundEscalation =
-        daily_ultrasound.probe_contact_verified &&
-        (daily_ultrasound.onsd_mm >= 5.5 ||
-          onsdDelta >= 0.8 ||
-          daily_ultrasound.ijv_flow_status === 'stagnant_retrograde');
-
-      const shouldEscalate = Boolean(vitalsMultiDrift || ultrasoundEscalation);
-
-      const unverifiedHardware = !vitals.sensor_verified || !daily_ultrasound.probe_contact_verified;
-      const isMildDrift =
-        !shouldEscalate &&
-        !unverifiedHardware &&
-        (hrDelta >= 18 ||
-          vitals.spo2_pct <= 95 ||
-          vitals.temp_c >= 37.3 ||
-          daily_ultrasound.onsd_mm >= 5.0 ||
-          onsdDelta >= 0.4);
-
-      let statusCategory = 'nominal';
-      if (shouldEscalate) statusCategory = 'escalate';
-      else if (unverifiedHardware) statusCategory = 'unverified';
-      else if (isMildDrift) statusCategory = 'mild';
-
-      const ultrasoundQualityNote = daily_ultrasound.probe_contact_verified
-        ? ` Ultrasound probe placement verified (ONSD ${daily_ultrasound.onsd_mm} mm, IJV flow: ${daily_ultrasound.ijv_flow_status}).`
-        : ' Unverified ultrasound probe contact: re-seat transducer and verify acoustic window before interpreting ONSD.';
-
-      const hasElevatedSpaceWeather =
-        (space_weather?.kp_index ?? 0) >= 5 ||
-        (space_weather?.solar_flare && space_weather.solar_flare !== 'None');
-
-      const radiationContextNote = hasElevatedSpaceWeather
-        ? ` Concurrent space weather activity (${space_weather.solar_flare}, Kp ${space_weather.kp_index}) logged as contextual stressor—do not attribute vital changes to radiation without dosimeter & clinical correlation.`
-        : ` Dosimeter & space-weather context monitored separately in ${loc.name} (${loc.gravity}) with no artificial baseline offsets.`;
-
-      const dataQualityCheck =
-        (vitals.sensor_verified
-          ? `Wearable sensor placement verified in ${loc.name} (${loc.gravity}); evaluating telemetry strictly against personal preflight median.`
-          : 'Unverified wearable sensor fit: confirm strap contact and rule out motion artifact before interpreting readings.') +
-        ultrasoundQualityNote +
-        radiationContextNote;
-
-      const baselineComparison = `HR ${vitals.hr_bpm} bpm (${hrDelta >= 0 ? '+' : ''}${hrDelta} bpm vs personal preflight ${vitals.preflight_hr_median} bpm); SpO2 ${vitals.spo2_pct}%; Temp ${vitals.temp_c}°C (${tempDelta >= 0 ? '+' : ''}${tempDelta}°C) | Daily Ultrasound ONSD: ${daily_ultrasound.onsd_mm} mm (${onsdDelta >= 0 ? '+' : ''}${onsdDelta} mm vs preflight ${daily_ultrasound.preflight_onsd_mm} mm).`;
-
-      let groundSupportReason = null;
-      if (shouldEscalate) {
-        if (ultrasoundEscalation && vitalsMultiDrift) {
-          groundSupportReason = `Verified multi-parameter vital drift (HR +${hrDelta} bpm over personal baseline, SpO2 ${vitals.spo2_pct}%, Temp ${vitals.temp_c}°C) and daily ultrasound shift (ONSD ${daily_ultrasound.onsd_mm} mm, +${onsdDelta} mm; IJV ${daily_ultrasound.ijv_flow_status}) in ${loc.name} warrant Flight Surgeon review (correlate dosimeter/CBC if acute SPE suspected).`;
-        } else if (ultrasoundEscalation) {
-          groundSupportReason = `Verified daily ultrasound drift (ONSD ${daily_ultrasound.onsd_mm} mm, +${onsdDelta} mm over personal baseline; IJV ${daily_ultrasound.ijv_flow_status}) in ${loc.name} warrants Flight Surgeon consultation.`;
-        } else {
-          groundSupportReason = `Verified multi-parameter vital deviation outside personal preflight baseline in ${loc.name}; recommend Flight Surgeon review.`;
-        }
-      }
-
-      const response = {
-        data_quality_check: dataQualityCheck,
-        baseline_comparison: baselineComparison,
-        common_causes: [
-          `Cephalad fluid redistribution in ${loc.gravity} affecting optic nerve sheath and jugular venous outflow`,
-          'Wearable strap shift, post-EVA exertion, cabin CO₂/hydration shift, or concurrent space-weather stressor requiring dosimeter correlation',
-        ],
-        confirmation_prompt:
-          'Can you confirm probe/sensor placement is snug and note any visual changes, headache, fever symptoms, or recent dosimeter alerts?',
-        available_tool_action_plan: [
-          `Verify readings using ${available_tools[0]}`,
-          `Cross-check status with ${available_tools[1]}`,
-          'Re-test after 5 minutes at rest, inspect personal dosimeter log, and record daily check-in',
-        ],
-        contact_ground_support: shouldEscalate,
-        ground_support_reason: groundSupportReason,
-      };
-
-      return {
-        response,
-        statusCategory,
-        hrDelta,
-        tempDelta,
-        onsdDelta,
-      };
-    }
-
-    // Render 4-Mode Mission Environment Context Tabs
-    function renderLocationTabs() {
-      const container = document.getElementById('locationTabsContainer');
-      container.innerHTML = '';
-
-      Object.values(MISSION_LOCATIONS).forEach((loc) => {
-        const isSelected = selectedLocationId === loc.id;
-        const btn = document.createElement('button');
-        btn.onclick = () => selectLocation(loc.id);
-        btn.className = `text-left p-3 rounded-xl border transition-all ${
-          isSelected
-            ? 'bg-indigo-500/20 border-cyan-400 shadow-lg shadow-cyan-950/40'
-            : 'bg-space-950/65 border-slate-800 hover:border-slate-600'
-        }`;
-
-        btn.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-200'}">${loc.name}</span>
-            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono ${
-              isSelected ? 'bg-cyan-500/25 text-cyan-200 border border-cyan-400/40' : 'bg-slate-800 text-slate-400'
-            }">${loc.gravity}</span>
-          </div>
-          <div class="text-[11px] font-mono text-amber-300/90 mt-1 truncate">${loc.radiationLevel}</div>
-          <div class="text-[10px] font-mono text-slate-400 mt-1">
-            Mode: <span class="text-cyan-300">${loc.contextTag}</span>
-          </div>
-        `;
-        container.appendChild(btn);
-      });
-    }
-
-    // Render 7-Day Selector Pills
-    function renderDayTabs() {
-      const container = document.getElementById('dayTabsContainer');
-      container.innerHTML = '';
-
-      MISSION_DAYS.forEach((d) => {
-        const rec = getRecordForCrewAndDay(selectedCrewId, d.day);
-        const triage = runDeterministicTriage(rec);
-        const isSelected = !simulatorMode && selectedDay === d.day;
-
-        let dotClass = 'bg-emerald-400';
-        let statusText = 'Nominal';
-        let badgeTextClass = 'text-emerald-300';
-
-        if (triage.statusCategory === 'escalate') {
-          dotClass = 'bg-rose-500 animate-ping';
-          statusText = 'Escalate';
-          badgeTextClass = 'text-rose-300';
-        } else if (triage.statusCategory === 'unverified') {
-          dotClass = 'bg-indigo-400';
-          statusText = 'Sensor Check';
-          badgeTextClass = 'text-indigo-300';
-        } else if (triage.statusCategory === 'mild') {
-          dotClass = 'bg-amber-400';
-          statusText = 'Mild Drift';
-          badgeTextClass = 'text-amber-300';
-        }
-
-        const btn = document.createElement('button');
-        btn.onclick = () => selectDay(d.day);
-        btn.className = `text-left p-3 rounded-xl border transition-all ${
-          isSelected
-            ? 'bg-cyan-500/15 border-cyan-400 shadow-lg shadow-cyan-950/50'
-            : 'bg-space-950/65 border-slate-800 hover:border-slate-600'
-        }`;
-
-        btn.innerHTML = `
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-xs font-mono font-bold ${isSelected ? 'text-white' : 'text-slate-300'}">
-              Day ${d.day}
-            </span>
-            <span class="relative flex h-2.5 w-2.5">
-              <span class="inline-flex rounded-full h-2.5 w-2.5 ${dotClass.replace('animate-ping', '')}"></span>
-            </span>
-          </div>
-          <div class="text-[11px] font-mono ${badgeTextClass} font-semibold truncate">
-            ${statusText}
-          </div>
-          <div class="text-[10px] font-mono text-slate-400 mt-1 truncate">
-            ${rec.vitals.hr_bpm} bpm • ${rec.daily_ultrasound.onsd_mm} mm
-          </div>
-        `;
-        container.appendChild(btn);
-      });
-    }
-
-    // Update UI with active telemetry payload
-    function renderDashboard() {
-      const crew = CREW_PROFILES[selectedCrewId];
-      const loc = MISSION_LOCATIONS[selectedLocationId];
-
-      document.getElementById('baseHrLabel').textContent = `${crew.preflight_hr_median} bpm`;
-      document.getElementById('baseTempLabel').textContent = `${crew.preflight_temp_median}°C`;
-      document.getElementById('baseOnsdLabel').textContent = `${crew.preflight_onsd_mm} mm`;
-
-      document.getElementById('locationNarrative').textContent = loc.narrative;
-      document.getElementById('locRadRate').textContent = loc.doseRate;
-
-      document.getElementById('cardBaseHr').textContent = `${crew.preflight_hr_median} bpm`;
-      document.getElementById('noteHr').innerHTML = `Normal band: within <span class="font-mono text-slate-300">+15 bpm</span> of personal preflight baseline (<span class="font-mono text-cyan-300">${crew.preflight_hr_median} bpm</span>).`;
-
-      document.getElementById('cardBaseTemp').textContent = `${crew.preflight_temp_median}°C`;
-      document.getElementById('cardBaseOnsd').textContent = `${crew.preflight_onsd_mm} mm`;
-
-      const payload = simulatorMode && customTelemetry
-        ? customTelemetry
-        : getRecordForCrewAndDay(selectedCrewId, selectedDay);
-
-      const {
-        response,
-        statusCategory,
-        hrDelta,
-        tempDelta,
-        onsdDelta,
-      } = runDeterministicTriage(payload);
-
-      // 1. Heart Rate Card
-      document.getElementById('valHr').textContent = payload.vitals.hr_bpm;
-      document.getElementById('deltaHr').textContent = `${hrDelta >= 0 ? '+' : ''}${hrDelta} bpm`;
-      const hrState = hrDelta >= 35 ? 'alert' : hrDelta >= 18 ? 'mild' : 'nominal';
-      applyMetricStyle('badgeHr', 'deltaHr', 'barHr', hrState, Math.min(100, Math.max(10, ((payload.vitals.hr_bpm - 45) / 85) * 100)));
-
-      // 2. SpO2 Card
-      document.getElementById('valSpo2').textContent = payload.vitals.spo2_pct;
-      const spo2State = payload.vitals.spo2_pct <= 91 ? 'alert' : payload.vitals.spo2_pct <= 95 ? 'mild' : 'nominal';
-      document.getElementById('deltaSpo2').textContent = spo2State === 'nominal' ? 'Optimal' : spo2State === 'mild' ? 'Mild Dip' : 'Low SpO₂';
-      applyMetricStyle('badgeSpo2', 'deltaSpo2', 'barSpo2', spo2State, Math.min(100, Math.max(8, ((payload.vitals.spo2_pct - 80) / 20) * 100)));
-
-      // 3. Temp Card
-      document.getElementById('valTemp').textContent = payload.vitals.temp_c.toFixed(1);
-      document.getElementById('deltaTemp').textContent = `${tempDelta >= 0 ? '+' : ''}${tempDelta.toFixed(1)}°C`;
-      const tempState = payload.vitals.temp_c >= 38.0 ? 'alert' : payload.vitals.temp_c >= 37.3 ? 'mild' : 'nominal';
-      applyMetricStyle('badgeTemp', 'deltaTemp', 'barTemp', tempState, Math.min(100, Math.max(12, ((payload.vitals.temp_c - 35.8) / 3.2) * 100)));
-
-      // 4. Daily Ultrasound ONSD Card
-      document.getElementById('valOnsd').textContent = payload.daily_ultrasound.onsd_mm.toFixed(1);
-      document.getElementById('deltaOnsd').textContent = `${onsdDelta >= 0 ? '+' : ''}${onsdDelta.toFixed(1)} mm`;
-      const onsdState =
-        payload.daily_ultrasound.onsd_mm >= 5.5 ||
-        onsdDelta >= 0.8 ||
-        payload.daily_ultrasound.ijv_flow_status === 'stagnant_retrograde'
-          ? 'alert'
-          : payload.daily_ultrasound.onsd_mm >= 5.0 ||
-            onsdDelta >= 0.4 ||
-            payload.daily_ultrasound.ijv_flow_status === 'mild_stasis'
-          ? 'mild'
-          : 'nominal';
-      applyMetricStyle('badgeOnsd', 'deltaOnsd', 'barOnsd', onsdState, Math.min(100, Math.max(12, ((payload.daily_ultrasound.onsd_mm - 3.8) / 2.4) * 100)));
-
-      const ijvEl = document.getElementById('valIjv');
-      ijvEl.textContent = payload.daily_ultrasound.ijv_flow_status;
-      ijvEl.className =
-        'font-semibold ' +
-        (payload.daily_ultrasound.ijv_flow_status === 'stagnant_retrograde'
-          ? 'text-rose-300'
-          : payload.daily_ultrasound.ijv_flow_status === 'mild_stasis' || payload.daily_ultrasound.ijv_flow_status === 'indeterminate'
-          ? 'text-amber-300'
-          : 'text-emerald-300');
-
-      // Hardware Gate Card
-      const bothVerified = payload.vitals.sensor_verified && payload.daily_ultrasound.probe_contact_verified;
-      const hwCard = document.getElementById('hardwareGateCard');
-      const hwIcon = document.getElementById('hardwareGateIconBox');
-      const hwTitle = document.getElementById('hardwareGateTitle');
-      const hwSub = document.getElementById('hardwareGateSub');
-      const hwPill = document.getElementById('hardwareGatePill');
-
-      if (bothVerified) {
-        hwCard.className = 'glass-card rounded-2xl p-4 flex items-center justify-between gap-3';
-        hwIcon.className = 'w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-300 shrink-0';
-        hwTitle.className = 'text-sm font-semibold text-emerald-300 mt-0.5';
-        hwTitle.textContent = 'Sensor & Probe Verified';
-        hwSub.textContent = 'Strap contact & acoustic window confirmed';
-        hwPill.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
-        hwPill.textContent = 'PASS';
-      } else {
-        hwCard.className = 'glass-card rounded-2xl p-4 flex items-center justify-between gap-3 border-indigo-400/50 bg-indigo-950/25';
-        hwIcon.className = 'w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/40 flex items-center justify-center text-indigo-300 shrink-0';
-        hwTitle.className = 'text-sm font-semibold text-indigo-300 mt-0.5';
-        hwTitle.textContent = 'Unverified Sensor / Probe Fit';
-        hwSub.textContent = 'False-alarm gate active — re-seat hardware first';
-        hwPill.className = 'px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-indigo-500/20 text-indigo-200 border border-indigo-400/40';
-        hwPill.textContent = 'HOLD';
-      }
-
-      // Space Weather
-      document.getElementById('valKp').textContent = payload.space_weather.kp_index;
-      document.getElementById('valFlare').textContent = payload.space_weather.solar_flare;
-      document.getElementById('valEnvShort').textContent = loc.shortLabel;
-
-      // Overarching AI Triage Panel Styling & Text
-      const triagePanel = document.getElementById('triagePanel');
-      const triageHeadline = document.getElementById('triageHeadline');
-      const escalationBadge = document.getElementById('escalationBadge');
-      const escalationDot = document.getElementById('escalationDot');
-      const escalationText = document.getElementById('escalationText');
-      const groundReasonBox = document.getElementById('groundReasonBox');
-      const outGroundReason = document.getElementById('outGroundReason');
-
-      if (statusCategory === 'escalate') {
-        triagePanel.className = 'xl:col-span-7 glass-card-elevated rounded-2xl p-5 sm:p-6 border-l-4 border-l-rose-500 transition-all duration-300';
-        triageHeadline.className = 'text-lg font-bold text-rose-300 mt-1';
-        triageHeadline.textContent = 'ESCALATE — Verified Drift Exceeds Baseline Threshold';
-        escalationBadge.className = 'px-3.5 py-2 rounded-xl font-mono text-xs font-bold bg-rose-500/20 text-rose-200 border border-rose-500/50 flex items-center gap-2';
-        escalationDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-400 animate-ping';
-        escalationText.textContent = 'contact_ground_support: TRUE';
-        groundReasonBox.className = 'bg-rose-950/30 rounded-xl p-3.5 border border-rose-500/40';
-        outGroundReason.className = 'text-xs font-mono text-rose-200 leading-relaxed';
-        outGroundReason.textContent = response.ground_support_reason;
-      } else if (statusCategory === 'unverified') {
-        triagePanel.className = 'xl:col-span-7 glass-card-elevated rounded-2xl p-5 sm:p-6 border-l-4 border-l-indigo-400 transition-all duration-300';
-        triageHeadline.className = 'text-lg font-bold text-indigo-300 mt-1';
-        triageHeadline.textContent = 'ARTIFACT BLOCKED — Re-Seat Sensor & Ultrasound Probe';
-        escalationBadge.className = 'px-3.5 py-2 rounded-xl font-mono text-xs font-bold bg-indigo-500/20 text-indigo-200 border border-indigo-400/40 flex items-center gap-2';
-        escalationDot.className = 'w-2.5 h-2.5 rounded-full bg-indigo-400';
-        escalationText.textContent = 'contact_ground_support: FALSE';
-        groundReasonBox.className = 'bg-space-950/60 rounded-xl p-3.5 border border-slate-800/90';
-        outGroundReason.className = 'text-xs font-mono text-indigo-300 leading-relaxed';
-        outGroundReason.textContent = 'null (Escalation blocked until sensor/probe contact is verified)';
-      } else if (statusCategory === 'mild') {
-        triagePanel.className = 'xl:col-span-7 glass-card-elevated rounded-2xl p-5 sm:p-6 border-l-4 border-l-amber-400 transition-all duration-300';
-        triageHeadline.className = 'text-lg font-bold text-amber-300 mt-1';
-        triageHeadline.textContent = 'MILD DRIFT — Monitor & Re-Test With Onboard Tools';
-        escalationBadge.className = 'px-3.5 py-2 rounded-xl font-mono text-xs font-bold bg-amber-500/15 text-amber-200 border border-amber-500/40 flex items-center gap-2';
-        escalationDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
-        escalationText.textContent = 'contact_ground_support: FALSE';
-        groundReasonBox.className = 'bg-space-950/60 rounded-xl p-3.5 border border-slate-800/90';
-        outGroundReason.className = 'text-xs font-mono text-slate-400 leading-relaxed';
-        outGroundReason.textContent = 'null (Below Flight Surgeon escalation cutoff; re-test after rest)';
-      } else {
-        triagePanel.className = 'xl:col-span-7 glass-card-elevated rounded-2xl p-5 sm:p-6 border-l-4 border-l-emerald-400 transition-all duration-300';
-        triageHeadline.className = 'text-lg font-bold text-emerald-300 mt-1';
-        triageHeadline.textContent = 'NOMINAL — All Vitals & Ultrasound Within Baseline';
-        escalationBadge.className = 'px-3.5 py-2 rounded-xl font-mono text-xs font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 flex items-center gap-2';
-        escalationDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400';
-        escalationText.textContent = 'contact_ground_support: FALSE';
-        groundReasonBox.className = 'bg-space-950/60 rounded-xl p-3.5 border border-slate-800/90';
-        outGroundReason.className = 'text-xs font-mono text-slate-400 leading-relaxed';
-        outGroundReason.textContent = 'null (No Flight Surgeon escalation required)';
-      }
-
-      document.getElementById('outDataQuality').textContent = response.data_quality_check;
-      document.getElementById('outBaseline').textContent = response.baseline_comparison;
-      document.getElementById('outPrompt').textContent = `"${response.confirmation_prompt}"`;
-
-      const causesUl = document.getElementById('outCauses');
-      causesUl.innerHTML = response.common_causes.map((c) => `<li>${c}</li>`).join('');
-
-      const planOl = document.getElementById('outActionPlan');
-      planOl.innerHTML = response.available_tool_action_plan.map((step) => `<li>${step}</li>`).join('');
-
-      // Raw JSON Inspector
-      document.getElementById('rawInputPre').textContent = JSON.stringify(payload, null, 2);
-      document.getElementById('rawOutputPre').textContent = JSON.stringify(response, null, 2);
-
-      renderLocationTabs();
-      renderDayTabs();
-      renderTrendChart();
-    }
-
-    function applyMetricStyle(badgeId, deltaId, barId, state, pct) {
-      const badge = document.getElementById(badgeId);
-      const delta = document.getElementById(deltaId);
-      const bar = document.getElementById(barId);
-      bar.style.width = `${pct}%`;
-
-      if (state === 'alert') {
-        badge.textContent = 'Alert';
-        badge.className = 'px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold uppercase bg-rose-500/20 text-rose-300 border border-rose-500/40';
-        delta.className = 'px-2 py-0.5 rounded-md text-xs font-mono font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40';
-        bar.className = 'h-full bg-rose-500 transition-all duration-300';
-      } else if (state === 'mild') {
-        badge.textContent = 'Drift';
-        badge.className = 'px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold uppercase bg-amber-500/20 text-amber-300 border border-amber-500/40';
-        delta.className = 'px-2 py-0.5 rounded-md text-xs font-mono font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40';
-        bar.className = 'h-full bg-amber-400 transition-all duration-300';
-      } else {
-        badge.textContent = 'Nominal';
-        badge.className = 'px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold uppercase bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
-        delta.className = 'px-2 py-0.5 rounded-md text-xs font-mono font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
-        bar.className = 'h-full bg-emerald-400 transition-all duration-300';
-      }
-    }
-
-    // Render SVG 7-Day Sparkline Trend Chart
-    function renderTrendChart() {
-      const svg = document.getElementById('trendSvg');
-      const crew = CREW_PROFILES[selectedCrewId];
-      const records = MISSION_DAYS.map((d) => getRecordForCrewAndDay(selectedCrewId, d.day));
-
-      const width = 460;
-      const height = 230;
-      const padL = 38;
-      const padR = 38;
-      const padT = 22;
-      const padB = 32;
-      const plotW = width - padL - padR;
-      const plotH = height - padT - padB;
-
-      const xForIdx = (i) => padL + (i / (records.length - 1)) * plotW;
-      // HR scale: 50 to 120 bpm
-      const yForHr = (hr) => padT + plotH - ((Math.min(120, Math.max(50, hr)) - 50) / 70) * plotH;
-      // ONSD scale: 4.0 to 6.2 mm
-      const yForOnsd = (mm) => padT + plotH - ((Math.min(6.2, Math.max(4.0, mm)) - 4.0) / 2.2) * plotH;
-
-      const hrEscalationVal = crew.preflight_hr_median + 35;
-      const yHrAlert = yForHr(hrEscalationVal);
-      const yOnsdAlert = yForOnsd(5.5);
-
-      const hrPoints = records.map((r, i) => `${xForIdx(i)},${yForHr(r.vitals.hr_bpm)}`).join(' ');
-      const onsdPoints = records.map((r, i) => `${xForIdx(i)},${yForOnsd(r.daily_ultrasound.onsd_mm)}`).join(' ');
-
-      let svgHtml = `
-        <!-- Grid lines -->
-        <line x1="${padL}" y1="${padT}" x2="${width - padR}" y2="${padT}" stroke="#1e293b" stroke-width="1" />
-        <line x1="${padL}" y1="${padT + plotH / 2}" x2="${width - padR}" y2="${padT + plotH / 2}" stroke="#1e293b" stroke-width="1" />
-        <line x1="${padL}" y1="${padT + plotH}" x2="${width - padR}" y2="${padT + plotH}" stroke="#334155" stroke-width="1" />
-
-        <!-- Escalation Reference Lines -->
-        <line x1="${padL}" y1="${yHrAlert}" x2="${width - padR}" y2="${yHrAlert}" stroke="#f43f5e" stroke-width="1.2" stroke-dasharray="4 4" opacity="0.75" />
-        <text x="${padL + 4}" y="${yHrAlert - 4}" fill="#fda4af" font-size="9" font-family="JetBrains Mono">HR Alert (${hrEscalationVal} bpm)</text>
-
-        <line x1="${padL}" y1="${yOnsdAlert}" x2="${width - padR}" y2="${yOnsdAlert}" stroke="#fb7185" stroke-width="1" stroke-dasharray="2 3" opacity="0.55" />
-        <text x="${width - padR - 92}" y="${yOnsdAlert + 11}" fill="#fda4af" font-size="9" font-family="JetBrains Mono">ONSD Alert (5.5mm)</text>
-
-        <!-- Axis Labels -->
-        <text x="6" y="${padT + 4}" fill="#22d3ee" font-size="9" font-family="JetBrains Mono">120</text>
-        <text x="6" y="${padT + plotH}" fill="#22d3ee" font-size="9" font-family="JetBrains Mono">50</text>
-        <text x="${width - 30}" y="${padT + 4}" fill="#818cf8" font-size="9" font-family="JetBrains Mono">6.2</text>
-        <text x="${width - 30}" y="${padT + plotH}" fill="#818cf8" font-size="9" font-family="JetBrains Mono">4.0</text>
-
-        <!-- Polylines -->
-        <polyline fill="none" stroke="#22d3ee" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${hrPoints}" />
-        <polyline fill="none" stroke="#818cf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${onsdPoints}" />
-      `;
-
-      records.forEach((r, i) => {
-        const cx = xForIdx(i);
-        const cyHr = yForHr(r.vitals.hr_bpm);
-        const cyOnsd = yForOnsd(r.daily_ultrasound.onsd_mm);
-        const isCurrent = !simulatorMode && r.mission_day === selectedDay;
-
-        if (isCurrent) {
-          svgHtml += `<line x1="${cx}" y1="${padT - 4}" x2="${cx}" y2="${padT + plotH + 4}" stroke="#38bdf8" stroke-width="1.5" opacity="0.45" />`;
-        }
-
-        // Day 5 unverified marker ring
-        const isUnverified = !r.vitals.sensor_verified;
-
-        svgHtml += `
-          <circle cx="${cx}" cy="${cyHr}" r="${isCurrent ? 5.5 : 3.8}" fill="${isUnverified ? '#818cf8' : '#22d3ee'}" stroke="#040812" stroke-width="1.5" />
-          <circle cx="${cx}" cy="${cyOnsd}" r="${isCurrent ? 5 : 3.5}" fill="#818cf8" stroke="#040812" stroke-width="1.5" />
-          <text x="${cx}" y="${height - 10}" text-anchor="middle" fill="${isCurrent ? '#ffffff' : '#94a3b8'}" font-weight="${isCurrent ? '700' : '400'}" font-size="10" font-family="JetBrains Mono">D${r.mission_day}</text>
-        `;
-      });
-
-      svg.innerHTML = svgHtml;
-    }
-
-    // Event Handlers
-    function selectLocation(locationId) {
-      selectedLocationId = locationId;
-      if (simulatorMode) {
-        onSimulatorChange();
-      } else {
-        renderDashboard();
-      }
-    }
-
-    function selectCrew(crewId) {
-      selectedCrewId = crewId;
-      document.getElementById('crewBtnC001').className =
-        crewId === 'C001'
-          ? 'px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-          : 'px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all text-slate-400 hover:text-slate-200 border border-transparent';
-      document.getElementById('crewBtnC002').className =
-        crewId === 'C002'
-          ? 'px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-          : 'px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all text-slate-400 hover:text-slate-200 border border-transparent';
-
-      if (simulatorMode) {
-        syncSimulatorInputsFromDay(selectedDay);
-      }
-      renderDashboard();
-    }
-
-    function selectDay(dayNum) {
-      stopPlayback();
-      selectedDay = dayNum;
-      if (simulatorMode) {
-        syncSimulatorInputsFromDay(dayNum);
-      }
-      renderDashboard();
-    }
-
-    function toggleTimelinePlayback() {
-      if (playbackTimer) {
-        stopPlayback();
-        return;
-      }
-      if (simulatorMode) {
-        toggleSimulatorMode();
-      }
-      document.getElementById('playBtnText').textContent = 'Pause Timeline';
-      playbackTimer = setInterval(() => {
-        selectedDay = selectedDay >= 7 ? 1 : selectedDay + 1;
-        renderDashboard();
-      }, 1700);
-    }
-
-    function stopPlayback() {
-      if (playbackTimer) {
-        clearInterval(playbackTimer);
-        playbackTimer = null;
-      }
-      document.getElementById('playBtnText').textContent = 'Play 7-Day Timeline';
-    }
-
-    function toggleSimulatorMode() {
-      stopPlayback();
-      simulatorMode = !simulatorMode;
-      const drawer = document.getElementById('simulatorDrawer');
-      const btnText = document.getElementById('simBtnText');
-
-      if (simulatorMode) {
-        drawer.classList.remove('hidden');
-        btnText.textContent = 'What-If Simulator: ON';
-        syncSimulatorInputsFromDay(selectedDay);
-      } else {
-        drawer.classList.add('hidden');
-        btnText.textContent = 'What-If Simulator: OFF';
-        customTelemetry = null;
-      }
-      renderDashboard();
-    }
-
-    function syncSimulatorInputsFromDay(dayNum) {
-      const rec = getRecordForCrewAndDay(selectedCrewId, dayNum);
-      document.getElementById('resetDayNum').textContent = dayNum;
-      document.getElementById('simHrInput').value = rec.vitals.hr_bpm;
-      document.getElementById('simSpo2Input').value = rec.vitals.spo2_pct;
-      document.getElementById('simTempInput').value = rec.vitals.temp_c;
-      document.getElementById('simOnsdInput').value = rec.daily_ultrasound.onsd_mm;
-      document.getElementById('simIjvInput').value = rec.daily_ultrasound.ijv_flow_status;
-      document.getElementById('simSensorVerified').checked = rec.vitals.sensor_verified;
-      document.getElementById('simProbeVerified').checked = rec.daily_ultrasound.probe_contact_verified;
-      onSimulatorChange();
-    }
-
-    function resetToCurrentDay() {
-      syncSimulatorInputsFromDay(selectedDay);
-    }
-
-    function onSimulatorChange() {
-      const crew = CREW_PROFILES[selectedCrewId];
-      const loc = MISSION_LOCATIONS[selectedLocationId];
-      const baseDay = getRecordForCrewAndDay(selectedCrewId, selectedDay);
-
-      const hr = parseInt(document.getElementById('simHrInput').value, 10);
-      const spo2 = parseInt(document.getElementById('simSpo2Input').value, 10);
-      const temp = parseFloat(document.getElementById('simTempInput').value);
-      const onsd = parseFloat(document.getElementById('simOnsdInput').value);
-      const ijv = document.getElementById('simIjvInput').value;
-      const sensorVer = document.getElementById('simSensorVerified').checked;
-      const probeVer = document.getElementById('simProbeVerified').checked;
-
-      document.getElementById('simHrVal').textContent = `${hr} bpm`;
-      document.getElementById('simSpo2Val').textContent = `${spo2}%`;
-      document.getElementById('simTempVal').textContent = `${temp.toFixed(1)}°C`;
-      document.getElementById('simOnsdVal').textContent = `${onsd.toFixed(1)} mm`;
-
-      customTelemetry = {
-        mission_day: selectedDay,
-        mission_location: loc.id,
-        crew_id: crew.id,
-        vitals: {
-          hr_bpm: hr,
-          preflight_hr_median: crew.preflight_hr_median,
-          spo2_pct: spo2,
-          temp_c: temp,
-          preflight_temp_median: crew.preflight_temp_median,
-          sensor_verified: sensorVer,
-        },
-        daily_ultrasound: {
-          onsd_mm: onsd,
-          preflight_onsd_mm: crew.preflight_onsd_mm,
-          ijv_flow_status: ijv,
-          probe_contact_verified: probeVer,
-        },
-        space_weather: baseDay.space_weather,
-        available_tools: AVAILABLE_TOOLS,
-      };
-
-      renderDashboard();
-    }
-
-    function toggleRawJson() {
-      const drawer = document.getElementById('rawJsonDrawer');
-      const chevron = document.getElementById('jsonChevron');
-      drawer.classList.toggle('hidden');
-      chevron.classList.toggle('rotate-90');
-    }
-
-    // Initialize on load
-    window.addEventListener('DOMContentLoaded', () => {
-      renderDashboard();
-    });
-  </script>
-</body>
-</html>
