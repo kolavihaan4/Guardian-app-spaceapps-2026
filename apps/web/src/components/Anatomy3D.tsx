@@ -31,14 +31,13 @@ const VIEWS = [
 ] as const
 
 /**
- * The layers a person can show or hide. Organs include the vessels and nerves; the structures in
- * HIDDEN_STRUCTURES (modestSkin.ts) are never drawn.
+ * The layers a person can show or hide. The models' organs, vessels and nerves are never drawn:
+ * the app's regions are parts of the body, not single organs, so an organ could not be selected.
  */
 const LAYERS = [
   { id: 'skin', label: 'Skin', systems: ['skin'] },
   { id: 'muscles', label: 'Muscles', systems: ['muscles'] },
   { id: 'skeleton', label: 'Skeleton', systems: ['skeleton'] },
-  { id: 'organs', label: 'Organs', systems: ['organs', 'vessels', 'nerves'] },
 ] as const satisfies readonly { id: string; label: string; systems: readonly AnatomySystem[] }[]
 type LayerId = (typeof LAYERS)[number]['id']
 
@@ -55,9 +54,8 @@ interface Props {
 /** Zoom steps: the whole figure, then closer views centred on the selected region. */
 const ZOOMS = [1, 1.6, 2.4] as const
 
-/** Surface finish per layer: bone is matt, organs and vessels have a soft wet sheen. */
-const FINISH: Record<'muscles' | 'skeleton' | 'organs', THREE.MeshPhysicalMaterialParameters> = {
-  organs: { roughness: 0.4, metalness: 0, clearcoat: 0.45, clearcoatRoughness: 0.35 },
+/** Surface finish per layer: bone is matt, muscle has a slight sheen. */
+const FINISH: Record<'muscles' | 'skeleton', THREE.MeshPhysicalMaterialParameters> = {
   skeleton: { roughness: 0.72, metalness: 0, clearcoat: 0.05 },
   muscles: { roughness: 0.5, metalness: 0, clearcoat: 0.2, clearcoatRoughness: 0.5 },
 }
@@ -73,7 +71,7 @@ interface Part {
 }
 
 /**
- * A rotatable 3D body with the organs, skeleton and muscles inside it (open-anatomy-3d models).
+ * A rotatable 3D body with the skeleton and muscles inside it (open-anatomy-3d models).
  * The skin is see-through, so the structures of the selected region glow through it. Drag to turn,
  * or use the view buttons; click to select a region. The region buttons under the figure give
  * keyboard and screen-reader users the same choices.
@@ -83,7 +81,7 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
   const [hovered, setHovered] = useState<{ region: BodyRegionId; label?: string } | null>(null)
   const [ready, setReady] = useState(false)
   const [zoom, setZoom] = useState(0)
-  const [layers, setLayers] = useState<Record<LayerId, boolean>>({ skin: true, muscles: false, skeleton: true, organs: true })
+  const [layers, setLayers] = useState<Record<LayerId, boolean>>({ skin: true, muscles: true, skeleton: true })
   // One long-lived effect owns the scene; it reads the latest props through this ref.
   const live = useRef({ selected, pain, hovered, layers, zoom, onSelect, onUnavailable, repaint: () => {}, turnTo: (_azimuth: number) => {} })
   live.current.selected = selected
@@ -289,7 +287,7 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
           }
           const layer = LAYERS.find((l) => (l.systems as readonly AnatomySystem[]).includes(info.system))
           if (!layer || layer.id === 'skin') {
-            o.visible = false // joint markers
+            o.visible = false // organs, vessels, nerves and joint markers
             return
           }
           const material = new THREE.MeshPhysicalMaterial({ color: info.color, ...FINISH[layer.id] })
@@ -426,7 +424,7 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
         ref={mountRef}
         className={`body-3d-canvas tall ${zoom > 0 ? 'zoomed' : ''}`}
         role="img"
-        aria-label={`Rotatable 3D ${sex} body with organs and skeleton. Selected region: ${BODY_REGIONS[selected].name}. Use the region buttons below to choose a region with the keyboard.`}
+        aria-label={`Rotatable 3D ${sex} body with muscles and skeleton. Selected region: ${BODY_REGIONS[selected].name}. Use the region buttons below to choose a region with the keyboard.`}
       />
       <p className="body-3d-hint" aria-live="polite">
         {!ready ? 'Loading 3D body…' : hovered ? (hovered.label ? `${hovered.label} · ${BODY_REGIONS[hovered.region].name}` : BODY_REGIONS[hovered.region].name) : 'Drag to turn · click a region'}
