@@ -221,6 +221,18 @@ const SOFTWARE_CITATIONS = [
     usage: 'Structured JSON crew health-data triage, sensor-artifact verification, tool-bound action plans, and Workout AI modifications.',
   },
   {
+    name: 'NASA hazard references: Distance from Earth, Gravity Fields, Hostile/Closed Environments',
+    license: 'NASA and US government pages; journal papers cited for numeric findings only',
+    url: 'https://www.nasa.gov/hrp/hazards/',
+    usage: 'Hazard cards on the Hazards page and the environment notes on the Triage page. Each fact links to its own source: NASA Human Research Program hazard pages, NASA-STD-3001 Volumes 1 and 2, NASA OCHMO-TB-004 (carbon dioxide), NSSDCA Moon and Mars fact sheets, NTRS 20250000703, MedlinePlus and FDA pulse oximetry pages, and papers by Nasrini 2020, Strollo 2014, Richter 2017, Beck 2018, Prisk 1995, Conkin 2017 and the Sleep 2022 ISS study.',
+  },
+  {
+    name: 'Environment photographs (Wikimedia Commons copies of NASA images)',
+    license: 'Public domain (NASA)',
+    url: 'https://commons.wikimedia.org/wiki/File:International_Space_Station_after_undocking_of_STS-132.jpg',
+    usage: 'Mission environment picker on the Crew Triage page: ISS after STS-132 undocking (NASA / STS-132 crew); Buzz Aldrin on Apollo 11 (NASA, photo by Neil Armstrong); Mount Sharp, PIA16099 (NASA/JPL-Caltech/MSSS); Orion with the Moon and Earth, Artemis I flight day 13, art001e000673 (NASA). Resized to 960 px wide, otherwise unmodified.',
+  },
+  {
     name: 'open-anatomy-3d — male and female anatomy models (v0.1.0)',
     license: 'Models CC BY 4.0; code MIT',
     url: 'https://github.com/MervinR07/open-anatomy-3d',
@@ -330,7 +342,7 @@ export function CitationsPage() {
             <strong>Not a Medical Device:</strong> Mission Baseline is an educational and exploratory crew health decision-support prototype created for the 2026 NASA Space Apps Challenge. It never diagnoses, treats, or prescribes.
           </li>
           <li>
-            <strong>Wearable Optical SpO₂ Error:</strong> Wrist-worn optical photoplethysmography (PPG) sensors serve as Earth-analog stand-ins for crew biotelemetry and are subject to artefact from motion and strap tension (the BTS 2017 guideline notes oximetry is "subject to artefact and errors of interpretation"), so low readings are confirmed with a fingertip oximeter before any action.
+            <strong>Wearable Optical SpO₂ Error:</strong> Wrist-worn optical photoplethysmography (PPG) sensors serve as Earth-analog stand-ins for crew biotelemetry and may read 2% to 4% higher or lower than the true blood oxygen level (MedlinePlus); poor circulation, skin pigmentation, cold skin and nail polish also affect them (US FDA), so low readings are confirmed with a fingertip oximeter before any action.
           </li>
           <li>
             <strong>Synthetic & De-Identified Data Only:</strong> No personally identifiable information (PII) is collected or transmitted. Crew profiles C001–C004 derive from NASA’s public, de-identified OSD-575 dataset.

@@ -22,7 +22,7 @@ describe('Overarching AI triage engine & Qwen3-8B schema', () => {
     expect(() => TriageResponseSchema.parse(res)).not.toThrow()
     expect(res.overall_status).toBe('caution')
     expect(res.contact_ground_support).toBe(false)
-    expect(res.data_quality_check).toContain('subject to artefact (BTS 2017 guideline)')
+    expect(res.data_quality_check).toContain('2% to 4% higher or lower than the true level (MedlinePlus)')
     expect(res.available_tool_action_plan.some((s) => s.includes('Pulse Oximeter'))).toBe(true)
   })
 

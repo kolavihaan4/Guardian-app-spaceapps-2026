@@ -2,6 +2,7 @@ import type { EnvironmentSeries, NASAEvent, RadiationStatus } from '@astrovitals
 import { useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from 'recharts'
 import { DailyLine } from '../components/charts'
+import { HazardCards } from '../components/HazardCards'
 import { Card, ErrorNote, fmtDate, fmtDateTime, Loading, NasaBadge, useAsync } from '../components/common'
 import { api } from '../lib/api'
 import { DAY, isoDay } from '../lib/series'
@@ -204,6 +205,14 @@ export function SpacePage() {
           ))}
         </div>
       </div>
+
+      <section className="section" style={{ marginTop: 0, marginBottom: 16 }} aria-label="NASA hazards of human spaceflight">
+        <h2 style={{ marginBottom: 4 }}>NASA’s hazards of human spaceflight</h2>
+        <p className="page-note" style={{ marginTop: 0 }}>
+          Three of the five hazards, with the source for each fact. Radiation is shown live below, and isolation is covered by the mood notes on the Triage page. Reference information, not a diagnosis.
+        </p>
+        <HazardCards />
+      </section>
 
       <section className="section" style={{ marginTop: 0, marginBottom: 16 }}>
         <Card title="Radiation environment — NOAA SWPC" actions={rad.data ? <NasaBadge {...rad.data} /> : null}>

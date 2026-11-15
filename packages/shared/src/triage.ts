@@ -40,10 +40,10 @@ export const MISSION_ENVIRONMENTS: Record<MissionEnvironmentId, MissionEnvironme
     evidence: 'Norsk et al. 2015 (J Physiol): 24-hour blood pressure 8–10 mmHg lower and heart rate unchanged in eight astronauts after 85–192 days on the ISS. One small study; varies by person.',
     radiationLevel: 'Elevated (LEO/SAA)',
     expectedNorms:
-      'Cephalad fluid shift moves ~2L of fluid toward the head/chest; average heart rate was unchanged in the one long-duration study, while tolerance of standing drops on return to gravity.',
+      'Fluids shift toward the head and chest and may put pressure on the eyes (NASA); average heart rate was unchanged in the one long-duration study, while tolerance of standing drops on return to gravity.',
     environmentInsights: [
-      'Schedule 2.5 hrs/day on ARED + treadmill to counter 1–1.5%/month bone density loss.',
-      'Monitor cabin CO2 partial pressure; levels > 3 mmHg commonly trigger frontal headaches and sleep fragmentation.',
+      'Keep to the scheduled resistive and aerobic exercise: weight-bearing bones lose on average 1–1.5% of mineral density per month in spaceflight (NASA).',
+      'Check cabin CO2: NASA limits the one-hour average to 3 mmHg, and crew reports link headaches to roughly 2.8–4.5 mmHg and poor sleep to 3.5 mmHg (NASA OCHMO-TB-004).',
       'Perform weekly SANS eye checks due to microgravity intracranial venous congestion.',
     ],
     expectedDeltas: {
@@ -59,7 +59,7 @@ export const MISSION_ENVIRONMENTS: Record<MissionEnvironmentId, MissionEnvironme
     shortLabel: 'Lunar Base (1/6g)',
     gravity: '0.16g Lunar Gravity',
     commsDelay: '1.3 sec one-way',
-    evidence: 'Project estimate only. No resting baseline shift has been measured for long stays in lunar gravity. Jones 2021 (NASA, ICES-2021-142) concludes that gravity below 0.4 g is probably insufficient to maintain heart, muscle and bone conditioning, with deconditioning probably less severe than in 0g.',
+    evidence: 'Project estimate only. No resting baseline shift has been measured for long stays in lunar gravity. Jones 2021 (NASA, ICES-2021-142) concludes that gravity below 0.4 g is probably insufficient to maintain heart, muscle and bone conditioning, with deconditioning probably less severe than in 0g. Beck 2018 measured a heart-rate rise on standing of about 21 bpm in lunar gravity in 14 people during parabolic flight.',
     radiationLevel: 'High (Deep Space / Unshielded)',
     expectedNorms:
       'Partial gravity reduces cephalad fluid pooling compared with 0g, but frequent surface EVAs increase metabolic load, dehydration risk, and lunar dust airway irritation.',
@@ -102,8 +102,8 @@ export const MISSION_ENVIRONMENTS: Record<MissionEnvironmentId, MissionEnvironme
     name: 'Planetary Surface Habitat (Mars Base)',
     shortLabel: 'Mars Surface (3/8g)',
     gravity: '0.38g Martian Gravity',
-    commsDelay: '4 to 22 min one-way',
-    evidence: 'Project estimate only. No human has been to Mars, so no Mars vital-sign data exists. Jones 2021 (NASA, ICES-2021-142) concludes that gravity below 0.4 g is probably insufficient to maintain heart, muscle and bone conditioning, with deconditioning probably less severe than in 0g.',
+    commsDelay: '3 to 22 min one-way',
+    evidence: 'Project estimate only. No human has been to Mars, so no Mars vital-sign data exists. Jones 2021 (NASA, ICES-2021-142) concludes that gravity below 0.4 g is probably insufficient to maintain heart, muscle and bone conditioning, with deconditioning probably less severe than in 0g. The standing heart-rate figure is from 14 people in parabolic flight (Beck 2018).',
     radiationLevel: 'Variable (Surface Shielded)',
     expectedNorms:
       'Transitioning from months of 0g transit into 0.38g gravity stresses cardiovascular orthostasis, vestibular balance, and weakened load-bearing bones.',
@@ -113,7 +113,7 @@ export const MISSION_ENVIRONMENTS: Record<MissionEnvironmentId, MissionEnvironme
       'Maintain strict dust-lock decontamination protocols to prevent perchlorate dust exposure.',
     ],
     expectedDeltas: {
-      hrDeltaBpm: '+10 to +22 bpm on standing after 0g transit',
+      hrDeltaBpm: 'About +23 bpm on standing in Mars gravity, against +34 on Earth (Beck 2018)',
       bpShift: 'Orthostatic systolic drop (-10 to -20 mmHg) during early surface adaptation',
       spo2Note: '95–99% inside pressurized habitat',
       fluidShift: 'Re-pooling to lower extremities; monitor for lightheadedness',
@@ -153,7 +153,7 @@ export const MISSION_ENVIRONMENTS: Record<MissionEnvironmentId, MissionEnvironme
       'Personal preflight baseline readings (L-92, L-44, L-3) establish each astronaut’s individual reference median prior to launch.',
     environmentInsights: [
       'Log resting morning vitals to lock in personal preflight median before launch.',
-      'Consumer wearables (Apple Watch / HealthKit) act as Earth-analog telemetry stand-ins; wrist SpO2 readings are subject to artefact, so confirm with a fingertip oximeter.',
+      'Consumer wearables (Apple Watch / HealthKit) act as Earth-analog telemetry stand-ins; pulse oximetry may read 2% to 4% higher or lower than the true level (MedlinePlus), so confirm low readings with a fingertip oximeter.',
       'Compare all in-flight deviations against your personal preflight median alongside clinical reference ranges.',
     ],
     expectedDeltas: {

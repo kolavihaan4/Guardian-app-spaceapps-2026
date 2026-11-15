@@ -348,6 +348,17 @@ a.button { text-decoration: none; display: inline-flex; align-items: center; }
   transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
+.hazard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.hazard-summary { margin: 0 0 10px; color: var(--text-secondary); }
+.hazard-facts { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 0.9rem; }
+.hazard-facts a { font-size: 0.8rem; white-space: normal; }
+
+.env-photo {
+  display: block; width: 100%; height: 84px; object-fit: cover; border-radius: 10px; margin-bottom: 6px;
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.22), rgba(255, 255, 255, 0.6));
+}
+.env-credit { margin: -4px 0 12px; font-size: 0.74rem; color: var(--text-secondary); }
+
 .env-pill:hover {
   transform: translateY(-1px);
   border-color: var(--accent);

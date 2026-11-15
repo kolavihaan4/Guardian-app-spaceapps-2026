@@ -341,7 +341,7 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
 
   // 1. Data quality check
   const data_quality_check = unverifiedArtifact
-    ? `Out-of-range reading (HR ${vitals.hr_bpm} bpm / SpO2 ${vitals.spo2_pct}%) reported with unverified sensor contact. Optical SpO2 readings are subject to artefact (BTS 2017 guideline), and sensors frequently slip during microgravity fluid shifts or upper-body movement.`
+    ? `Out-of-range reading (HR ${vitals.hr_bpm} bpm / SpO2 ${vitals.spo2_pct}%) reported with unverified sensor contact. Pulse oximetry may read 2% to 4% higher or lower than the true level (MedlinePlus), and sensors frequently slip during microgravity fluid shifts or upper-body movement.`
     : vitals.sensor_verified
       ? 'Sensor placement verified by crew; readings are evaluated directly against personal preflight median and habitat norms.'
       : 'Routine check-in with standard sensor telemetry; confirm snug optical sensor contact before acting on single-metric spikes.'

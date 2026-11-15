@@ -151,6 +151,15 @@ function vitalBand(
 }
 
 // three.js is large, so the 3D body loads only when the triage page shows it.
+/** Public-domain NASA photographs for the environment picker (files in public/environments, credits on the Citations page). */
+const ENVIRONMENT_PHOTOS: Partial<Record<MissionEnvironmentId, { src: string; credit: string; position?: string }>> = {
+  iss_leo: { src: '/environments/iss.jpg', credit: 'International Space Station after STS-132 undocking. NASA / STS-132 crew' },
+  eva_spacewalk: { src: '/environments/iss.jpg', credit: 'International Space Station after STS-132 undocking. NASA / STS-132 crew', position: '30% 40%' },
+  lunar_base: { src: '/environments/moon.jpg', credit: 'Buzz Aldrin on the Moon, Apollo 11. NASA, photo by Neil Armstrong', position: '50% 30%' },
+  mars_surface: { src: '/environments/mars.jpg', credit: 'Mount Sharp from the Curiosity rover (PIA16099). NASA/JPL-Caltech/MSSS' },
+  deep_space_transit: { src: '/environments/spacecraft.jpg', credit: 'Orion with the Moon and Earth, Artemis I flight day 13. NASA' },
+}
+
 const Body3D = lazy(() => import('../components/Body3D'))
 const Anatomy3D = lazy(() => import('../components/Anatomy3D'))
 
@@ -454,12 +463,19 @@ export function CrewAssessmentPage() {
                 className={`env-pill${active ? ' active' : ''}`}
                 onClick={() => setEnvironment(id)}
               >
+                {ENVIRONMENT_PHOTOS[id] ? (
+                  <img className="env-photo" src={ENVIRONMENT_PHOTOS[id].src} alt="" loading="lazy" style={{ objectPosition: ENVIRONMENT_PHOTOS[id].position }} />
+                ) : (
+                  <span className="env-photo env-photo-none" aria-hidden="true" />
+                )}
                 <strong>{m.shortLabel}</strong>
                 <span>{m.gravity} · Comms {m.commsDelay}</span>
               </button>
             )
           })}
         </div>
+
+        {ENVIRONMENT_PHOTOS[environment] ? <p className="env-credit">Photo: {ENVIRONMENT_PHOTOS[environment].credit} (public domain).</p> : null}
 
         <div className="env-norms">
           <div>
