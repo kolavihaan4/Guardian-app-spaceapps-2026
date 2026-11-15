@@ -96,11 +96,12 @@
         </div>
 
         <div id="baselineSummaryPill" class="px-3 py-1.5 rounded-xl bg-space-900/80 border border-slate-800 text-[11px] font-mono text-slate-300 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span class="text-slate-400">Preflight Medians:</span>
+          <span class="text-slate-400">Personal Preflight Baseline:</span>
           <span>HR <strong id="baseHrLabel" class="text-cyan-300">60 bpm</strong></span>
           <span>Temp <strong id="baseTempLabel" class="text-cyan-300">36.7°C</strong></span>
           <span>ONSD <strong id="baseOnsdLabel" class="text-cyan-300">4.4 mm</strong></span>
-          <span>SpO2 <strong class="text-emerald-300">96–100%</strong></span>
+          <span class="text-slate-600">|</span>
+          <span class="text-indigo-300">Anchor: <strong class="text-white">Unshifted Personal Median</strong></span>
         </div>
       </div>
     </div>
@@ -108,6 +109,42 @@
 
   <!-- Main Workspace -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+
+    <!-- Mission Environment / Gravity & Radiation Context Selector -->
+    <section class="glass-card rounded-2xl p-4 sm:p-5 shadow-xl border-cyan-500/20">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-3.5">
+        <div>
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-cyan-300 flex items-center gap-2">
+            <svg class="w-4 h-4 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M3.6 9h16.8M3.6 15h16.8M12 3a14.5 14.5 0 010 18M12 3a14.5 14.5 0 000 18" stroke-linecap="round" />
+            </svg>
+            Mission Environment &amp; Radiation Context (Non-Offset Telemetry)
+          </h2>
+          <p id="locationNarrative" class="text-xs text-slate-300 mt-1">
+            Mars Surface (3/8 g • Elevated GCR + Perchlorate Dust): Monitored as environmental context alongside personal dosimeter feeds. Personal preflight baselines remain unshifted (no artificial radiation BPM/SpO₂ formulas).
+          </p>
+        </div>
+        <div class="shrink-0 flex items-center gap-2 text-[11px] font-mono bg-space-950/80 px-3 py-2 rounded-xl border border-slate-800">
+          <span class="text-slate-400">Background Dose Rate:</span>
+          <span id="locRadRate" class="text-amber-300 font-semibold">~0.64 mSv/day (Contextual)</span>
+        </div>
+      </div>
+
+      <div id="locationTabsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+        <!-- Populated dynamically by JS -->
+      </div>
+
+      <!-- Scientific Guardrail Banner (NASA/CSA & HHS/REMM Evidence Standard) -->
+      <div class="mt-3.5 pt-3 border-t border-slate-800/80 flex items-start gap-2.5 text-xs text-slate-300">
+        <span class="px-2 py-0.5 rounded font-mono text-[10px] font-bold uppercase bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 shrink-0 mt-0.5">
+          Evidence Guardrail
+        </span>
+        <p class="leading-relaxed text-slate-300">
+          Per <strong class="text-white">NASA/CSA</strong> and <strong class="text-white">U.S. HHS/REMM</strong> radiological guidance, routine space radiation does not apply fixed BPM or SpO₂ offsets. AstroVitals evaluates vitals strictly against each astronaut's <span class="font-mono text-cyan-300">personal preflight median</span> and tracks dosimeter/space-weather telemetry separately as a contextual stressor (recommending fever &amp; lymphocyte checks only during acute Solar Particle Events).
+        </p>
+      </div>
+    </section>
 
     <!-- Mission Day Switcher & Playback / Simulator Bar -->
     <section class="glass-card rounded-2xl p-4 sm:p-5 shadow-xl">
@@ -262,14 +299,14 @@
 
         <div class="mt-4">
           <div class="flex justify-between text-[11px] font-mono text-slate-400 mb-1">
-            <span>Preflight: <strong id="cardBaseHr" class="text-slate-200">60 bpm</strong></span>
+            <span>Personal Preflight: <strong id="cardBaseHr" class="text-cyan-300">60 bpm</strong></span>
             <span>Alert: <strong class="text-rose-300">≥ +35 bpm</strong></span>
           </div>
           <div class="w-full h-2 bg-space-950 rounded-full overflow-hidden border border-slate-800">
             <div id="barHr" class="h-full bg-emerald-400 transition-all duration-300" style="width: 28%"></div>
           </div>
-          <p class="text-[11px] text-slate-400 mt-2">
-            Normal band: within <span class="font-mono text-slate-300">-5 to +15 bpm</span> of personal preflight median.
+          <p id="noteHr" class="text-[11px] text-slate-400 mt-2">
+            Normal band: within <span class="font-mono text-slate-300">+15 bpm</span> of personal preflight baseline (<span class="font-mono text-cyan-300">60 bpm</span>).
           </p>
         </div>
       </div>
@@ -300,8 +337,8 @@
           <div class="w-full h-2 bg-space-950 rounded-full overflow-hidden border border-slate-800">
             <div id="barSpo2" class="h-full bg-emerald-400 transition-all duration-300" style="width: 90%"></div>
           </div>
-          <p class="text-[11px] text-slate-400 mt-2">
-            Mild drift band: <span class="font-mono text-slate-300">92–95%</span> (re-test after 5 min rest &amp; check regolith dust/CO₂).
+          <p id="noteSpo2" class="text-[11px] text-slate-400 mt-2">
+            Mild drift band: <span class="font-mono text-slate-300">92–95%</span> (re-test after 5 min rest &amp; check planetary dust/cabin CO₂).
           </p>
         </div>
       </div>
@@ -326,14 +363,14 @@
 
         <div class="mt-4">
           <div class="flex justify-between text-[11px] font-mono text-slate-400 mb-1">
-            <span>Preflight: <strong id="cardBaseTemp" class="text-slate-200">36.7°C</strong></span>
+            <span>Personal Preflight: <strong id="cardBaseTemp" class="text-cyan-300">36.7°C</strong></span>
             <span>Alert: <strong class="text-rose-300">≥ 38.0°C</strong></span>
           </div>
           <div class="w-full h-2 bg-space-950 rounded-full overflow-hidden border border-slate-800">
             <div id="barTemp" class="h-full bg-emerald-400 transition-all duration-300" style="width: 30%"></div>
           </div>
           <p class="text-[11px] text-slate-400 mt-2">
-            Normal band: within <span class="font-mono text-slate-300">±0.3°C</span> of preflight median.
+            Normal within <span class="font-mono text-slate-300">±0.3°C</span> of preflight; acute fever alert at <span class="font-mono text-rose-300">≥ 38.0°C</span> (monitored during SPEs).
           </p>
         </div>
       </div>
@@ -358,7 +395,7 @@
 
         <div class="mt-3">
           <div class="flex justify-between text-[11px] font-mono text-slate-400 mb-1">
-            <span>Preflight ONSD: <strong id="cardBaseOnsd" class="text-slate-200">4.4 mm</strong></span>
+            <span>Personal Preflight: <strong id="cardBaseOnsd" class="text-cyan-300">4.4 mm</strong></span>
             <span>Alert: <strong class="text-rose-300">≥ 5.5 mm</strong></span>
           </div>
           <div class="w-full h-2 bg-space-950 rounded-full overflow-hidden border border-slate-800">
@@ -407,12 +444,12 @@
             </svg>
           </div>
           <div>
-            <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400">Deep-Space Radiation &amp; Weather</div>
+            <div class="text-[11px] font-mono uppercase tracking-wider text-slate-400">Radiation &amp; Space Weather Context</div>
             <div class="text-sm font-semibold text-slate-100 mt-0.5 font-mono">
-              Kp Index: <span id="valKp" class="text-cyan-300">2</span> &bull; Flare: <span id="valFlare" class="text-amber-300">None</span>
+              Kp: <span id="valKp" class="text-cyan-300">2</span> &bull; Flare: <span id="valFlare" class="text-amber-300">None</span> &bull; Env: <span id="valEnvShort" class="text-indigo-300">Mars (3/8g)</span>
             </div>
             <div class="text-xs text-slate-400">
-              Correlated for radiation stress &amp; sensor EMI noise
+              Correlated for GCR/SPE oxidative stress &amp; sensor EMI noise
             </div>
           </div>
         </div>
@@ -607,11 +644,65 @@
       }
     };
 
-    // Exact 7-Day Mission Profiles (Offsets applied to crew preflight median)
+    // Mission Environment Profiles (Purely Contextual — Zero Artificial BPM/ONSD Offsets)
+    const MISSION_LOCATIONS = {
+      earth_preflight: {
+        id: 'earth_preflight',
+        name: 'Earth Preflight',
+        shortLabel: 'Earth (1.0g)',
+        gravity: '1.0 g',
+        radiationLevel: 'Low Rad (Magnetosphere)',
+        doseRate: '~0.01 mSv/day (Ground)',
+        contextTag: 'Baseline Anchor • 1.0g',
+        narrative:
+          'Earth Preflight (1.0 g • Full Magnetosphere Shielding): Establishes each astronaut’s personal preflight median before microgravity or deep-space radiation exposure.',
+      },
+      deep_space_transit: {
+        id: 'deep_space_transit',
+        name: 'Deep-Space Transit',
+        shortLabel: 'Transit (0g)',
+        gravity: '0.0 g (Microgravity)',
+        radiationLevel: 'High GCR + SPE Watch',
+        doseRate: '~1.80 mSv/day (Contextual)',
+        contextTag: '0g Fluid Shift • SPE Watch',
+        narrative:
+          'Deep-Space Transit (0 g • Unshielded GCR/SPE Watch): Microgravity promotes headward fluid shift (tracked via daily ONSD/IJV scans); dosimeter telemetry is monitored separately for acute Solar Particle Events without altering numeric vital baselines.',
+      },
+      lunar_surface: {
+        id: 'lunar_surface',
+        name: 'Lunar Surface',
+        shortLabel: 'Moon (1/6g)',
+        gravity: '0.16 g (1/6 g)',
+        radiationLevel: 'Surface Rad + Regolith',
+        doseRate: '~1.37 mSv/day (Contextual)',
+        contextTag: '1/6g • Regolith & SPE Watch',
+        narrative:
+          'Lunar Surface (1/6 g • Surface Radiation & Sharp Regolith): Vitals are evaluated strictly against personal preflight baselines while lunar dust exposure and solar particle alerts are flagged as contextual stressors.',
+      },
+      mars_surface: {
+        id: 'mars_surface',
+        name: 'Mars Surface',
+        shortLabel: 'Mars (3/8g)',
+        gravity: '0.38 g (3/8 g)',
+        radiationLevel: 'Elevated GCR + Perchlorates',
+        doseRate: '~0.64 mSv/day (Contextual)',
+        contextTag: '3/8g • GCR & Dust Context',
+        narrative:
+          'Mars Surface (3/8 g • Elevated GCR + Perchlorate Dust): Monitored as environmental context alongside personal dosimeter feeds. Personal preflight baselines remain unshifted (no artificial radiation BPM/SpO₂ formulas).',
+      },
+    };
+
+    const AVAILABLE_TOOLS = [
+      'Ultrasound',
+      'Pulse Oximeter',
+      'Blood Pressure Cuff',
+      'Hydration Pack',
+    ];
+
+    // Exact 7-Day Mission Profiles (Deltas applied strictly to personal preflight baseline)
     const MISSION_DAYS = [
       {
         day: 1,
-        label: 'Nominal',
         hr_offset: 2,
         spo2_pct: 98,
         temp_offset: 0.0,
@@ -624,7 +715,6 @@
       },
       {
         day: 2,
-        label: 'Nominal',
         hr_offset: 4,
         spo2_pct: 98,
         temp_offset: 0.1,
@@ -632,12 +722,11 @@
         ijv_flow_status: 'normal_forward',
         sensor_verified: true,
         probe_contact_verified: true,
-        kp_index: 3,
-        solar_flare: 'C4.2',
+        kp_index: 2,
+        solar_flare: 'None',
       },
       {
         day: 3,
-        label: 'Nominal',
         hr_offset: 3,
         spo2_pct: 97,
         temp_offset: 0.0,
@@ -645,12 +734,11 @@
         ijv_flow_status: 'mild_stasis',
         sensor_verified: true,
         probe_contact_verified: true,
-        kp_index: 4,
-        solar_flare: 'C8.0',
+        kp_index: 3,
+        solar_flare: 'C1.4',
       },
       {
         day: 4,
-        label: 'Nominal',
         hr_offset: 5,
         spo2_pct: 97,
         temp_offset: 0.1,
@@ -663,7 +751,6 @@
       },
       {
         day: 5,
-        label: 'Sensor Check',
         hr_offset: 42,
         spo2_pct: 86,
         temp_offset: 0.0,
@@ -672,11 +759,10 @@
         sensor_verified: false,
         probe_contact_verified: false,
         kp_index: 5,
-        solar_flare: 'M1.1',
+        solar_flare: 'M2.1',
       },
       {
         day: 6,
-        label: 'Mild Drift',
         hr_offset: 19,
         spo2_pct: 94,
         temp_offset: 0.4,
@@ -684,12 +770,11 @@
         ijv_flow_status: 'mild_stasis',
         sensor_verified: true,
         probe_contact_verified: true,
-        kp_index: 6,
-        solar_flare: 'M2.4',
+        kp_index: 4,
+        solar_flare: 'C4.0',
       },
       {
         day: 7,
-        label: 'Escalate',
         hr_offset: 46,
         spo2_pct: 90,
         temp_offset: 1.5,
@@ -697,42 +782,43 @@
         ijv_flow_status: 'stagnant_retrograde',
         sensor_verified: true,
         probe_contact_verified: true,
-        kp_index: 7,
-        solar_flare: 'X1.1',
+        kp_index: 6,
+        solar_flare: 'X1.2',
       },
-    ];
-
-    const AVAILABLE_TOOLS = [
-      'Ultrasound',
-      'Pulse Oximeter',
-      'Blood Pressure Cuff',
-      'Hydration Pack',
     ];
 
     // Application State
     let selectedCrewId = 'C001';
+    let selectedLocationId = 'mars_surface';
     let selectedDay = 1;
     let simulatorMode = false;
     let playbackTimer = null;
     let customTelemetry = null;
 
-    // Build payload for a given crew and day
+    // Build payload for a given crew, location context, and day (strictly anchored to personal preflight baseline)
     function getRecordForCrewAndDay(crewId, dayNum) {
       const crew = CREW_PROFILES[crewId];
+      const loc = MISSION_LOCATIONS[selectedLocationId];
       const profile = MISSION_DAYS.find((d) => d.day === dayNum) || MISSION_DAYS[0];
+
+      const hrVal = crew.preflight_hr_median + profile.hr_offset;
+      const onsdVal = +(crew.preflight_onsd_mm + profile.onsd_offset).toFixed(2);
+      const tempVal = +(crew.preflight_temp_median + profile.temp_offset).toFixed(1);
+
       return {
         mission_day: profile.day,
+        mission_location: loc.id,
         crew_id: crew.id,
         vitals: {
-          hr_bpm: crew.preflight_hr_median + profile.hr_offset,
+          hr_bpm: hrVal,
           preflight_hr_median: crew.preflight_hr_median,
           spo2_pct: profile.spo2_pct,
-          temp_c: +(crew.preflight_temp_median + profile.temp_offset).toFixed(1),
+          temp_c: tempVal,
           preflight_temp_median: crew.preflight_temp_median,
           sensor_verified: profile.sensor_verified,
         },
         daily_ultrasound: {
-          onsd_mm: +(crew.preflight_onsd_mm + profile.onsd_offset).toFixed(2),
+          onsd_mm: onsdVal,
           preflight_onsd_mm: crew.preflight_onsd_mm,
           ijv_flow_status: profile.ijv_flow_status,
           probe_contact_verified: profile.probe_contact_verified,
@@ -740,14 +826,18 @@
         space_weather: {
           kp_index: profile.kp_index,
           solar_flare: profile.solar_flare,
+          background_dose_rate: loc.doseRate,
         },
         available_tools: AVAILABLE_TOOLS,
       };
     }
 
-    // Exact JS mirror of buildDeterministicFallback() from ai/triage_route.ts
+    // Evidence-Based Triage: Personal Preflight Baseline Comparison + Contextual Radiation Monitoring
     function runDeterministicTriage(input) {
-      const { vitals, daily_ultrasound, available_tools } = input;
+      const { vitals, daily_ultrasound, space_weather, available_tools } = input;
+      const loc = MISSION_LOCATIONS[input.mission_location || selectedLocationId];
+
+      // Deltas evaluated strictly against each astronaut's personal preflight baseline
       const hrDelta = vitals.hr_bpm - vitals.preflight_hr_median;
       const tempDelta = +(vitals.temp_c - vitals.preflight_temp_median).toFixed(1);
       const onsdDelta = +(daily_ultrasound.onsd_mm - daily_ultrasound.preflight_onsd_mm).toFixed(2);
@@ -783,23 +873,31 @@
         ? ` Ultrasound probe placement verified (ONSD ${daily_ultrasound.onsd_mm} mm, IJV flow: ${daily_ultrasound.ijv_flow_status}).`
         : ' Unverified ultrasound probe contact: re-seat transducer and verify acoustic window before interpreting ONSD.';
 
+      const hasElevatedSpaceWeather =
+        (space_weather?.kp_index ?? 0) >= 5 ||
+        (space_weather?.solar_flare && space_weather.solar_flare !== 'None');
+
+      const radiationContextNote = hasElevatedSpaceWeather
+        ? ` Concurrent space weather activity (${space_weather.solar_flare}, Kp ${space_weather.kp_index}) logged as contextual stressor—do not attribute vital changes to radiation without dosimeter & clinical correlation.`
+        : ` Dosimeter & space-weather context monitored separately in ${loc.name} (${loc.gravity}) with no artificial baseline offsets.`;
+
       const dataQualityCheck =
         (vitals.sensor_verified
-          ? 'Wearable sensor placement verified; evaluating telemetry against personal preflight median.'
+          ? `Wearable sensor placement verified in ${loc.name} (${loc.gravity}); evaluating telemetry strictly against personal preflight median.`
           : 'Unverified wearable sensor fit: confirm strap contact and rule out motion artifact before interpreting readings.') +
-        ultrasoundQualityNote;
+        ultrasoundQualityNote +
+        radiationContextNote;
 
-      const baselineComparison = `HR ${vitals.hr_bpm} bpm (${hrDelta >= 0 ? '+' : ''}${hrDelta} bpm vs preflight median ${vitals.preflight_hr_median} bpm); SpO2 ${vitals.spo2_pct}%; Temp ${vitals.temp_c}°C (${tempDelta >= 0 ? '+' : ''}${tempDelta}°C) | Daily Ultrasound ONSD: ${daily_ultrasound.onsd_mm} mm (${onsdDelta >= 0 ? '+' : ''}${onsdDelta} mm vs preflight ${daily_ultrasound.preflight_onsd_mm} mm).`;
+      const baselineComparison = `HR ${vitals.hr_bpm} bpm (${hrDelta >= 0 ? '+' : ''}${hrDelta} bpm vs personal preflight ${vitals.preflight_hr_median} bpm); SpO2 ${vitals.spo2_pct}%; Temp ${vitals.temp_c}°C (${tempDelta >= 0 ? '+' : ''}${tempDelta}°C) | Daily Ultrasound ONSD: ${daily_ultrasound.onsd_mm} mm (${onsdDelta >= 0 ? '+' : ''}${onsdDelta} mm vs preflight ${daily_ultrasound.preflight_onsd_mm} mm).`;
 
       let groundSupportReason = null;
       if (shouldEscalate) {
         if (ultrasoundEscalation && vitalsMultiDrift) {
-          groundSupportReason = `Verified multi-parameter vital drift (HR +${hrDelta} bpm, SpO2 ${vitals.spo2_pct}%, Temp ${vitals.temp_c}°C) and daily ultrasound shift (ONSD ${daily_ultrasound.onsd_mm} mm, +${onsdDelta} mm; IJV ${daily_ultrasound.ijv_flow_status}) warrant Flight Surgeon consultation.`;
+          groundSupportReason = `Verified multi-parameter vital drift (HR +${hrDelta} bpm over personal baseline, SpO2 ${vitals.spo2_pct}%, Temp ${vitals.temp_c}°C) and daily ultrasound shift (ONSD ${daily_ultrasound.onsd_mm} mm, +${onsdDelta} mm; IJV ${daily_ultrasound.ijv_flow_status}) in ${loc.name} warrant Flight Surgeon review (correlate dosimeter/CBC if acute SPE suspected).`;
         } else if (ultrasoundEscalation) {
-          groundSupportReason = `Verified daily ultrasound drift (ONSD ${daily_ultrasound.onsd_mm} mm, +${onsdDelta} mm over preflight; IJV ${daily_ultrasound.ijv_flow_status}) warrants Flight Surgeon consultation.`;
+          groundSupportReason = `Verified daily ultrasound drift (ONSD ${daily_ultrasound.onsd_mm} mm, +${onsdDelta} mm over personal baseline; IJV ${daily_ultrasound.ijv_flow_status}) in ${loc.name} warrants Flight Surgeon consultation.`;
         } else {
-          groundSupportReason =
-            'Verified multi-parameter vital deviation outside personal preflight baseline; recommend Flight Surgeon review.';
+          groundSupportReason = `Verified multi-parameter vital deviation outside personal preflight baseline in ${loc.name}; recommend Flight Surgeon review.`;
         }
       }
 
@@ -807,21 +905,58 @@
         data_quality_check: dataQualityCheck,
         baseline_comparison: baselineComparison,
         common_causes: [
-          'Cephalad microgravity fluid redistribution affecting optic nerve sheath and jugular venous flow',
-          'Wearable strap shift, recent resistive exercise, or cabin hydration/sleep shift',
+          `Cephalad fluid redistribution in ${loc.gravity} affecting optic nerve sheath and jugular venous outflow`,
+          'Wearable strap shift, post-EVA exertion, cabin CO₂/hydration shift, or concurrent space-weather stressor requiring dosimeter correlation',
         ],
         confirmation_prompt:
-          'Can you confirm probe/sensor placement is snug and note any visual changes, headache, or pressure sensations?',
+          'Can you confirm probe/sensor placement is snug and note any visual changes, headache, fever symptoms, or recent dosimeter alerts?',
         available_tool_action_plan: [
           `Verify readings using ${available_tools[0]}`,
           `Cross-check status with ${available_tools[1]}`,
-          'Re-test after 5 minutes at rest and log daily check-in',
+          'Re-test after 5 minutes at rest, inspect personal dosimeter log, and record daily check-in',
         ],
         contact_ground_support: shouldEscalate,
         ground_support_reason: groundSupportReason,
       };
 
-      return { response, statusCategory, hrDelta, tempDelta, onsdDelta };
+      return {
+        response,
+        statusCategory,
+        hrDelta,
+        tempDelta,
+        onsdDelta,
+      };
+    }
+
+    // Render 4-Mode Mission Environment Context Tabs
+    function renderLocationTabs() {
+      const container = document.getElementById('locationTabsContainer');
+      container.innerHTML = '';
+
+      Object.values(MISSION_LOCATIONS).forEach((loc) => {
+        const isSelected = selectedLocationId === loc.id;
+        const btn = document.createElement('button');
+        btn.onclick = () => selectLocation(loc.id);
+        btn.className = `text-left p-3 rounded-xl border transition-all ${
+          isSelected
+            ? 'bg-indigo-500/20 border-cyan-400 shadow-lg shadow-cyan-950/40'
+            : 'bg-space-950/65 border-slate-800 hover:border-slate-600'
+        }`;
+
+        btn.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold ${isSelected ? 'text-white' : 'text-slate-200'}">${loc.name}</span>
+            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono ${
+              isSelected ? 'bg-cyan-500/25 text-cyan-200 border border-cyan-400/40' : 'bg-slate-800 text-slate-400'
+            }">${loc.gravity}</span>
+          </div>
+          <div class="text-[11px] font-mono text-amber-300/90 mt-1 truncate">${loc.radiationLevel}</div>
+          <div class="text-[10px] font-mono text-slate-400 mt-1">
+            Mode: <span class="text-cyan-300">${loc.contextTag}</span>
+          </div>
+        `;
+        container.appendChild(btn);
+      });
     }
 
     // Render 7-Day Selector Pills
@@ -883,11 +1018,18 @@
     // Update UI with active telemetry payload
     function renderDashboard() {
       const crew = CREW_PROFILES[selectedCrewId];
+      const loc = MISSION_LOCATIONS[selectedLocationId];
+
       document.getElementById('baseHrLabel').textContent = `${crew.preflight_hr_median} bpm`;
       document.getElementById('baseTempLabel').textContent = `${crew.preflight_temp_median}°C`;
       document.getElementById('baseOnsdLabel').textContent = `${crew.preflight_onsd_mm} mm`;
 
+      document.getElementById('locationNarrative').textContent = loc.narrative;
+      document.getElementById('locRadRate').textContent = loc.doseRate;
+
       document.getElementById('cardBaseHr').textContent = `${crew.preflight_hr_median} bpm`;
+      document.getElementById('noteHr').innerHTML = `Normal band: within <span class="font-mono text-slate-300">+15 bpm</span> of personal preflight baseline (<span class="font-mono text-cyan-300">${crew.preflight_hr_median} bpm</span>).`;
+
       document.getElementById('cardBaseTemp').textContent = `${crew.preflight_temp_median}°C`;
       document.getElementById('cardBaseOnsd').textContent = `${crew.preflight_onsd_mm} mm`;
 
@@ -895,7 +1037,13 @@
         ? customTelemetry
         : getRecordForCrewAndDay(selectedCrewId, selectedDay);
 
-      const { response, statusCategory, hrDelta, tempDelta, onsdDelta } = runDeterministicTriage(payload);
+      const {
+        response,
+        statusCategory,
+        hrDelta,
+        tempDelta,
+        onsdDelta,
+      } = runDeterministicTriage(payload);
 
       // 1. Heart Rate Card
       document.getElementById('valHr').textContent = payload.vitals.hr_bpm;
@@ -969,6 +1117,7 @@
       // Space Weather
       document.getElementById('valKp').textContent = payload.space_weather.kp_index;
       document.getElementById('valFlare').textContent = payload.space_weather.solar_flare;
+      document.getElementById('valEnvShort').textContent = loc.shortLabel;
 
       // Overarching AI Triage Panel Styling & Text
       const triagePanel = document.getElementById('triagePanel');
@@ -1035,6 +1184,7 @@
       document.getElementById('rawInputPre').textContent = JSON.stringify(payload, null, 2);
       document.getElementById('rawOutputPre').textContent = JSON.stringify(response, null, 2);
 
+      renderLocationTabs();
       renderDayTabs();
       renderTrendChart();
     }
@@ -1139,6 +1289,15 @@
     }
 
     // Event Handlers
+    function selectLocation(locationId) {
+      selectedLocationId = locationId;
+      if (simulatorMode) {
+        onSimulatorChange();
+      } else {
+        renderDashboard();
+      }
+    }
+
     function selectCrew(crewId) {
       selectedCrewId = crewId;
       document.getElementById('crewBtnC001').className =
@@ -1225,6 +1384,7 @@
 
     function onSimulatorChange() {
       const crew = CREW_PROFILES[selectedCrewId];
+      const loc = MISSION_LOCATIONS[selectedLocationId];
       const baseDay = getRecordForCrewAndDay(selectedCrewId, selectedDay);
 
       const hr = parseInt(document.getElementById('simHrInput').value, 10);
@@ -1242,6 +1402,7 @@
 
       customTelemetry = {
         mission_day: selectedDay,
+        mission_location: loc.id,
         crew_id: crew.id,
         vitals: {
           hr_bpm: hr,
