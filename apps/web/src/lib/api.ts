@@ -1,4 +1,8 @@
 import type {
+  HeartFrame,
+  HeartScanResult,
+  JugularScanResult,
+  UltrasoundStatus,
   ApodResponse,
   RadiationResponse,
   BaselineDatasetResponse,
@@ -45,6 +49,10 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
 const json = (method: string, body?: unknown): RequestInit => ({ method, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) })
 
 export const api = {
+  ultrasoundStatus: () => call<UltrasoundStatus>('/api/ultrasound/status'),
+  /** `image` and each frame are base64 PNG without a data: prefix. */
+  analyseJugular: (image: string, depthCm: number) => call<JugularScanResult>('/api/ultrasound/jugular', json('POST', { image, depthCm })),
+  analyseHeart: (frames: Record<HeartFrame, string>, depthCm: number) => call<HeartScanResult>('/api/ultrasound/heart', json('POST', { frames, depthCm })),
   register: (email: string, password: string) => call<{ ok: true }>('/api/auth/register', json('POST', { email, password })),
   login: (email: string, password: string) => call<{ ok: true }>('/api/auth/login', json('POST', { email, password })),
   logout: () => call<{ ok: true }>('/api/auth/logout', json('POST')),

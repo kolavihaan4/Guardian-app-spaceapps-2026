@@ -40,6 +40,9 @@ const schema = z.object({
   GARMIN_CLIENT_ID: optional,
   GARMIN_CLIENT_SECRET: optional,
 
+  /** The Python service that runs the ultrasound models (ai/ultrasound_service). Only this server calls it. */
+  ULTRASOUND_URL: z.url().default('http://127.0.0.1:8790'),
+
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 })
 

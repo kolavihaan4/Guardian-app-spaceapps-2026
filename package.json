@@ -14,7 +14,8 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "concurrently -k -n server,web -c blue,magenta \"npm run dev -w @astrovitals/server\" \"npm run dev -w @astrovitals/web\"",
+    "dev": "concurrently -k -n server,web,scans -c blue,magenta,green \"npm run dev -w @astrovitals/server\" \"npm run dev -w @astrovitals/web\" \"npm run ultrasound\"",
+    "ultrasound": "node --env-file-if-exists=.env scripts/ultrasound.mjs",
     "build": "npm run build -w @astrovitals/web",
     "start": "npm run start -w @astrovitals/server",
     "typecheck": "npm run typecheck --workspaces --if-present",
