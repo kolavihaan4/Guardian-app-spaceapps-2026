@@ -6,7 +6,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { ANATOMY_STRUCTURES, type AnatomySystem } from './anatomyStructures'
-import { isSkinLandmarkPart, regionForSkinPoint, regionForStructure, skinLandmarks, type SkinLandmarks } from './bodyRegions'
+import { BODY_ZONES, zoneLabel, regionForZone, zoneForSkinPoint, isSkinLandmarkPart, regionForStructure, skinLandmarks, type SkinLandmarks, type BodyZoneId } from './bodyRegions'
 import { HIDDEN_STRUCTURES, smoothModestSkin } from './modestSkin'
 
 export type AnatomySex = 'male' | 'female'
@@ -44,9 +44,11 @@ type LayerId = (typeof LAYERS)[number]['id']
 interface Props {
   sex: AnatomySex
   selected: BodyRegionId
+  zonePain: Partial<Record<BodyZoneId, number>>
+  selectedZone: BodyZoneId | null
+  onZoneSelect: (zone: BodyZoneId) => void
   /** Logged pain per region, 1–10. Regions without pain are absent. */
   pain: Partial<Record<BodyRegionId, number>>
-  onSelect: (region: BodyRegionId) => void
   /** Called when WebGL or the model cannot load, so the page can fall back to the simpler figure. */
   onUnavailable: () => void
 }
@@ -68,6 +70,8 @@ interface Part {
   region: BodyRegionId
   label: string
   layer: LayerId
+  points: Float32Array
+  zones: BodyZoneId[]
 }
 
 /**
@@ -76,20 +80,22 @@ interface Part {
  * or use the view buttons; click to select a region. The region buttons under the figure give
  * keyboard and screen-reader users the same choices.
  */
-export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable }: Props) {
+export default function Anatomy3D({ sex, selected, zonePain, selectedZone, onZoneSelect, pain, onUnavailable }: Props) {
   const mountRef = useRef<HTMLDivElement>(null)
-  const [hovered, setHovered] = useState<{ region: BodyRegionId; label?: string } | null>(null)
+  const [hovered, setHovered] = useState<{ region: BodyRegionId; zone: BodyZoneId; label?: string } | null>(null)
   const [ready, setReady] = useState(false)
   const [zoom, setZoom] = useState(0)
   const [layers, setLayers] = useState<Record<LayerId, boolean>>({ skin: true, muscles: true, skeleton: true })
   // One long-lived effect owns the scene; it reads the latest props through this ref.
-  const live = useRef({ selected, pain, hovered, layers, zoom, onSelect, onUnavailable, repaint: () => {}, turnTo: (_azimuth: number) => {} })
+  const live = useRef({ zonePain, selectedZone, onZoneSelect, selected, pain, hovered, layers, zoom, onUnavailable, repaint: () => {}, turnTo: (_azimuth: number) => {} })
+  live.current.zonePain = zonePain
+  live.current.selectedZone = selectedZone
+  live.current.onZoneSelect = onZoneSelect
   live.current.selected = selected
   live.current.pain = pain
   live.current.hovered = hovered
   live.current.layers = layers
   live.current.zoom = zoom
-  live.current.onSelect = onSelect
   live.current.onUnavailable = onUnavailable
 
   useEffect(() => {
@@ -142,7 +148,7 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
       camera.lookAt(controls.target)
     }
     // Height of each region's centre, for zooming in on the selected one.
-    const regionHeight: Partial<Record<BodyRegionId, number>> = {}
+    const regionHeight: Partial<Record<BodyRegionId | BodyZoneId, number>> = {}
     live.current.turnTo = (azimuth) => {
       if (reduceMotion) setAzimuth(azimuth)
       else turnTarget = azimuth
@@ -151,7 +157,7 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
     const parts: Part[] = []
     let skin: THREE.Mesh | null = null
     let figure: THREE.Object3D | null = null
-    let skinRegions: BodyRegionId[] = []
+    let skinRegions: BodyZoneId[] = []
     let skinPoints: Float32Array | null = null
     let marks: SkinLandmarks | null = null
     const landmarkParts: Record<string, Float32Array> = {}
@@ -172,7 +178,7 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
       // Ease the camera towards the chosen zoom, centred on the selected region when zoomed in.
       const zoomBy = ZOOMS[live.current.zoom] ?? 1
       const wantRadius = DISTANCE / zoomBy
-      const wantY = zoomBy > 1 ? (regionHeight[live.current.selected] ?? 0) : 0
+      const wantY = zoomBy > 1 ? (regionHeight[live.current.selectedZone ?? live.current.selected] ?? 0) : 0
       const ease = reduceMotion ? 1 : 0.12
       offset.copy(camera.position).sub(controls.target)
       const radius = offset.length()
@@ -187,31 +193,36 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
 
     const tint = new THREE.Color()
     const repaint = () => {
-      const { selected: sel, pain: hurt, hovered: hov, layers: shown } = live.current
+      const { selected: sel, selectedZone: zone, pain: hurt, hovered: hov, layers: shown } = live.current
+      const chosen = (z: BodyZoneId) => zone ? z === zone : regionForZone(z) === sel
       for (const part of parts) {
         part.mesh.visible = shown[part.layer]
-        const severity = hurt[part.region] ?? 0
-        // The selected region keeps its full colour and the rest is faded back, so it stands out.
-        // Structures of a region with pain glow coral.
-        const inFocus = part.region === sel || part.region === hov?.region || severity > 0
-        part.material.color.copy(part.base)
-        if (!inFocus) part.material.color.lerp(COLOR.faded, 0.25)
-        if (severity > 0) part.material.emissive.copy(COLOR.glowPain).multiplyScalar(0.25 + 0.45 * (Math.min(severity, 10) / 10))
-        else if (part.region === sel) part.material.emissive.copy(part.base).multiplyScalar(0.22)
-        else part.material.emissive.setScalar(0)
+
+        const colors = part.mesh.geometry.getAttribute('color') as THREE.BufferAttribute
+        part.zones.forEach((z, i) => {
+          const severity = live.current.zonePain[z] ?? hurt[regionForZone(z)] ?? 0
+          const active = chosen(z)
+          tint.copy(part.base)
+          if (active) tint.lerp(COLOR.selected, 0.75)
+          else if (z === hov?.zone) tint.lerp(COLOR.hover, 0.6)
+          else tint.lerp(COLOR.faded, 0.35)
+          if (severity > 0) tint.lerp(COLOR.painSevere, 0.4)
+          colors.setXYZ(i, tint.r, tint.g, tint.b)
+        })
+        colors.needsUpdate = true
       }
       if (!skin) return
       skin.visible = shown.skin
       const colors = skin.geometry.getAttribute('color') as THREE.BufferAttribute
-      const byRegion = new Map<BodyRegionId, THREE.Color>()
+      const byRegion = new Map<BodyZoneId, THREE.Color>()
       skinRegions.forEach((region, i) => {
         let c = byRegion.get(region)
         if (!c) {
-          const severity = hurt[region] ?? 0
+          const severity = live.current.zonePain[region] ?? hurt[regionForZone(region)] ?? 0
           c = new THREE.Color()
           if (severity > 0) c.lerpColors(COLOR.painMild, COLOR.painSevere, Math.min(severity, 10) / 10)
-          else c.copy(region === sel ? COLOR.selected : region === hov?.region ? COLOR.hover : COLOR.body)
-          if (severity > 0 && region === sel) c.lerp(tint.set('#5b2a1a'), 0.35)
+          else c.copy(chosen(region) ? COLOR.selected : region === hov?.zone ? COLOR.hover : COLOR.body)
+          if (severity > 0 && chosen(region)) c.lerp(tint.set('#5b2a1a'), 0.35)
           byRegion.set(region, c)
         }
         colors.setXYZ(i, c.r, c.g, c.b)
@@ -290,9 +301,9 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
             o.visible = false // organs, vessels, nerves and joint markers
             return
           }
-          const material = new THREE.MeshPhysicalMaterial({ color: info.color, ...FINISH[layer.id] })
+          const material = new THREE.MeshPhysicalMaterial({ color: '#ffffff', vertexColors: true, ...FINISH[layer.id] })
           o.material = material
-          parts.push({ mesh: o, material, base: new THREE.Color(info.color), region: regionForStructure(name), label: info.label, layer: layer.id })
+          parts.push({ mesh: o, material, base: new THREE.Color(info.color), region: regionForStructure(name), label: info.label, layer: layer.id, points: worldPoints(), zones: [] })
         })
         marks = skinLandmarks(landmarkParts)
         if (!skin || !skinPoints || !marks) {
@@ -302,7 +313,11 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
         // Colour the skin per vertex by region, using each vertex's place on the body.
         const points: Float32Array = skinPoints
         const found: SkinLandmarks = marks
-        skinRegions = Array.from({ length: points.length / 3 }, (_, i) => regionForSkinPoint(points[i * 3]!, points[i * 3 + 1]!, points[i * 3 + 2]!, found))
+        skinRegions = Array.from({ length: points.length / 3 }, (_, i) => zoneForSkinPoint(points[i * 3]!, points[i * 3 + 1]!, points[i * 3 + 2]!, found))
+        for (const part of parts) {
+          part.zones = Array.from({ length: part.points.length / 3 }, (_, i) => zoneForSkinPoint(part.points[i * 3]!, part.points[i * 3 + 1]!, part.points[i * 3 + 2]!, found))
+          part.mesh.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(part.points.length), 3))
+        }
         // Centre the figure on its own height and scale it to fill the view.
         const box = new THREE.Box3().setFromObject(skin)
         const height = box.max.y - box.min.y
@@ -321,6 +336,11 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
           sum.n += 1
         }
         for (const [region, sum] of Object.entries(sums)) regionHeight[region as BodyRegionId] = sum.y / sum.n
+        for (const zone of BODY_ZONES) {
+          let y = 0, n = 0
+          skinRegions.forEach((z, i) => { if (z === zone) { y += points[i * 3 + 1]! * scale + root.position.y; n++ } })
+          if (n) regionHeight[zone] = y / n
+        }
         repaint()
         setReady(true)
       },
@@ -331,7 +351,7 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
     const raycaster = new THREE.Raycaster()
     const pointer = new THREE.Vector2()
     const local = new THREE.Vector3()
-    const hitAt = (e: PointerEvent): { region: BodyRegionId; label?: string } | null => {
+    const hitAt = (e: PointerEvent): { region: BodyRegionId; zone: BodyZoneId; label?: string } | null => {
       if (!skin) return null
       const rect = renderer.domElement.getBoundingClientRect()
       pointer.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1)
@@ -344,11 +364,15 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
         // Back to the model's own metres, undoing the scene's scale and centring.
         if (!figure || !marks) return null
         figure.worldToLocal(local.copy(hit.point))
-        return { region: regionForSkinPoint(local.x, local.y, local.z, marks) }
+        const zone = zoneForSkinPoint(local.x, local.y, local.z, marks)
+        return { region: regionForZone(zone), zone, label: zoneLabel(zone) }
       }
       const hit = raycaster.intersectObjects(parts.filter((p) => p.mesh.visible).map((p) => p.mesh))[0]
       const part = hit && parts.find((p) => p.mesh === hit.object)
-      return part ? { region: part.region, label: part.label } : null
+      if (!part || !hit || !figure || !marks) return null
+      figure.worldToLocal(local.copy(hit.point))
+      const zone = zoneForSkinPoint(local.x, local.y, local.z, marks)
+      return { region: regionForZone(zone), zone, label: zoneLabel(zone) }
     }
 
     let downAt: { x: number; y: number } | null = null
@@ -362,7 +386,7 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
       downAt = null
       if (moved > 5) return // a drag turns the figure
       const hit = hitAt(e)
-      if (hit) live.current.onSelect(hit.region)
+      if (hit) live.current.onZoneSelect(hit.zone)
     }
     const onMove = (e: PointerEvent) => {
       // The models are detailed, so look under the pointer at most about 12 times a second.
@@ -413,10 +437,10 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
   }, [sex])
 
   // Recolour whenever the selection, pain, hover or visible layers change.
-  const painKey = JSON.stringify(pain)
+  const painKey = JSON.stringify([pain, zonePain])
   useEffect(() => {
     live.current.repaint()
-  }, [selected, painKey, hovered, layers, ready])
+  }, [selected, selectedZone, painKey, hovered, layers, ready])
 
   return (
     <div className="body-3d">
@@ -424,11 +448,22 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
         ref={mountRef}
         className={`body-3d-canvas tall ${zoom > 0 ? 'zoomed' : ''}`}
         role="img"
-        aria-label={`Rotatable 3D ${sex} body with muscles and skeleton. Selected region: ${BODY_REGIONS[selected].name}. Use the region buttons below to choose a region with the keyboard.`}
+        aria-label={`Rotatable 3D ${sex} body with muscles and skeleton. Selected region: ${selectedZone ? zoneLabel(selectedZone) : BODY_REGIONS[selected].name}. Use the region buttons below to choose a region with the keyboard.`}
       />
       <p className="body-3d-hint" aria-live="polite">
-        {!ready ? 'Loading 3D body…' : hovered ? (hovered.label ? `${hovered.label} · ${BODY_REGIONS[hovered.region].name}` : BODY_REGIONS[hovered.region].name) : 'Drag to turn · click a region'}
+        {!ready ? 'Loading 3D body…' : hovered ? (hovered.label ? `${hovered.label} · ${BODY_REGIONS[hovered.region].name}` : BODY_REGIONS[hovered.region].name) : 'Drag to turn · click a body part'}
       </p>
+      <label className="body-part-picker">Select a body part
+        <select value={selectedZone ?? ''} onChange={(e) => {
+          const zone = e.target.value as BodyZoneId
+          live.current.onZoneSelect(zone)
+          live.current.turnTo(/back|glute|hamstring|calf|spine/.test(zone) ? Math.PI : 0)
+        }}>
+          <option value="" disabled>Choose a part</option>
+          {BODY_ZONES.map((z) => <option key={z} value={z}>{zoneLabel(z)}</option>)}
+        </select>
+      </label>
+      <small>Left and right refer to the person's own sides.</small>
       <div className="body-3d-views" role="group" aria-label="Turn the body to a view">
         {VIEWS.map((view) => (
           <button key={view.label} type="button" className="zone-btn" onClick={() => live.current.turnTo(view.azimuth)} disabled={!ready}>

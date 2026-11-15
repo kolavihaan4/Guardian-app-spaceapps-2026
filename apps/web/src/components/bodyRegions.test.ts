@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ANATOMY_STRUCTURES } from './anatomyStructures'
-import { bodyPartForBone, regionForPoint, regionForSkinPoint, regionForStructure, skinLandmarks } from './bodyRegions'
+import { bodyPartForBone, regionForPoint, regionForSkinPoint, regionForStructure, skinLandmarks, zoneForSkinPoint, zoneLabel, regionForZone, BODY_ZONES } from './bodyRegions'
 
 describe('bodyPartForBone', () => {
   it('names the part for each bone, with or without dots in the name', () => {
@@ -111,7 +111,7 @@ describe('regionForSkinPoint', () => {
     expect(regionForSkinPoint(0.05, 1.3, 0.1, marks)).toBe('chest_cardio')
     expect(regionForSkinPoint(0.05, 1.05, 0.1, marks)).toBe('abdomen_nutrition')
     expect(regionForSkinPoint(0, 1.2, -0.1, marks)).toBe('spine_bone')
-    expect(regionForSkinPoint(0.02, 1.4, -0.01, marks)).toBe('chest_cardio') // base of the neck, in front of the backbone
+    expect(regionForSkinPoint(0.02, 1.4, -0.01, marks)).toBe('spine_bone') // behind the trunk's centre belongs to the back
     expect(regionForSkinPoint(0.09, 0.5, 0, marks)).toBe('lower_limbs')
   })
 
@@ -137,5 +137,39 @@ describe('regionForSkinPoint', () => {
   it('reports when the model lacks a structure it measures from', () => {
     const { mandible: _, ...rest } = figure(1)
     expect(skinLandmarks(rest)).toBeNull()
+  })
+})
+
+// Asymmetric points verify anatomical left/right and independent front/back selection.
+describe('detailed body zones', () => {
+  const m = skinLandmarks(figure(1))!
+  m.parts.neckBase = 1.44
+  m.parts.knee = { yMin: 0.42, yMax: 0.50 }
+  m.parts.footTop = 0.08
+  m.parts.thighMid = { y0: 0.9, y1: 0.45, z0: 0, z1: 0 }
+  m.parts.lowerLegMid = { y0: 0.42, y1: 0.08, z0: 0, z1: 0 }
+  m.parts.glute = { yMin: 0.78, yMax: 1.0 }
+  it('separates all four chest quadrants from the back', () => {
+    expect(zoneForSkinPoint(0.06, 1.36, 0.1, m)).toBe('chest_upper_l')
+    expect(zoneForSkinPoint(-0.06, 1.36, 0.1, m)).toBe('chest_upper_r')
+    expect(zoneForSkinPoint(0.06, 1.20, 0.1, m)).toBe('chest_lower_l')
+    expect(zoneForSkinPoint(-0.06, 1.20, 0.1, m)).toBe('chest_lower_r')
+    expect(zoneForSkinPoint(0.06, 1.20, -0.1, m)).toBe('upper_back_l')
+  })
+  it('separates quads, hamstrings, glutes, knees, shins, calves and feet', () => {
+    for (const [y, z, part] of [[0.65, 0.08, 'quad'], [0.65, -0.08, 'hamstring'], [0.85, -0.08, 'glute'], [0.46, 0.08, 'knee'], [0.3, 0.08, 'shin'], [0.3, -0.08, 'calf'], [0.04, 0.08, 'foot']] as const) {
+      expect(zoneForSkinPoint(0.09, y, z, m)).toBe(part + '_l')
+      expect(zoneForSkinPoint(-0.09, y, z, m)).toBe(part + '_r')
+    }
+  })
+  it('separates the forearm faces and palms from the back of the hand', () => {
+    expect(zoneForSkinPoint(0.25, 1.0, 0.06, m)).toBe('forearm_front_l')
+    expect(zoneForSkinPoint(0.25, 1.0, -0.06, m)).toBe('forearm_back_l')
+    expect(zoneForSkinPoint(0.29, 0.8, 0.06, m)).toBe('palm_l')
+    expect(zoneForSkinPoint(0.29, 0.8, -0.06, m)).toBe('hand_back_l')
+  })
+  it('gives every selectable zone a unique name and a supported body system', () => {
+    expect(new Set(BODY_ZONES.map(zoneLabel)).size).toBe(BODY_ZONES.length)
+    for (const z of BODY_ZONES) expect(regionForZone(z)).toBeTruthy()
   })
 })
