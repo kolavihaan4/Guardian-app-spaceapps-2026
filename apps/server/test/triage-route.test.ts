@@ -72,7 +72,7 @@ describe('triage route and the model', () => {
     const res = await triage()
     expect(asked).toHaveLength(1)
     expect(asked[0]!.url).toBe('http://localhost:11434/api/chat')
-    expect(asked[0]!.body).toMatchObject({ model: 'astrovitals-triage', think: false })
+    expect(asked[0]!.body).toMatchObject({ model: 'astrovitals-triage-ft-v2', think: false })
     expect(asked[0]!.body).toHaveProperty('format')
     expect(res.source).toBe('Qwen3-8B explanation, decisions by onboard rules')
     expect(res.triage.common_causes).toEqual(['written by the model'])

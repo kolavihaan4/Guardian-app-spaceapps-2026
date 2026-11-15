@@ -125,7 +125,7 @@ export const TriageResponseSchema = z.object({
 const TRIAGE_BACKEND = process.env.TRIAGE_BACKEND === 'ollama' ? 'ollama' : 'mlx'
 const MLX_URL = process.env.MLX_URL ?? 'http://localhost:8080'
 const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://localhost:11434'
-const OLLAMA_MODEL = process.env.OLLAMA_TRIAGE_MODEL ?? 'astrovitals-triage'
+const OLLAMA_MODEL = process.env.OLLAMA_TRIAGE_MODEL ?? 'astrovitals-triage-ft-v2'
 // How long to wait for the model before the rule engine answers alone. 20 s suits the fine-tuned
 // model on a Mac or an L4 GPU; a slower machine, such as a T4, needs more.
 const MODEL_TIMEOUT_MS = Number(process.env.TRIAGE_MODEL_TIMEOUT_MS) || 20_000
