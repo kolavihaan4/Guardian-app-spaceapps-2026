@@ -84,6 +84,13 @@ export function App() {
         <div className="topbar__glass" aria-hidden="true" />
         <Brand />
         <nav className="nav" id="nav" aria-label="Main">
+          {/* The team's dashboard (cards and collections) lives in the home site; same header, same origin. */}
+          <a className="nav__link" href="/home/index.html#/dashboard" aria-label="Dashboard" title="Dashboard">
+            <svg viewBox="0 0 24 24" aria-hidden>
+              <path d="M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z" />
+            </svg>
+            Dashboard
+          </a>
           {ROUTES.map((r, i) => (
             <Fragment key={r.path}>
               {r.group === 'account' && ROUTES[i - 1]?.group !== 'account' ? <span className="nav-divider" aria-hidden /> : null}

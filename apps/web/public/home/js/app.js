@@ -52,10 +52,12 @@
   const envOf = id => ENVS.find(e => e.id === id) || null;
   const gated = () => !store.get().env;
 
-  // the crew health app (triage, hazards, vitals) this site launches into; same origin
-  const APP_URL = '/#/assessment';
+  // the crew health app (triage, vitals, hazards) shares this origin; its pages sit in the same nav
+  const APP = { triage: '/#/assessment', vitals: '/#/dashboard', hazards: '/#/space' };
   const NAV = [
     { key: 'dashboard', href: '#/dashboard', label: 'Dashboard', icon: 'dashboard' },
+    // one entry for the health assistant keeps the bar from crowding; its own header lists its pages
+    { key: 'crew', href: APP.triage, label: 'Crew health', icon: 'heart' },
     { key: 'cards', href: '#/cards', label: 'My cards', icon: 'cards', badge: true },
     { key: 'collections', href: '#/collections', label: 'Collections', icon: 'layers' },
     { key: 'library', href: '#/library', label: 'Card library', icon: 'library' },
@@ -132,6 +134,7 @@
       action: `<button class="btn btn--ghost" data-action="customize">${icon('sliders')}Customize view</button>`
     }) +
       (v.hero ? hero(s) : '') +
+      crewHealth() +
       (v.glance ? glance(s) : '') +
       (v.activity || v.collections ? `<div class="split${both ? '' : ' split--one'}">${v.activity ? activity(s) : ''}${v.collections ? collectionsPanel(s) : ''}</div>` : '') +
       (v.recent ? recent(s) : '') +
@@ -163,6 +166,20 @@
       <p class="metric__value">${o.value == null ? '<span class="metric__dash" aria-label="No data"></span>' : o.value}</p>
       <div class="metric__foot"><span class="metric__note"><span class="dot${o.value == null ? '' : ' dot--live'}"></span>${o.note}</span>${spark(o.series)}</div>
     </article>`;
+  }
+
+  // the way into the crew health app: triage, vital signs and the hazards reference
+  function crewHealth() {
+    const link = o => `<a class="panel metric crew-link" href="${o.href}">
+      <div class="metric__head">${chipIcon(o.icon)}<h3 class="metric__label">${o.label}</h3><span class="metric__go" aria-hidden="true">${icon('arrowUpRight')}</span></div>
+      <p class="crew-link__text">${o.text}</p>
+    </a>`;
+    return `<div class="section-label"><h2>Crew health</h2><span>Opens the health assistant</span></div>
+    <div class="glance">
+      ${link({ icon: 'heart', label: 'Triage', href: APP.triage, text: 'Check a crew member: vital signs against cited ranges, a 3D body map and a step-by-step plan.' })}
+      ${link({ icon: 'pulse', label: 'Vitals', href: APP.vitals, text: 'Heart rate, sleep and activity over time from connected wearables.' })}
+      ${link({ icon: 'radiation', label: 'Hazards', href: APP.hazards, text: 'NASA’s hazards of spaceflight with sources, and live space weather.' })}
+    </div>`;
   }
 
   function glance(s) {
@@ -809,7 +826,7 @@ Possible cause: short sleep before the EVA</p>
         function results(q) {
           const s = store.get(); q = q.trim().toLowerCase();
           const hit = t => !q || t.toLowerCase().includes(q);
-          const pages = NAV.filter(n => hit(n.label)).map(n => ({ kind: 'Page', label: n.label, icon: n.icon, go: () => { location.hash = n.href; } }));
+          const pages = NAV.filter(n => hit(n.label)).map(n => ({ kind: 'Page', label: n.label, icon: n.icon, go: () => { if (n.href[0] === '#') location.hash = n.href; else location.href = n.href; } }));
           const cols = s.collections.filter(c => hit(c.name + ' ' + (c.description || ''))).map(c => ({ kind: 'Collection', label: c.name, icon: 'layers', go: () => { location.hash = '#/collections/' + c.id; } }));
           const cards = newest(s.cards).filter(c => hit(c.title + ' ' + (c.notes || ''))).map(c => ({ kind: typeOf(c.type).label, label: c.title, icon: typeOf(c.type).icon, go: () => openCard(c.id) }));
           return (q ? cards.concat(cols, pages) : pages.concat(cards.slice(0, 5))).slice(0, 12);
@@ -910,16 +927,16 @@ Possible cause: short sleep before the EVA</p>
         confirmBox({ title: 'Clear all data?', confirm: 'Clear everything', text: 'Every card and collection in this browser will be deleted. Export first if you want a copy.', onConfirm() { store.update(s => { s.cards = []; s.collections = []; }); toast('All data cleared'); } });
         break;
       case 'launch':
-        // with an environment chosen, open the crew health app; otherwise the picker comes first
-        if (store.get().env) location.href = APP_URL;
-        else location.hash = '#/dashboard';
+        // no environment yet: the dashboard address shows the picker first
+        location.hash = '#/dashboard';
         break;
       case 'launch-env': {
         const env = envOf(el.dataset.env);
         if (!env) break;
         const changed = store.get().env !== env.id;
         store.update(s => { s.env = env.id; });
-        location.href = APP_URL;
+        location.hash = '#/dashboard';
+        toast(changed ? `${env.name} selected` : `Opening ${env.name}`);
         break;
       }
       case 'scroll-to': {
@@ -977,8 +994,6 @@ Possible cause: short sleep before the EVA</p>
         topbar.classList.add('chrome-in');
         setTimeout(() => topbar.classList.remove('chrome-in'), 900);
       }
-      // a first choice goes on into the crew health app, which reads the saved environment
-      if (first) { location.href = APP_URL; return; }
       if (location.hash !== '#/dashboard') location.hash = '#/dashboard';
       else { window.scrollTo(0, 0); main.focus({ preventScroll: true }); }
       main.classList.remove('page-enter'); void main.offsetWidth; main.classList.add('page-enter');

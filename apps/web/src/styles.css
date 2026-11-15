@@ -55,16 +55,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 /* The scenery is drawn by the home site's script into .scenery (see guardian-shell.css). */
-.background-trees::before { left: -48px; }
-.background-trees::after {
-  right: -12px;
-  bottom: -5vh;
-  width: clamp(210px, 27vw, 520px);
-  background-image: url('/scenery/misty-trees-right.svg');
-  transform: scaleX(-1);
-  opacity: 0.86;
-  filter: blur(3px);
-}
 
 a { color: var(--accent-dark); text-underline-offset: 3px; }
 h1, h2, h3 { line-height: 1.25; margin: 0; color: var(--ink-strong); }

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { App } from './App'
 import './styles.css'
 import './guardian-shell.css'
+import './guardian-pages.css'
 import { renderScenery } from './guardian'
 
 renderScenery()
