@@ -236,7 +236,7 @@ const SOFTWARE_CITATIONS = [
     name: 'open-anatomy-3d — male and female anatomy models (v0.1.0)',
     license: 'Models CC BY 4.0; code MIT',
     url: 'https://github.com/MervinR07/open-anatomy-3d',
-    usage: 'The rotatable 3D body with organs, skeleton and muscles on the Crew Triage page. Unmodified; the app only colours it. Credit: Anatomy: BodyParts3D © The Database Center for Life Science (CC BY 4.0); female organs: Human Reference Atlas 3D Reference Organs, HuBMAP (CC BY 4.0); female body: MakeHuman (CC0). Modified by open-anatomy-3d, CC BY 4.0. For education and visualisation, not diagnosis.',
+    usage: 'The rotatable 3D body with skeleton and muscles on the Crew Triage page. The model files are unmodified; when showing them the app colours the body, leaves out the organs, vessels and nerves, and smooths the skin for modesty. Credit: Anatomy: BodyParts3D © The Database Center for Life Science (CC BY 4.0); female organs: Human Reference Atlas 3D Reference Organs, HuBMAP (CC BY 4.0); female body: MakeHuman (CC0). Modified by open-anatomy-3d, CC BY 4.0. For education and visualisation, not diagnosis.',
   },
   {
     name: '3D Male Base Mesh (orange-juice-games; GitHub reupload by BoQsc)',
@@ -268,7 +268,7 @@ export function CitationsPage() {
   return (
     <div className="stack" style={{ gap: 16 }}>
       <Card
-        title="📚 Citations, NASA Data Sources & Open-Source Licenses"
+        title="Citations, NASA Data Sources & Open-Source Licenses"
         actions={<span className="badge">2026 NASA Space Apps Challenge · Apache-2.0 Licensed</span>}
       >
         <p className="muted">
@@ -276,7 +276,7 @@ export function CitationsPage() {
         </p>
       </Card>
 
-      <Card title="🛰️ NASA, NOAA & Space Biomedical Datasets">
+      <Card title="NASA, NOAA & Space Biomedical Datasets">
         <div className="table-wrap" style={{ maxHeight: 'none' }}>
           <table className="data">
             <thead>
@@ -307,7 +307,7 @@ export function CitationsPage() {
         </div>
       </Card>
 
-      <Card title="🤖 AI Models & Open-Source Software Stack">
+      <Card title="AI Models & Open-Source Software Stack">
         <div className="table-wrap" style={{ maxHeight: 'none' }}>
           <table className="data">
             <thead>
@@ -336,7 +336,7 @@ export function CitationsPage() {
         </div>
       </Card>
 
-      <Card title="⚖️ Medical Disclaimer & Measurement Error Transparency">
+      <Card title="Medical Disclaimer & Measurement Error Transparency">
         <ul className="compact-list">
           <li>
             <strong>Not a Medical Device:</strong> Mission Baseline is an educational and exploratory crew health decision-support prototype created for the 2026 NASA Space Apps Challenge. It never diagnoses, treats, or prescribes.
