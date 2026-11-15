@@ -58,11 +58,13 @@ fi
 ip="$(curl -fs -H 'Metadata-Flavor: Google' 'http://metadata.google.internal/computeMetadata/v1/instance/network-interfaces/0/ip' 2>/dev/null || hostname -I | awk '{print $1}')"
 
 cd ai/model_server
-BIND_IP="$ip" MODEL_DIR="$dir" $docker compose up -d
+# Compose reads these from its .env file, so they survive `sudo docker` (which drops environment variables) and later restarts.
+printf 'BIND_IP=%s\nMODEL_DIR=%s\n' "$ip" "$dir" > .env
+$docker compose up -d
 for _ in $(seq 1 60); do curl -fs "http://$ip:11434/api/version" >/dev/null && break; sleep 2; done
 echo "Registering the model with Ollama..."
 if [ "$kind" = tar ]; then
-  $docker compose exec -T ollama tar -xf "/models/$tar_name" -C /root/.ollama/models
+  $docker compose exec -T ollama sh -c "mkdir -p /root/.ollama/models && tar -xf /models/$tar_name -C /root/.ollama/models"
   $docker compose restart ollama
   for _ in $(seq 1 60); do curl -fs "http://$ip:11434/api/version" >/dev/null && break; sleep 2; done
 else
