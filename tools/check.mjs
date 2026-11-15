@@ -80,6 +80,12 @@ async function shot(name) {
   const r = await send('Page.captureScreenshot', { format: 'png' });
   fs.writeFileSync(path.join(shots, name + '.png'), Buffer.from(r.data, 'base64'));
 }
+async function fullShot(name) {
+  const h = await ev('Math.ceil(document.documentElement.scrollHeight)');
+  const w = await ev('innerWidth');
+  const r = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true, clip: { x: 0, y: 0, width: w, height: h, scale: 1 } });
+  fs.writeFileSync(path.join(shots, name + '.png'), Buffer.from(r.data, 'base64'));
+}
 async function rect(sel) {
   return ev(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; })()`);
 }
@@ -120,10 +126,10 @@ try {
   check('Ship keeps orbiting while loading', th2 - th1 > 0.6, `moved ${(th2 - th1).toFixed(2)} rad in 0.7 s`);
   await shot('02-loading-orbit');
   check('App is not interactive under the loader', await ev(`document.getElementById('main').inert && document.getElementById('topbar').inert`));
-  const marsCard = await rect('.env-card[data-env=mars]');
+  const marsCard = await rect('.home-env[data-env=mars]');
   await clickAt(marsCard.cx, marsCard.cy);
   await sleep(150);
-  check('A click during loading does nothing', await ev(`!document.querySelector('.env-card.is-selected') && !document.querySelector('.modal')`));
+  check('A click during loading does nothing', await ev(`location.hash === '' && !JSON.parse(localStorage.getItem('still.v1') || '{}').env && !document.querySelector('.modal')`));
 
   await ev('Still.releaseIntro()');
   await sleep(380); await shot('03-reveal-start');
@@ -143,13 +149,26 @@ try {
   check('Same element moved (one mark in the page)', await ev(`document.querySelectorAll('.mark').length === 1`));
   check('Ship parked at the logo pose', await ev(`Math.abs(Still.mark.theta - 0.42) < 1e-6`));
   check('Loader removed, app interactive', await ev(`!document.getElementById('loader') && !document.getElementById('main').inert && !document.documentElement.classList.contains('intro-active')`));
-  check('Header bar visible with only the logo', await ev(`getComputedStyle(document.querySelector('.topbar__glass')).opacity === '1' && getComputedStyle(document.querySelector('.nav')).display === 'none' && getComputedStyle(document.querySelector('.topbar__actions')).display === 'none'`));
+  check('Home header: logo, section links and Launch, no app nav', await ev(`getComputedStyle(document.querySelector('.topbar__glass')).opacity === '1' && getComputedStyle(document.querySelector('.nav')).display === 'none' && getComputedStyle(document.querySelector('.land-nav')).display === 'flex' && getComputedStyle(document.querySelector('#landLaunch')).opacity === '1'`));
   check('Logo uses day colours', await ev(`document.querySelector('.mark').classList.contains('is-day')`));
   check('Guardian brand: emblem, wordmark and title', await ev(`document.querySelector('.brand__name').textContent === 'GUARDIAN' && document.title.endsWith('· Guardian') && getComputedStyle(document.querySelector('.mark__emblem--navy')).opacity === '1'`));
   check('Ship has landed into the emblem', await ev(`getComputedStyle(document.querySelector('.mark__ship')).opacity === '0'`));
 
-  /* ---------------- environment picker comes straight after the loader */
-  check('Picker shown, not the dashboard', await ev(`document.querySelector('h1').textContent === 'Where is your crew?' && !document.querySelector('.hero, .glance, .recent')`));
+  /* ---------------- the public home page comes straight after the loader */
+  check('Home page shown after the loader', await ev(`location.hash === '' && document.querySelector('h1').textContent.startsWith('Watching over the crew') && !document.querySelector('.hero, .glance, .env-card')`));
+  check('Home tells the story: environments, the five hazards, how it works, a final call', await ev(`document.querySelectorAll('.home-env').length === 4 && document.querySelectorAll('.hazard').length === 5 && !!document.getElementById('how') && !!document.querySelector('.home-final [data-action=launch]')`));
+  check('Home body text is at least 14px and the lead 16px+', await ev(`parseFloat(getComputedStyle(document.querySelector('.home-lead')).fontSize) >= 16 && [...document.querySelectorAll('.hazard__text, .home-env__line, .steps p')].every(p => parseFloat(getComputedStyle(p).fontSize) >= 14)`));
+  await fullShot('05b-home-full');
+  await click('.land-nav__link[data-target="how"]');
+  await sleep(900);
+  check('Section link scrolls to How it works', await ev(`Math.abs(document.getElementById('how').getBoundingClientRect().top - 100) < 40`));
+  await ev('window.scrollTo(0, 0)');
+  await sleep(200);
+  await click('#landLaunch');
+  await sleep(300);
+
+  /* ---------------- environment picker before the dashboard */
+  check('Launch shows the picker, not the dashboard',await ev(`document.querySelector('h1').textContent === 'Where is your crew?' && !document.querySelector('.hero, .glance, .recent')`));
   check('Four environments in order: ISS, Mars, Moon, Spacecraft', await ev(`[...document.querySelectorAll('.env-card')].map(c => c.dataset.env).join() === 'iss,mars,moon,spacecraft'`));
   check('Every photo loaded', await ev(`[...document.querySelectorAll('.env-card img')].every(i => i.complete && i.naturalWidth >= 1200)`));
   check('Each photo sits above its name and text', await ev(`[...document.querySelectorAll('.env-card')].every(c => c.querySelector('.env-card__media').getBoundingClientRect().bottom <= c.querySelector('.env-card__name').getBoundingClientRect().top)`));
@@ -177,7 +196,7 @@ try {
   await shot('06b-picker-selected');
   await click('.env__actions [type=submit]');
   await sleep(900);
-  check('Continue opens the dashboard', await ev(`location.hash === '#/' && document.querySelector('h1').textContent === 'Dashboard' && !!document.querySelector('.hero')`));
+  check('Continue opens the dashboard', await ev(`location.hash === '#/dashboard' &&document.querySelector('h1').textContent === 'Dashboard' && !!document.querySelector('.hero')`));
   check('Choice saved', await ev(`JSON.parse(localStorage.getItem('still.v1')).env === 'mars'`));
   check('Nav and actions appear after the choice', await ev(`getComputedStyle(document.querySelector('.nav')).display !== 'none' && getComputedStyle(document.querySelector('.nav')).opacity === '1'`));
   check('Header pill and hero name the environment', await ev(`document.querySelector('#envPill').textContent.trim() === 'Mars' && document.querySelector('.hero__eyebrow').textContent.includes('Mars')`));
@@ -187,7 +206,10 @@ try {
   await load(pageUrl);
   await waitFor('Still.introDone === true', 12000);
   await sleep(300);
-  check('Reopen: saved environment loads, no picker', await ev(`document.querySelector('h1').textContent === 'Dashboard' && document.querySelector('#envPill').textContent.trim() === 'Mars'`));
+  check('Reopen: home knows the saved environment', await ev(`document.querySelector('.home-env.is-current').dataset.env === 'mars' && document.querySelector('#landLaunch').getAttribute('aria-label') === 'Open dashboard'`));
+  await click('#landLaunch');
+  await sleep(400);
+  check('Reopen: straight to the dashboard, no picker', await ev(`document.querySelector('h1').textContent === 'Dashboard' && document.querySelector('#envPill').textContent.trim() === 'Mars'`));
   await shot('06d-reopened');
 
   /* ---------------- change it any time */
@@ -207,12 +229,19 @@ try {
   await sleep(200);
   await click('.env__actions a.btn');
   await sleep(250);
-  check('Cancel keeps the choice', await ev(`location.hash === '#/' && JSON.parse(localStorage.getItem('still.v1')).env === 'moon'`));
+  check('Cancel keeps the choice', await ev(`location.hash === '#/dashboard' && JSON.parse(localStorage.getItem('still.v1')).env === 'moon'`));
 
   /* ---------------- the logo as a home link */
   await click('#brand');
   await sleep(300);
-  check('Logo on home: stays home, no replay', await ev(`(location.hash === '' || location.hash === '#/') && !document.getElementById('loader') && document.querySelector('h1').textContent === 'Dashboard'`));
+  const HOME = `document.querySelector('h1').textContent.startsWith('Watching over the crew')`;
+  check('Logo goes to the home page, no replay', await ev(`location.hash === '#/' && !document.getElementById('loader') && ${HOME}`));
+  await ev('window.scrollTo(0, 600)');
+  await click('#brand');
+  await sleep(900);
+  check('Logo on the home page scrolls to the top', await ev(`location.hash === '#/' && window.scrollY === 0 && !document.getElementById('loader')`));
+  await ev(`location.hash = '#/dashboard'`);
+  await sleep(250);
   await click('[data-nav="cards"]');
   await sleep(200);
   check('Nav goes to My cards', await ev(`location.hash === '#/cards' && document.querySelector('h1').textContent === 'My cards'`));
@@ -227,9 +256,11 @@ try {
   check('Ship returns to its pose after hover', await ev(`Math.abs(Still.mark.theta - 0.42) < 1e-6`));
   await click('#brand');
   await sleep(250);
-  check('Logo from another page goes home without the intro', await ev(`location.hash === '#/' && document.querySelector('h1').textContent === 'Dashboard' && !document.getElementById('loader')`));
+  check('Logo from another page goes home without the intro', await ev(`location.hash === '#/' && ${HOME} && !document.getElementById('loader')`));
   const slot2 = await rect('#brandSlot');
   check('Logo stays in the same place across pages', near(slot2.x, slot.x, 0.5) && near(slot2.y, slot.y, 0.5));
+  await ev(`location.hash = '#/dashboard'`);
+  await sleep(250);
 
   /* ---------------- add a card */
   await click('.topbar .btn--add');
@@ -257,7 +288,8 @@ try {
     check(`Route ${hash} renders`, await ev(`document.querySelector('h1').textContent === ${JSON.stringify(h1)}`));
     await shot('08-' + hash.slice(2));
   }
-  await ev(`location.hash = '#/'`);
+  await ev(`location.hash = '#/dashboard'`);
+  await sleep(200);
   await ev(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))`);
   await sleep(200);
   await type('heart');
@@ -286,7 +318,7 @@ try {
     if (name === 'phone' || name === 'tablet') {
       // the picker at this size: stacked cards, photo above each, Continue always reachable
       await ev(`(() => { const s = JSON.parse(localStorage.getItem('still.v1')); s.env = null; s.intro = false; localStorage.setItem('still.v1', JSON.stringify(s)); })()`);
-      await load(pageUrl + '#/');
+      await load(pageUrl + '#/dashboard');
       await sleep(400);
       const perRow = name === 'phone' ? 1 : 2;
       check(`${name}: picker shows ${perRow} card${perRow > 1 ? 's' : ''} per row`, await ev(`(() => { const r = [...document.querySelectorAll('.env-card')].map(c => Math.round(c.getBoundingClientRect().top)); return new Set(r).size === ${4 / perRow}; })()`));

@@ -33,7 +33,12 @@
     task: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="m8 12 3 3 5-6"/>',
     eye: '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>',
     megaphone: '<path d="M4 10v4h3l7 4V6l-7 4z"/><path d="M17.5 9a4 4 0 0 1 0 6"/>',
-    folder: '<path d="M3.5 7a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>'
+    radiation: '<circle cx="12" cy="12" r="1.8"/><path d="M12 10.2V3.5a8.5 8.5 0 0 1 7.4 4.3l-5.8 3.3M10.4 12.9l-5.8 3.3a8.5 8.5 0 0 1 0-8.4l5.8 3.3M13.6 12.9l5.8 3.3a8.5 8.5 0 0 1-7.4 4.3v-6.7"/>',
+    isolation: '<rect x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle cx="12" cy="10" r="2.6"/><path d="M7.6 17.2a4.4 4.4 0 0 1 8.8 0"/>',
+    signal: '<circle cx="12" cy="12" r="1.6"/><path d="M8.6 15.4a4.8 4.8 0 0 1 0-6.8M15.4 8.6a4.8 4.8 0 0 1 0 6.8M5.6 18.4a9 9 0 0 1 0-12.8M18.4 5.6a9 9 0 0 1 0 12.8"/>',
+    gravity: '<circle cx="12" cy="17" r="3.6"/><path d="M12 3v8.2M8.4 7.6 12 11.2l3.6-3.6"/>',
+    air: '<path d="M3.5 8.5h10a3 3 0 1 0-3-3M3.5 12.5h14a3 3 0 1 1-3 3M3.5 16.5h6"/>',
+    folder:'<path d="M3.5 7a2 2 0 0 1 2-2h4l2 2.5h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>'
   };
   S.icon = function (name, cls) {
     return '<svg class="i' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' + (P[name] || '') + '</svg>';

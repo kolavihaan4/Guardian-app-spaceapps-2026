@@ -53,7 +53,7 @@
   const gated = () => !store.get().env;
 
   const NAV = [
-    { key: 'dashboard', href: '#/', label: 'Dashboard', icon: 'dashboard' },
+    { key: 'dashboard', href: '#/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { key: 'cards', href: '#/cards', label: 'My cards', icon: 'cards', badge: true },
     { key: 'collections', href: '#/collections', label: 'Collections', icon: 'layers' },
     { key: 'library', href: '#/library', label: 'Card library', icon: 'library' },
@@ -392,7 +392,7 @@
           </label>`).join('')}
         </fieldset>
         <div class="env__actions">
-          ${first ? '' : `<a class="btn btn--ghost btn--lg" href="#/">Cancel</a>`}
+          ${first ? '' : `<a class="btn btn--ghost btn--lg" href="#/dashboard">Cancel</a>`}
           <button class="btn btn--primary btn--lg" type="submit"${current ? '' : ' disabled'}>${first ? 'Continue to dashboard' : 'Save environment'}${icon('arrowRight')}</button>
         </div>      </form>
     </section>`;
@@ -400,7 +400,7 @@
 
   function notFound() {
     return pageHead({ eyebrow: 'Guardian', title: 'Page not found', sub: 'That page is not here.' }) +
-      `<section class="panel">${emptyBlock('search', 'Nothing at this address', 'Go back to the dashboard to keep working.', `<a class="btn btn--primary" href="#/">Back to Dashboard</a>`)}</section>`;
+      `<section class="panel">${emptyBlock('search', 'Nothing at this address', 'Go back to the dashboard to keep working.', `<a class="btn btn--primary" href="#/dashboard">Back to Dashboard</a>`)}</section>`;
   }
 
   /* ---------------------------------------------------------------- router */
@@ -408,10 +408,12 @@
   function resolve(s) {
     const path = (location.hash.replace(/^#/, '') || '/').replace(/\/+$/, '') || '/';
     let m;
-    // no environment yet: every address shows the picker, never the dashboard
+    // the public home page is open to everyone
+    if (path === '/') return { key: 'home', title: 'Watching over the crew', html: viewHome(s) };
+    // no environment yet: every app address shows the picker, never the dashboard
     if (!s.env) return { key: 'environment', title: 'Choose your environment', html: viewEnvironment(s, true) };
     if (path === '/environment') return { key: 'environment', title: 'Change environment', html: viewEnvironment(s, false) };
-    if (path === '/') return { key: 'dashboard', title: 'Dashboard', html: viewDashboard(s) };
+    if (path === '/dashboard') return { key: 'dashboard', title: 'Dashboard', html: viewDashboard(s) };
     if (path === '/cards') return { key: 'cards', title: 'My cards', html: viewCards(s) };
     if (path === '/collections') return { key: 'collections', title: 'Collections', html: viewCollections(s) };
     if ((m = path.match(/^\/collections\/([\w-]+)$/))) {
@@ -431,7 +433,14 @@
     main.innerHTML = r.html;
     currentKey = r.key;
     document.title = r.title + ' · Guardian';
-    document.documentElement.classList.toggle('env-gate', !s.env);
+    document.documentElement.classList.toggle('is-landing', r.key === 'home');
+    document.documentElement.classList.toggle('env-gate', !s.env && r.key !== 'home');
+    const launch = $('#landLaunch'), envNow = envOf(s.env);
+    if (launch) {
+      launch.querySelector('.lg').textContent = envNow ? 'Open dashboard' : 'Launch assistant';
+      launch.querySelector('.sm').textContent = envNow ? 'Open' : 'Launch';
+      launch.setAttribute('aria-label', envNow ? 'Open dashboard' : 'Launch assistant');
+    }
     const env = envOf(s.env), pill = $('#envPill');
     if (pill && env) {
       pill.innerHTML = `<img src="${env.img}" alt="" width="26" height="26"><span>${env.short}</span>`;
@@ -456,6 +465,117 @@
        <button class="icon-btn icon-btn--help" data-action="guide" aria-label="Quick guide" title="Quick guide" style="--d:400ms">${icon('help')}</button>
        <button class="btn btn--primary btn--add" data-action="add-card" style="--d:440ms">${icon('plus')}<span>Add card</span></button>`;
     $('.brand__word').style.setProperty('--d', '60ms');
+    // the home page's own header: section links and the way in
+    const land = document.createElement('div');
+    land.className = 'land-nav';
+    land.id = 'landNav';
+    land.innerHTML =
+      `<nav class="land-nav__links" aria-label="Home page">
+         <button class="land-nav__link" data-action="scroll-to" data-target="challenge" style="--d:160ms">The challenge</button>
+         <button class="land-nav__link" data-action="scroll-to" data-target="environments" style="--d:205ms">Environments</button>
+         <button class="land-nav__link" data-action="scroll-to" data-target="how" style="--d:250ms">How it works</button>
+       </nav>
+       <button class="btn btn--primary land-nav__cta" id="landLaunch" data-action="launch" style="--d:300ms"><span class="lg">Launch assistant</span><span class="sm" aria-hidden="true">Launch</span>${icon('arrowRight')}</button>`;
+    topbar.appendChild(land);
+  }
+
+  /* ---------------------------------------------------------------- home page */
+  const HAZARDS = [
+    { icon: 'radiation', name: 'Radiation', text: 'Beyond Earth’s magnetic field, crews absorb more radiation, raising long-term risks to the body and brain.' },
+    { icon: 'isolation', name: 'Isolation and confinement', text: 'Small crews in tight quarters for months. Sleep, mood and teamwork all need watching.' },
+    { icon: 'signal', name: 'Distance from Earth', text: 'From Mars, a message takes up to 22 minutes each way. The crew has to catch problems themselves.' },
+    { icon: 'gravity', name: 'Gravity fields', text: 'Weightlessness thins bone and weakens muscle; moving between gravity fields upsets balance and the heart.' },
+    { icon: 'air', name: 'Hostile, closed environments', text: 'The air, water, noise, temperature and microbes inside the craft all shape the crew’s health.' }
+  ];
+  const HOME_LINES = {
+    iss: 'Microgravity, 16 sunrises a day and a crew that lives where it works.',
+    mars: 'About a third of Earth’s gravity and up to 22 minutes from an answer.',
+    moon: 'One-sixth gravity, sharp dust and nights that last two weeks.',
+    spacecraft: 'Days in a cabin the size of a van, on the way to somewhere else.'
+  };
+
+  function viewHome(s) {
+    const env = envOf(s.env);
+    return `<div class="home">
+      <section class="home-hero" aria-labelledby="page-title">
+        <p class="home-kicker">${icon('satellite')}NASA Space Apps Challenge 2026</p>
+        <h1 class="home-title" id="page-title">Watching over the crew, wherever they&nbsp;are.</h1>
+        <p class="home-lead">Guardian is a health assistant for astronauts on the space station, the Moon, Mars and in deep space. It keeps every observation about the crew in one calm place, set up for where they live.</p>
+        <div class="home-ctas">
+          <button class="btn btn--primary btn--lg" data-action="launch">${env ? `Open the ${env.short} dashboard` : 'Launch assistant'}${icon('arrowRight')}</button>
+          <button class="btn btn--ghost btn--lg" data-action="scroll-to" data-target="how">How it works</button>
+        </div>
+      </section>
+
+      <section class="home-envs" id="environments" aria-labelledby="envs-title">
+        <div class="home-head">
+          <p class="home-kicker">Four environments</p>
+          <h2 class="home-h2" id="envs-title">One assistant, set up for where the crew is.</h2>
+        </div>
+        <ul class="home-envs__list">
+          ${ENVS.map(e => `<li><button class="home-env${e.id === s.env ? ' is-current' : ''}" data-action="launch-env" data-env="${e.id}">
+            <span class="home-env__media"><img src="${e.img}" alt="${esc(e.alt)}" width="${e.w}" height="${e.h}" loading="lazy" decoding="async"></span>
+            <span class="home-env__name">${e.name}${e.id === s.env ? '<span class="home-env__badge">Your environment</span>' : ''}</span>
+            <span class="home-env__line">${HOME_LINES[e.id]}</span>
+            <span class="home-env__go">Open ${e.short}${icon('arrowRight')}</span>
+          </button></li>`).join('')}
+        </ul>
+      </section>
+
+      <section class="home-section" id="challenge" aria-labelledby="challenge-title">
+        <div class="home-head">
+          <p class="home-kicker">The challenge</p>
+          <h2 class="home-h2" id="challenge-title">Space is hard on the body.</h2>
+          <p class="home-sub">NASA plans every mission around five hazards of human spaceflight. Each one shows up differently on the station, the Moon, Mars and in transit.</p>
+        </div>
+        <ol class="hazards">
+          ${HAZARDS.map((h, i) => `<li class="hazard">
+            <span class="hazard__top">${chipIcon(h.icon)}<span class="hazard__n">0${i + 1}</span></span>
+            <h3 class="hazard__name">${h.name}</h3>
+            <p class="hazard__text">${h.text}</p>
+          </li>`).join('')}
+        </ol>
+      </section>
+
+      <section class="home-section home-how" id="how" aria-labelledby="how-title">
+        <div class="home-how__text">
+          <p class="home-kicker">How it works</p>
+          <h2 class="home-h2" id="how-title">Notice it, log it, look at it together.</h2>
+          <ol class="steps">
+            <li><span class="steps__n">1</span><div><h3>Pick the environment</h3><p>The station, the Moon, Mars or a spacecraft in transit. Guardian sets itself up for it.</p></div></li>
+            <li><span class="steps__n">2</span><div><h3>Log what you notice</h3><p>Heart rate after a spacewalk, a bad night’s sleep, a dataset to check. Crew health templates make it quick.</p></div></li>
+            <li><span class="steps__n">3</span><div><h3>Review it together</h3><p>The dashboard shows the week’s activity, collections keep related cards side by side, and search finds anything.</p></div></li>
+          </ol>
+          <button class="btn btn--primary btn--lg" data-action="launch">${env ? 'Open dashboard' : 'Start with an environment'}${icon('arrowRight')}</button>
+        </div>
+        <div class="home-preview" aria-label="Example of a card in Guardian">
+          <p class="home-preview__label">Example card</p>
+          <article class="panel card home-preview__card">
+            ${typeTag('observation')}
+            <h3 class="card__title">Crew health: heart rate after EVA</h3>
+            <p class="card__notes">Crew member: Mission specialist
+Reading: resting heart rate higher than usual the morning after the spacewalk
+Possible cause: short sleep before the EVA</p>
+            <p class="card__meta">${icon('folder')}<span>Crew vitals</span><span class="sep">·</span><span>Mars</span></p>
+          </article>
+          <div class="panel home-preview__mini">
+            ${chipIcon('pulse')}<div><p class="home-preview__k">This week</p><p class="home-preview__v">Cards by day</p></div>
+            <span class="home-preview__bars" aria-hidden="true"><i style="--h:.35"></i><i style="--h:.6"></i><i style="--h:.25"></i><i style="--h:.8"></i><i style="--h:.5"></i><i style="--h:.95"></i><i style="--h:.45"></i></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="home-final" aria-labelledby="final-title">
+        <h2 class="home-final__title" id="final-title">Your assistant is ready.</h2>
+        <p class="home-final__text">${env ? `Set up for ${env.name}.` : 'Choose an environment and start logging.'}</p>
+        <button class="btn btn--light btn--lg" data-action="launch">${env ? 'Open dashboard' : 'Launch assistant'}${icon('arrowRight')}</button>
+      </section>
+
+      <footer class="home-foot">
+        <span><strong>Guardian Space Agency</strong> · Built for the NASA Space Apps Challenge 2026</span>
+        <span>Not affiliated with NASA.</span>
+      </footer>
+    </div>`;
   }
 
   /* ---------------------------------------------------------------- toast */
@@ -787,6 +907,24 @@
       case 'clear-data':
         confirmBox({ title: 'Clear all data?', confirm: 'Clear everything', text: 'Every card and collection in this browser will be deleted. Export first if you want a copy.', onConfirm() { store.update(s => { s.cards = []; s.collections = []; }); toast('All data cleared'); } });
         break;
+      case 'launch':
+        // no environment yet: the dashboard address shows the picker first
+        location.hash = '#/dashboard';
+        break;
+      case 'launch-env': {
+        const env = envOf(el.dataset.env);
+        if (!env) break;
+        const changed = store.get().env !== env.id;
+        store.update(s => { s.env = env.id; });
+        location.hash = '#/dashboard';
+        toast(changed ? `${env.name} selected` : `Opening ${env.name}`);
+        break;
+      }
+      case 'scroll-to': {
+        const t = document.getElementById(el.dataset.target);
+        if (t) t.scrollIntoView({ behavior: reduceMotion.matches ? 'auto' : 'smooth', block: 'start' });
+        break;
+      }
       case 'replay':
         try { sessionStorage.setItem('still.forceIntro', '1'); } catch (err) { /* ignore */ }
         location.reload();
@@ -798,7 +936,7 @@
     const el = e.target;
     if ((e.key === 'Enter' || e.key === ' ') && el.matches && el.matches('[role="button"][data-action]')) { e.preventDefault(); el.click(); return; }
     const typing = el.closest && el.closest('input,textarea,select,[contenteditable]');
-    if (!S.introDone || modal || gated()) return;
+    if (!S.introDone || modal || gated() || currentKey === 'home') return;
     if ((e.key === 'k' && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !typing)) { e.preventDefault(); openSearch(); }
   });
 
@@ -837,7 +975,7 @@
         topbar.classList.add('chrome-in');
         setTimeout(() => topbar.classList.remove('chrome-in'), 900);
       }
-      if (location.hash && location.hash !== '#/' && location.hash !== '#') location.hash = '#/';
+      if (location.hash !== '#/dashboard') location.hash = '#/dashboard';
       else { window.scrollTo(0, 0); main.focus({ preventScroll: true }); }
       main.classList.remove('page-enter'); void main.offsetWidth; main.classList.add('page-enter');
       toast(first ? `${env.name} selected` : changed ? `Environment set to ${env.name}` : `Still on ${env.name}`);
@@ -866,8 +1004,8 @@
   brand.addEventListener('click', e => {
     e.preventDefault();
     if (!S.introDone) return;
-    if (gated()) { window.scrollTo({ top: 0, behavior: reduceMotion.matches ? 'auto' : 'smooth' }); return; }
-    if (currentKey === 'dashboard' && (location.hash === '' || location.hash === '#/' || location.hash === '#')) {
+    // the logo always leads to the public home page; on it, back to the top (never the opening again)
+    if (currentKey === 'home') {
       window.scrollTo({ top: 0, behavior: reduceMotion.matches ? 'auto' : 'smooth' });
     } else {
       location.hash = '#/';
