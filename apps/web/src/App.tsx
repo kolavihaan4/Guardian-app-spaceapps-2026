@@ -11,16 +11,31 @@ import { DashboardPage } from './pages/DashboardPage'
 import { PrivacyPage } from './pages/PrivacyPage'
 import { SpacePage } from './pages/SpacePage'
 
+/** `short` is the visible link text and is always contained in `label`, which stays the accessible name. */
 const ROUTES = [
-  { path: 'assessment', label: 'Crew Triage & Body Map', group: 'main' },
-  { path: 'baseline', label: 'NASA Lab Baseline', group: 'main' },
-  { path: 'space', label: 'Space Radiation & Hazards', group: 'main' },
-  { path: 'dashboard', label: 'Dynamic Vitals Charts', group: 'main' },
-  { path: 'correlation', label: 'Hazard Overlay', group: 'main' },
-  { path: 'citations', label: 'Citations & Licenses', group: 'main' },
-  { path: 'connections', label: 'Telemetry Sources', group: 'account' },
-  { path: 'privacy', label: 'Settings & Privacy', group: 'account' },
+  { path: 'assessment', label: 'Crew Triage & Body Map', short: 'Triage', group: 'main', icon: 'M12 7.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm0 0v7m-5-4.5h10m-8 11 3-6.5 3 6.5' },
+  { path: 'baseline', label: 'NASA Lab Baseline', short: 'Lab Baseline', group: 'main', icon: 'M9 3h6m-5 0v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3M7.5 15h9' },
+  { path: 'space', label: 'Space Radiation & Hazards', short: 'Hazards', group: 'main', icon: 'M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-14v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4m0-14.2-1.4 1.4M6.3 17.7l-1.4 1.4' },
+  { path: 'dashboard', label: 'Dynamic Vitals Charts', short: 'Vitals', group: 'main', icon: 'M3 12h4l3-8 4 16 3-8h4' },
+  { path: 'correlation', label: 'Hazard Overlay', short: 'Overlay', group: 'main', icon: 'm12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5m-18 4 9 5 9-5' },
+  { path: 'citations', label: 'Citations & Licenses', short: 'Citations', group: 'main', icon: 'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4Zm0 13a3 3 0 0 1 3-3h11' },
+  { path: 'connections', label: 'Telemetry Sources', short: 'Sources', group: 'account', icon: 'M10 14a4 4 0 0 0 5.7 0l3-3A4 4 0 0 0 13 5.3l-1 1m2 3.7a4 4 0 0 0-5.7 0l-3 3A4 4 0 0 0 11 18.7l1-1' },
+  { path: 'privacy', label: 'Settings & Privacy', short: 'Settings', group: 'account', icon: 'M4 6h8m4 0h4M4 12h2m4 0h10M4 18h10m4 0h2M14 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm-6 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm8 6a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z' },
 ] as const
+
+/** The wordmark from the Still template: a small mountain mark beside a lowercase serif name. */
+export function Brand() {
+  return (
+    <a className="brand" href="#/assessment" aria-label="AstroVitals, Mission Baseline">
+      <svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M2 17 8.5 6 15 17M11.5 11 15.5 5 22 17M5.7 11l2.8-4 2.8 4M3 21h18" />
+      </svg>
+      <span>
+        astrovitals<span className="brand-dot">.</span>
+      </span>
+    </a>
+  )
+}
 /** The simulated-wearable banner only belongs where wearable data is shown. */
 const WEARABLE_ROUTES: readonly string[] = ['dashboard', 'correlation', 'connections']
 type Route = (typeof ROUTES)[number]['path']
@@ -51,19 +66,16 @@ export function App() {
   return (
     <div className="shell">
       <header className="topbar">
-        <div className="brand">
-          <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden>
-            <circle cx="16" cy="16" r="14" fill="var(--accent)" />
-            <path d="M6 17h5l3-7 4 13 3-6h5" stroke="#fff" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Mission Baseline
-        </div>
+        <Brand />
         <nav className="nav" aria-label="Main">
           {ROUTES.map((r, i) => (
             <Fragment key={r.path}>
-              {r.group === 'account' && ROUTES[i - 1]?.group !== 'account' ? <span className="nav-group">System</span> : null}
-              <a href={`#/${r.path}`} aria-current={route === r.path ? 'page' : undefined}>
-                {r.label}
+              {r.group === 'account' && ROUTES[i - 1]?.group !== 'account' ? <span className="nav-divider" aria-hidden /> : null}
+              <a href={`#/${r.path}`} aria-label={r.label} title={r.label} aria-current={route === r.path ? 'page' : undefined}>
+                <svg viewBox="0 0 24 24" aria-hidden>
+                  <path d={r.icon} />
+                </svg>
+                {r.short}
               </a>
             </Fragment>
           ))}

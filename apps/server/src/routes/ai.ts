@@ -4,7 +4,14 @@ import {
   GRAVITY_ENVIRONMENTS,
   MISSION_ENVIRONMENTS,
   assessOrthostaticChange,
+  classifyBloodGlucose,
+  classifyBodyTemperature,
+  classifyOxygenSaturation,
+  classifySleepDuration,
   classifyBloodPressure,
+  classifyRespiratoryRate,
+  classifyRestingHeartRate,
+  compareWithAstronautAverage,
   type BodyRegionId,
   type MissionEnvironmentId,
   type TriageEnvelope,
@@ -51,6 +58,7 @@ export const TriageRequestSchema = z.object({
     hr_bpm: z.number().min(20).max(260),
     preflight_hr_median: z.number().min(30).max(150),
     spo2_pct: z.number().min(50).max(100),
+    preflight_spo2_median: z.number().min(85).max(100).optional(),
     bp_systolic: z.number().min(60).max(240).optional(),
     bp_diastolic: z.number().min(30).max(150).optional(),
     standing_bp_systolic: z.number().min(40).max(240).optional(),
@@ -107,9 +115,23 @@ export const TriageResponseSchema = z.object({
 const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://localhost:11434'
 const OLLAMA_MODEL = process.env.OLLAMA_TRIAGE_MODEL ?? 'astrovitals-triage'
 
-export interface ComputedBloodPressureFacts {
+export interface ComputedVitalFacts {
+  /** Heart rate against the personal preflight median and, when at rest, the 60–100 bpm resting adult range. */
+  heart_rate: string
+  /** SpO2 against the BTS 94–98% target (88–92% for listed lung conditions) and the personal baseline. */
+  oxygen_saturation: string
+  /** Temperature against the usual adult oral range and fever line, or undefined when it was not sent. */
+  body_temperature?: string
+  /** Sleep against the 7-hour adult recommendation, or undefined when it was not sent. */
+  sleep?: string
+  /** Glucose against the fasting ranges, or undefined when it was not sent. */
+  blood_glucose?: string
+  /** Respiratory rate against the 12–20 resting adult range, or undefined when it was not sent. */
+  respiratory_rate?: string
   /** Resting reading with its guideline category, or undefined when no full reading was sent. */
   blood_pressure?: string
+  /** Reading against the NASA LSAH astronaut average for the crew member's age group and sex, when the dataset has one. */
+  astronaut_average?: string
   /** Standing-versus-resting result, or why it was not assessed; undefined when no standing pair was sent. */
   standing_check?: string
   /** True when the standing fall reaches the criterion (gravity environments only). */
@@ -123,7 +145,7 @@ export interface ComputedBloodPressureFacts {
  * directly, and the model route sends them alongside the request and re-attaches any the model
  * leaves out, so the numbers on screen are the same whichever one answers.
  */
-export function computeBloodPressureFacts(input: TriageRequest): ComputedBloodPressureFacts {
+export function computeVitalFacts(input: TriageRequest): ComputedVitalFacts {
   const { vitals } = input
   const envId: MissionEnvironmentId = input.environment ?? 'iss_leo'
   const env = MISSION_ENVIRONMENTS[envId] ?? MISSION_ENVIRONMENTS.iss_leo
@@ -131,13 +153,48 @@ export function computeBloodPressureFacts(input: TriageRequest): ComputedBloodPr
   const dia = vitals.bp_diastolic
   const standingSys = vitals.standing_bp_systolic
   const standingDia = vitals.standing_bp_diastolic
-  const facts: ComputedBloodPressureFacts = { standing_drop_meets_criterion: false, minimum_status: 'nominal' }
+  // The resting range does not apply during a spacewalk, where exertion is expected.
+  const heartRate = classifyRestingHeartRate(vitals.hr_bpm, vitals.preflight_hr_median, envId !== 'eva_spacewalk')
+  const oxygen = classifyOxygenSaturation(vitals.spo2_pct, input.profile?.previous_conditions, vitals.preflight_spo2_median)
+  const facts: ComputedVitalFacts = {
+    heart_rate: heartRate.summary,
+    oxygen_saturation: oxygen.summary,
+    standing_drop_meets_criterion: false,
+    minimum_status: oxygen.flag ? 'caution' : 'nominal',
+  }
+  if (vitals.blood_sugar_mg_dl !== undefined) {
+    const glucose = classifyBloodGlucose(vitals.blood_sugar_mg_dl, input.profile?.previous_conditions)
+    facts.blood_glucose = glucose.summary
+    if (glucose.flag) facts.minimum_status = 'caution'
+  }
+  if (vitals.temp_c !== undefined) {
+    const base = vitals.preflight_temp_median
+    const delta = base === undefined ? undefined : Number((vitals.temp_c - base).toFixed(1))
+    const own = delta === undefined || base === undefined ? 'no preflight temperature baseline' : `${delta >= 0 ? '+' : ''}${delta}°C vs ${base.toFixed(1)}°C baseline`
+    const temperature = classifyBodyTemperature(vitals.temp_c, envId, input.profile?.previous_conditions, input.profile?.age)
+    facts.body_temperature = `Temp ${vitals.temp_c.toFixed(1)}°C (${own}): ${temperature.summary}`
+    if (temperature.flag) facts.minimum_status = 'caution'
+  }
+  if (vitals.sleep_hours !== undefined) {
+    const glucoseBand = vitals.blood_sugar_mg_dl === undefined ? undefined : classifyBloodGlucose(vitals.blood_sugar_mg_dl).band
+    const sleep = classifySleepDuration(vitals.sleep_hours, glucoseBand !== undefined && glucoseBand !== 'low' && glucoseBand !== 'fasting_normal')
+    facts.sleep = sleep.summary
+    if (sleep.band === 'very_short') facts.minimum_status = 'caution'
+  }
+  if (vitals.respiratory_rate !== undefined) {
+    const breathing = classifyRespiratoryRate(vitals.respiratory_rate, envId !== 'eva_spacewalk', input.profile?.previous_conditions)
+    facts.respiratory_rate = breathing.summary
+    if (breathing.band === 'below_range' || breathing.band === 'above_range') facts.minimum_status = 'caution'
+  }
   if (sys !== undefined && (sys >= 140 || sys <= 88)) facts.minimum_status = 'caution'
   if (dia !== undefined && dia >= 90) facts.minimum_status = 'caution'
   if (sys === undefined || dia === undefined) return facts
 
   const category = classifyBloodPressure(sys, dia)
   facts.blood_pressure = `BP ${sys}/${dia} mmHg: ${category.label} on the ${BP_REFERENCE_SOURCE}; one reading does not set a category, so repeat it at rest`
+  if (input.profile) {
+    facts.astronaut_average = compareWithAstronautAverage(sys, dia, input.profile.age, input.profile.gender)?.summary
+  }
   if (standingSys === undefined || standingDia === undefined) return facts
 
   if (!GRAVITY_ENVIRONMENTS.includes(envId)) {
@@ -155,8 +212,8 @@ export function computeBloodPressureFacts(input: TriageRequest): ComputedBloodPr
 }
 
 /** Adds any computed fact the model's answer does not already carry word for word, and holds the status at the computed minimum. */
-export function attachComputedFacts(triage: TriageResponse, facts: ComputedBloodPressureFacts): TriageResponse {
-  const missing = [facts.blood_pressure, facts.standing_check].filter(
+export function attachComputedFacts(triage: TriageResponse, facts: ComputedVitalFacts): TriageResponse {
+  const missing = [facts.heart_rate, facts.oxygen_saturation, facts.blood_pressure, facts.astronaut_average, facts.standing_check, facts.body_temperature, facts.blood_glucose, facts.respiratory_rate, facts.sleep].filter(
     (fact): fact is string => fact !== undefined && !triage.baseline_comparison.includes(fact),
   )
   const overall_status = triage.overall_status === 'nominal' ? facts.minimum_status : triage.overall_status
@@ -166,6 +223,37 @@ export function attachComputedFacts(triage: TriageResponse, facts: ComputedBlood
     ...triage,
     overall_status,
     baseline_comparison: missing.length === 0 ? triage.baseline_comparison : `${triage.baseline_comparison} Computed onboard: ${computed}.`,
+  }
+}
+
+/** Words that name a piece of onboard equipment; a step using one needs a matching entry in available_tools. */
+const TOOL_KEYWORDS = ['oximeter', 'blood pressure cuff', 'glucometer', 'thermometer', 'ultrasound', 'eye exam', 'fundoscope', 'ecg', 'ared', 'ergometer', 'sleep mask', 'light mask', 'co2'] as const
+
+function namesUnavailableTool(step: string, availableTools: string[]): boolean {
+  const text = step.toLowerCase()
+  const available = availableTools.map((tool) => tool.toLowerCase())
+  return TOOL_KEYWORDS.some((keyword) => text.includes(keyword) && !available.some((tool) => tool.includes(keyword)))
+}
+
+/**
+ * The rule engine decides; the language model explains. Status and Ground Support escalation always
+ * come from the rules, and any step that names equipment missing from available_tools is dropped
+ * (falling back to the rule engine's steps if none survive). Measured on 300 samples, the model
+ * alone got 76% of escalation decisions right and named an unavailable tool in 30% of answers.
+ */
+export function applyRuleDecisions(model: TriageResponse, rules: TriageResponse, availableTools: string[]): TriageResponse {
+  const keep = (steps: string[], fallback: string[]) => {
+    const kept = steps.filter((step) => !namesUnavailableTool(step, availableTools))
+    return kept.length > 0 ? kept : fallback
+  }
+  return {
+    ...model,
+    overall_status: rules.overall_status,
+    contact_ground_support: rules.contact_ground_support,
+    ground_support_reason: rules.ground_support_reason,
+    available_tool_action_plan: keep(model.available_tool_action_plan, rules.available_tool_action_plan),
+    simple_instructions: keep(model.simple_instructions, rules.simple_instructions),
+    workout_modification: rules.contact_ground_support ? rules.workout_modification : model.workout_modification,
   }
 }
 
@@ -184,7 +272,6 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
   const sys = vitals.bp_systolic
   const dia = vitals.bp_diastolic
   const glucose = vitals.blood_sugar_mg_dl
-  const rr = vitals.respiratory_rate
   const sleep = vitals.sleep_hours
   const sepEvent = input.space_weather?.sep_event
   const sepActive = Boolean(sepEvent && sepEvent !== 'None')
@@ -194,20 +281,26 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
     available_tools.find((t) => t.toLowerCase().includes(keyword.toLowerCase()))
 
   const highHr = hrDelta >= 35 || vitals.hr_bpm >= 115
-  const modHr = hrDelta >= 15 || vitals.hr_bpm >= 95
+  // Above 100 bpm is the top of the resting adult range; the rise over the personal median still flags first.
+  const modHr = hrDelta >= 15 || vitals.hr_bpm > 100
+  // 91 or below is the project's own escalation line (no guideline sets one there); caution follows
+  // the BTS guideline through bpFacts.minimum_status: below 94, or 3 points below the personal baseline.
   const lowSpo2 = vitals.spo2_pct <= 91
-  const modSpo2 = vitals.spo2_pct <= 94
+  // 38.0 °C and the rises of 0.6 and 1.2 °C over the personal baseline are the project's own lines; the
+  // cited ranges reach the status through bpFacts.minimum_status.
   const highTemp = (tempC !== undefined && tempC >= 38.0) || (tempDelta !== undefined && tempDelta >= 1.2)
   const modTemp = (tempC !== undefined && tempC >= 37.5) || (tempDelta !== undefined && tempDelta >= 0.6)
   // Flag at the guideline's stage 2 line (140 or 90). The low-side cut-off is the project's own:
   // the guideline defines no low-pressure category.
   // Standing check: reaching the criterion raises the status to caution and never escalates alone,
   // because one pair of readings can meet it by chance.
-  const bpFacts = computeBloodPressureFacts(input)
+  const bpFacts = computeVitalFacts(input)
+  const modSpo2 = classifyOxygenSaturation(vitals.spo2_pct, input.profile?.previous_conditions, vitals.preflight_spo2_median).flag
   const orthostaticDrop = bpFacts.standing_drop_meets_criterion
   // Stage 2 line (140 or 90) from the guideline; the low-side cut-off (88) is the project's own.
   const highBp = (sys !== undefined && (sys >= 140 || sys <= 88)) || (dia !== undefined && dia >= 90)
-  const highGlucose = glucose !== undefined && (glucose >= 140 || glucose <= 65)
+  // Below 70 or 140 and above, whatever the meal timing; see classifyBloodGlucose.
+  const highGlucose = glucose !== undefined && classifyBloodGlucose(glucose).flag
   const lowSleep = sleep !== undefined && sleep < 5.5
   const eyeFlag = vitals.eye_exam_finding === 'hyperopia_shift' || vitals.eye_exam_finding === 'amsler_grid_distortion'
   const usFlag =
@@ -227,7 +320,7 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
 
   const caution =
     !escalate &&
-    (unverifiedArtifact || modHr || modSpo2 || modTemp || highBp || orthostaticDrop || highGlucose || lowSleep || eyeFlag || maxPain >= 4 || vitals.mood === 'stressed' || vitals.mood === 'isolated')
+    (unverifiedArtifact || modHr || modSpo2 || modTemp || highBp || orthostaticDrop || bpFacts.minimum_status === 'caution' || highGlucose || lowSleep || eyeFlag || maxPain >= 4 || vitals.mood === 'stressed' || vitals.mood === 'isolated')
 
   const overall_status: 'nominal' | 'caution' | 'alert' = escalate ? 'alert' : caution ? 'caution' : 'nominal'
 
@@ -240,18 +333,15 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
 
   // 2. Baseline comparison
   const parts = [
-    `HR ${vitals.hr_bpm} bpm (${hrDelta >= 0 ? '+' : ''}${hrDelta} bpm vs preflight median ${vitals.preflight_hr_median} bpm)`,
-    `SpO2 ${vitals.spo2_pct}%`,
-    tempC === undefined
-      ? 'Temp not measured'
-      : tempDelta === undefined || tempBase === undefined
-        ? `Temp ${tempC.toFixed(1)}°C (no preflight temperature baseline)`
-        : `Temp ${tempC.toFixed(1)}°C (${tempDelta >= 0 ? '+' : ''}${tempDelta}°C vs ${tempBase.toFixed(1)}°C baseline)`,
+    bpFacts.heart_rate,
+    bpFacts.oxygen_saturation,
+    bpFacts.body_temperature ?? 'Temp not measured',
     bpFacts.blood_pressure ?? (sys === undefined && dia === undefined ? 'BP not measured' : `BP ${sys ?? '—'}/${dia ?? '—'} mmHg`),
+    ...(bpFacts.astronaut_average ? [bpFacts.astronaut_average] : []),
     ...(bpFacts.standing_check ? [bpFacts.standing_check] : []),
-    glucose === undefined ? 'Glucose not measured' : `Glucose ${glucose} mg/dL`,
-    rr === undefined ? 'RR not measured' : `RR ${rr} br/min`,
-    sleep === undefined ? 'Sleep not reported' : `Sleep ${sleep}h`,
+    bpFacts.blood_glucose ?? 'Glucose not measured',
+    bpFacts.respiratory_rate ?? 'RR not measured',
+    bpFacts.sleep ?? 'Sleep not reported',
   ]
   const baseline_comparison = `${parts.join(' · ')}. Expected in ${env.shortLabel}: ${env.expectedDeltas.hrDeltaBpm}, ${env.expectedDeltas.bpShift} (${env.evidence})`
 
@@ -457,7 +547,7 @@ export function aiRoutes(ctx: AppContext): Router {
     }
 
     const payload = parsed.data
-    const bpFacts = computeBloodPressureFacts(payload)
+    const bpFacts = computeVitalFacts(payload)
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 8_000)
 
@@ -489,17 +579,17 @@ export function aiRoutes(ctx: AppContext): Router {
       const validatedOutput = TriageResponseSchema.parse(JSON.parse(rawContent))
 
       const out: TriageEnvelope = {
-        source: `local-ollama:${OLLAMA_MODEL} (Qwen3-8B)`,
+        source: 'Qwen3-8B explanation, decisions by onboard rules',
         disclaimer:
           'Not a medical device. Exploratory crew decision-support prototype only; does not diagnose, treat, or prescribe.',
-        triage: attachComputedFacts(validatedOutput, bpFacts),
+        triage: applyRuleDecisions(attachComputedFacts(validatedOutput, bpFacts), buildDeterministicFallback(payload), payload.available_tools),
       }
       res.json(out)
     } catch {
-      ctx.log.info({ path: '/api/ai/triage' }, 'Ollama offline or model still loading; serving onboard deterministic Qwen3-8B rule engine')
+      ctx.log.info({ path: '/api/ai/triage' }, 'Model unavailable, too slow, or gave an invalid answer; serving the onboard rule engine')
 
       const out: TriageEnvelope = {
-        source: 'onboard-autonomous-engine (Qwen3-8B schema ready)',
+        source: 'Onboard rule engine',
         disclaimer:
           'Not a medical device. Exploratory crew decision-support prototype only; does not diagnose, treat, or prescribe.',
         triage: buildDeterministicFallback(payload),

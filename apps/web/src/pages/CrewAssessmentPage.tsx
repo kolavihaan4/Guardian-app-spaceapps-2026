@@ -13,9 +13,11 @@ import {
   type UltrasoundFinding,
   BP_REFERENCE_SOURCE,
   GRAVITY_ENVIRONMENTS,
+  LSAH_REFERENCE_SOURCE,
   classifyBloodPressure,
+  compareWithAstronautAverage,
 } from '@astrovitals/shared'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Card, useAsync } from '../components/common'
 import { api } from '../lib/api'
 
@@ -148,6 +150,10 @@ function vitalBand(
   return 'alert'
 }
 
+// three.js is large, so the 3D body loads only when the triage page shows it.
+const Body3D = lazy(() => import('../components/Body3D'))
+const Anatomy3D = lazy(() => import('../components/Anatomy3D'))
+
 export function CrewAssessmentPage() {
   // 1. Mission Environment (Whiteboard Feature #1, #6, #20)
   const [environment, setEnvironment] = useState<MissionEnvironmentId>('iss_leo')
@@ -165,6 +171,10 @@ export function CrewAssessmentPage() {
   const [preflightHr, setPreflightHr] = useState<number>(60)
   const [bpSys, setBpSys] = useState<number>(118)
   const [bpDia, setBpDia] = useState<number>(76)
+  // The 3D body is the default; it switches itself off if WebGL or the model is unavailable.
+  const [use3d, setUse3d] = useState(true)
+  // The detailed anatomy model is tried first; if it cannot load, the simpler figure takes over.
+  const [useAnatomy, setUseAnatomy] = useState(true)
   // Optional standing reading; empty means it was not taken, so nothing is sent.
   const [standSys, setStandSys] = useState<string>('')
   const [standDia, setStandDia] = useState<string>('')
@@ -172,6 +182,8 @@ export function CrewAssessmentPage() {
   const [tempC, setTempC] = useState<number>(36.8)
   const [preflightTemp, setPreflightTemp] = useState<number>(36.7)
   const [spo2Pct, setSpo2Pct] = useState<number>(98)
+  // Optional personal baseline; empty means none is known, so nothing is sent.
+  const [spo2Baseline, setSpo2Baseline] = useState<string>('')
   const [respRate, setRespRate] = useState<number>(14)
   const [sleepHours, setSleepHours] = useState<number>(7.5)
   const [mood, setMood] = useState<MoodStatus>('optimal')
@@ -264,6 +276,7 @@ export function CrewAssessmentPage() {
           hr_bpm: hrBpm,
           preflight_hr_median: preflightHr,
           spo2_pct: spo2Pct,
+          ...(spo2Baseline !== '' ? { preflight_spo2_median: Number(spo2Baseline) } : {}),
           bp_systolic: bpSys,
           bp_diastolic: bpDia,
           ...(standSys !== '' && standDia !== ''
@@ -392,6 +405,7 @@ export function CrewAssessmentPage() {
   // Color coding status calculations for each vital indicator (Whiteboard #8)
   const hrStatus = vitalBand(hrBpm, preflightHr - 10, preflightHr + 15, preflightHr - 18, preflightHr + 34)
   const bpCategory = classifyBloodPressure(bpSys, bpDia)
+  const astronautAverage = compareWithAstronautAverage(bpSys, bpDia, age, gender)
   // Colour follows the guideline category; the low side keeps the project's own cut-offs.
   const bpStatus: 'nominal' | 'caution' | 'alert' =
     bpCategory.category === 'stage_2' || bpSys < 88
@@ -399,11 +413,11 @@ export function CrewAssessmentPage() {
       : bpCategory.category !== 'normal' || bpSys < 95
         ? 'caution'
         : 'nominal'
-  const spo2Status = vitalBand(spo2Pct, 95, 100, 92, 100)
-  const tempStatus = vitalBand(tempC, 36.1, 37.3, 35.6, 37.9)
-  const glucStatus = vitalBand(bloodSugar, 70, 115, 65, 139)
-  const rrStatus = vitalBand(respRate, 10, 18, 8, 22)
-  const sleepStatus = vitalBand(sleepHours, 6.5, 9.5, 5.0, 10.5)
+  const spo2Status = vitalBand(spo2Pct, 94, 100, 89, 100)
+  const tempStatus = vitalBand(tempC, 35.7, 37.3, 35.1, 37.9)
+  const glucStatus = vitalBand(bloodSugar, 70, 99, 65, 139)
+  const rrStatus = vitalBand(respRate, 12, 20, 8, 24)
+  const sleepStatus = vitalBand(sleepHours, 7, 9.5, 5.0, 10.5)
 
   const totalXp = quests.filter((q) => q.done).reduce((sum, q) => sum + q.xp, 0)
   const maxXp = quests.reduce((sum, q) => sum + q.xp, 0)
@@ -476,7 +490,7 @@ export function CrewAssessmentPage() {
       </div>
 
       {/* 2. INTERACTIVE BODY MAP + COMPLETE VITALS & ASTRONAUT INPUT (Whiteboard #3-1) */}
-      <div className="grid two" style={{ alignItems: 'start' }}>
+      <div className="grid two triage-columns" style={{ alignItems: 'start' }}>
         {/* LEFT COLUMN: INTERACTIVE CLICKABLE HUMAN BODY */}
         <Card
           title="🧍 Interactive Crew Body Map — Click Region to Inspect & Log Pain"
@@ -492,111 +506,135 @@ export function CrewAssessmentPage() {
         >
           <div className="body-explorer">
             <div className="body-svg-wrap">
-              <svg viewBox="0 0 240 430" className="body-svg" role="img" aria-label="Interactive astronaut body diagram. Click any body region to view spaceflight health risks and log pain.">
-                <defs>
-                  <radialGradient id="suitGlow" cx="50%" cy="45%" r="55%">
-                    <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.18" />
-                    <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
-                  </radialGradient>
-                </defs>
-                <circle cx="120" cy="210" r="115" fill="url(#suitGlow)" />
+              {use3d ? (
+                <Suspense fallback={<p className="body-3d-hint">Loading 3D body…</p>}>
+                  {useAnatomy ? (
+                    <Anatomy3D
+                      sex={/^\s*(f|woman)/i.test(gender) ? 'female' : 'male'}
+                      selected={selectedRegion}
+                      pain={Object.fromEntries(painPoints.filter((p) => p.severity > 0).map((p) => [p.region, p.severity]))}
+                      onSelect={setSelectedRegion}
+                      onUnavailable={() => setUseAnatomy(false)}
+                    />
+                  ) : (
+                    <Body3D
+                      selected={selectedRegion}
+                      pain={Object.fromEntries(painPoints.filter((p) => p.severity > 0).map((p) => [p.region, p.severity]))}
+                      onSelect={setSelectedRegion}
+                      onUnavailable={() => setUse3d(false)}
+                    />
+                  )}
+                </Suspense>
+              ) : (
+                <svg viewBox="0 0 240 430" className="body-svg" role="img" aria-label="Interactive astronaut body diagram. Click any body region to view spaceflight health risks and log pain.">
+                  <defs>
+                    <radialGradient id="suitGlow" cx="50%" cy="45%" r="55%">
+                      <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.18" />
+                      <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
+                    </radialGradient>
+                  </defs>
+                  <circle cx="120" cy="210" r="115" fill="url(#suitGlow)" />
 
-                {/* Head & Neuro */}
-                <g
-                  className={`body-zone ${selectedRegion === 'head_neuro' ? 'selected' : ''} ${getRegionPain('head_neuro') > 0 ? 'has-pain' : ''}`}
-                  onClick={() => setSelectedRegion('head_neuro')}
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Head and Neuro-Vestibular"
-                  onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('head_neuro')}
-                >
-                  <circle cx="120" cy="48" r="30" />
-                  <title>Head & Neuro-Vestibular</title>
-                </g>
+                  {/* Head & Neuro */}
+                  <g
+                    className={`body-zone ${selectedRegion === 'head_neuro' ? 'selected' : ''} ${getRegionPain('head_neuro') > 0 ? 'has-pain' : ''}`}
+                    onClick={() => setSelectedRegion('head_neuro')}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Head and Neuro-Vestibular"
+                    onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('head_neuro')}
+                  >
+                    <circle cx="120" cy="48" r="30" />
+                    <title>Head & Neuro-Vestibular</title>
+                  </g>
 
-                {/* Eyes & SANS */}
-                <g
-                  className={`body-zone eyes ${selectedRegion === 'eyes_sans' ? 'selected' : ''} ${getRegionPain('eyes_sans') > 0 ? 'has-pain' : ''}`}
-                  onClick={() => setSelectedRegion('eyes_sans')}
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Eyes and Optic Nerve (SANS)"
-                  onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('eyes_sans')}
-                >
-                  <rect x="98" y="36" width="44" height="16" rx="8" />
-                  <circle cx="110" cy="44" r="3.5" fill="currentColor" />
-                  <circle cx="130" cy="44" r="3.5" fill="currentColor" />
-                  <title>Eyes & Vision (SANS)</title>
-                </g>
+                  {/* Eyes & SANS */}
+                  <g
+                    className={`body-zone eyes ${selectedRegion === 'eyes_sans' ? 'selected' : ''} ${getRegionPain('eyes_sans') > 0 ? 'has-pain' : ''}`}
+                    onClick={() => setSelectedRegion('eyes_sans')}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Eyes and Optic Nerve (SANS)"
+                    onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('eyes_sans')}
+                  >
+                    <rect x="98" y="36" width="44" height="16" rx="8" />
+                    <circle cx="110" cy="44" r="3.5" fill="currentColor" />
+                    <circle cx="130" cy="44" r="3.5" fill="currentColor" />
+                    <title>Eyes & Vision (SANS)</title>
+                  </g>
 
-                {/* Chest, Heart & Lungs */}
-                <g
-                  className={`body-zone ${selectedRegion === 'chest_cardio' ? 'selected' : ''} ${getRegionPain('chest_cardio') > 0 ? 'has-pain' : ''}`}
-                  onClick={() => setSelectedRegion('chest_cardio')}
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Chest, Heart and Lungs"
-                  onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('chest_cardio')}
-                >
-                  <rect x="82" y="86" width="76" height="68" rx="14" />
-                  <path d="M106 120 h10 l4 -9 l6 18 l5 -9 h12" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" />
-                  <title>Chest, Cardiovascular & Lungs</title>
-                </g>
+                  {/* Chest, Heart & Lungs */}
+                  <g
+                    className={`body-zone ${selectedRegion === 'chest_cardio' ? 'selected' : ''} ${getRegionPain('chest_cardio') > 0 ? 'has-pain' : ''}`}
+                    onClick={() => setSelectedRegion('chest_cardio')}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Chest, Heart and Lungs"
+                    onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('chest_cardio')}
+                  >
+                    <rect x="82" y="86" width="76" height="68" rx="14" />
+                    <path d="M106 120 h10 l4 -9 l6 18 l5 -9 h12" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" />
+                    <title>Chest, Cardiovascular & Lungs</title>
+                  </g>
 
-                {/* Spine & Bone (Center Pillar Overlay) */}
-                <g
-                  className={`body-zone spine ${selectedRegion === 'spine_bone' ? 'selected' : ''} ${getRegionPain('spine_bone') > 0 ? 'has-pain' : ''}`}
-                  onClick={() => setSelectedRegion('spine_bone')}
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Spine and Skeletal System"
-                  onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('spine_bone')}
-                >
-                  <rect x="112" y="88" width="16" height="132" rx="6" />
-                  <title>Spine & Skeletal Density</title>
-                </g>
+                  {/* Spine & Bone (Center Pillar Overlay) */}
+                  <g
+                    className={`body-zone spine ${selectedRegion === 'spine_bone' ? 'selected' : ''} ${getRegionPain('spine_bone') > 0 ? 'has-pain' : ''}`}
+                    onClick={() => setSelectedRegion('spine_bone')}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Spine and Skeletal System"
+                    onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('spine_bone')}
+                  >
+                    <rect x="112" y="88" width="16" height="132" rx="6" />
+                    <title>Spine & Skeletal Density</title>
+                  </g>
 
-                {/* Abdomen, GI & Renal */}
-                <g
-                  className={`body-zone ${selectedRegion === 'abdomen_nutrition' ? 'selected' : ''} ${getRegionPain('abdomen_nutrition') > 0 ? 'has-pain' : ''}`}
-                  onClick={() => setSelectedRegion('abdomen_nutrition')}
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Abdomen, Renal and Metabolism"
-                  onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('abdomen_nutrition')}
-                >
-                  <rect x="86" y="158" width="68" height="64" rx="12" />
-                  <title>Abdomen, Renal & Metabolism</title>
-                </g>
+                  {/* Abdomen, GI & Renal */}
+                  <g
+                    className={`body-zone ${selectedRegion === 'abdomen_nutrition' ? 'selected' : ''} ${getRegionPain('abdomen_nutrition') > 0 ? 'has-pain' : ''}`}
+                    onClick={() => setSelectedRegion('abdomen_nutrition')}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Abdomen, Renal and Metabolism"
+                    onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('abdomen_nutrition')}
+                  >
+                    <rect x="86" y="158" width="68" height="64" rx="12" />
+                    <title>Abdomen, Renal & Metabolism</title>
+                  </g>
 
-                {/* Upper Limbs (Shoulders, Arms, Hands) */}
-                <g
-                  className={`body-zone ${selectedRegion === 'upper_limbs' ? 'selected' : ''} ${getRegionPain('upper_limbs') > 0 ? 'has-pain' : ''}`}
-                  onClick={() => setSelectedRegion('upper_limbs')}
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Shoulders, Arms and Hands"
-                  onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('upper_limbs')}
-                >
-                  <rect x="48" y="90" width="28" height="135" rx="13" />
-                  <rect x="164" y="90" width="28" height="135" rx="13" />
-                  <title>Shoulders, Arms & Hands (EVA / Wearable Strap)</title>
-                </g>
+                  {/* Upper Limbs (Shoulders, Arms, Hands) */}
+                  <g
+                    className={`body-zone ${selectedRegion === 'upper_limbs' ? 'selected' : ''} ${getRegionPain('upper_limbs') > 0 ? 'has-pain' : ''}`}
+                    onClick={() => setSelectedRegion('upper_limbs')}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Shoulders, Arms and Hands"
+                    onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('upper_limbs')}
+                  >
+                    <rect x="48" y="90" width="28" height="135" rx="13" />
+                    <rect x="164" y="90" width="28" height="135" rx="13" />
+                    <title>Shoulders, Arms & Hands (EVA / Wearable Strap)</title>
+                  </g>
 
-                {/* Lower Limbs (Hips, Legs, Calves) */}
-                <g
-                  className={`body-zone ${selectedRegion === 'lower_limbs' ? 'selected' : ''} ${getRegionPain('lower_limbs') > 0 ? 'has-pain' : ''}`}
-                  onClick={() => setSelectedRegion('lower_limbs')}
-                  role="button"
-                  tabIndex={0}
-                  aria-label="Legs, Hips and Antigravity Muscles"
-                  onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('lower_limbs')}
-                >
-                  <rect x="86" y="228" width="30" height="172" rx="14" />
-                  <rect x="124" y="228" width="30" height="172" rx="14" />
-                  <title>Legs, Hips & Antigravity Muscles</title>
-                </g>
-              </svg>
+                  {/* Lower Limbs (Hips, Legs, Calves) */}
+                  <g
+                    className={`body-zone ${selectedRegion === 'lower_limbs' ? 'selected' : ''} ${getRegionPain('lower_limbs') > 0 ? 'has-pain' : ''}`}
+                    onClick={() => setSelectedRegion('lower_limbs')}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Legs, Hips and Antigravity Muscles"
+                    onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('lower_limbs')}
+                  >
+                    <rect x="86" y="228" width="30" height="172" rx="14" />
+                    <rect x="124" y="228" width="30" height="172" rx="14" />
+                    <title>Legs, Hips & Antigravity Muscles</title>
+                  </g>
+                </svg>
+              )}
+              <button type="button" className="zone-btn" onClick={() => setUse3d((v) => !v)} aria-pressed={use3d}>
+                {use3d ? 'Switch to 2D diagram' : 'Switch to 3D body'}
+              </button>
 
               <div className="body-zone-pills">
                 {(Object.keys(BODY_REGIONS) as BodyRegionId[]).map((rId) => {
@@ -725,7 +763,7 @@ export function CrewAssessmentPage() {
                 <small>Baseline median: {preflightHr} bpm ({hrBpm - preflightHr >= 0 ? `+${hrBpm - preflightHr}` : hrBpm - preflightHr})</small>
               </label>
 
-              <label className={`vital-input ${bpStatus}`}>
+              <label className={`vital-input wide ${bpStatus}`}>
                 <span className="row" style={{ justifyContent: 'space-between' }}>
                   <span>Blood Pressure (mmHg)</span>
                   <span className={`status-dot ${bpStatus}`} />
@@ -736,6 +774,11 @@ export function CrewAssessmentPage() {
                   <input type="number" value={bpDia} onChange={(e) => setBpDia(Number(e.target.value))} aria-label="Diastolic BP" />
                 </div>
                 <small>{bpCategory.label}. {BP_REFERENCE_SOURCE}, not an in-flight limit.</small>
+                <small>
+                  {astronautAverage
+                    ? `Astronaut average, ${astronautAverage.group}: ${astronautAverage.averageSystolic}/${astronautAverage.averageDiastolic} mmHg. ${LSAH_REFERENCE_SOURCE}.`
+                    : 'No NASA LSAH astronaut average for this age and gender.'}
+                </small>
                 <span style={{ marginTop: 6 }}>Standing BP, within 3 min (optional)</span>
                 <div className="row" style={{ gap: 4, flexWrap: 'nowrap' }}>
                   <input type="number" value={standSys} onChange={(e) => setStandSys(e.target.value)} aria-label="Standing systolic BP" />
@@ -755,7 +798,7 @@ export function CrewAssessmentPage() {
                   <span className={`status-dot ${glucStatus}`} />
                 </span>
                 <input type="number" value={bloodSugar} onChange={(e) => setBloodSugar(Number(e.target.value))} />
-                <small>Fasting reference: 70–115 mg/dL</small>
+                <small>Normal fasting range: 70–99 mg/dL (ADA 2026, NIDDK). Fasting means 8 hours without food.</small>
               </label>
 
               <label className={`vital-input ${tempStatus}`}>
@@ -764,7 +807,7 @@ export function CrewAssessmentPage() {
                   <span className={`status-dot ${tempStatus}`} />
                 </span>
                 <input type="number" step="0.1" value={tempC} onChange={(e) => setTempC(Number(e.target.value))} />
-                <small>Preflight baseline: {preflightTemp}°C</small>
+                <small>Preflight baseline: {preflightTemp}°C. Usual adult oral range: 35.7–37.3 °C (Obermeyer 2017); 37.8 °C or more counts as fever (Merck Manual). Earth reference.</small>
               </label>
 
               <label className={`vital-input ${spo2Status}`}>
@@ -773,7 +816,8 @@ export function CrewAssessmentPage() {
                   <span className={`status-dot ${spo2Status}`} />
                 </span>
                 <input type="number" value={spo2Pct} onChange={(e) => setSpo2Pct(Number(e.target.value))} />
-                <small>Note: Wrist optical SpO₂ has ±2–4% error</small>
+                <input type="number" value={spo2Baseline} onChange={(e) => setSpo2Baseline(e.target.value)} placeholder="Usual SpO₂ (optional)" aria-label="Usual SpO2 baseline, optional" />
+                <small>Target range: 94–98% (BTS 2017), Earth reference; 88–92% for some lung conditions. A fall of 3 points from the usual value prompts a recheck.</small>
               </label>
 
               <label className={`vital-input ${rrStatus}`}>
@@ -782,7 +826,7 @@ export function CrewAssessmentPage() {
                   <span className={`status-dot ${rrStatus}`} />
                 </span>
                 <input type="number" value={respRate} onChange={(e) => setRespRate(Number(e.target.value))} />
-                <small>Resting norm: 10–18 breaths/min</small>
+                <small>Resting adult range: 12–20 breaths/min (KORA-FF4), Earth reference</small>
               </label>
 
               <label className={`vital-input ${sleepStatus}`}>
@@ -791,7 +835,7 @@ export function CrewAssessmentPage() {
                   <span className={`status-dot ${sleepStatus}`} />
                 </span>
                 <input type="number" step="0.5" value={sleepHours} onChange={(e) => setSleepHours(Number(e.target.value))} />
-                <small>Mission target: 7.0–8.5 hrs/day</small>
+                <small>Recommended for adults: 7 or more hours a night (AASM and SRS, via AHA 2016), Earth reference</small>
               </label>
 
               <label className={`vital-input ${mood === 'optimal' || mood === 'focused' ? 'nominal' : mood === 'fatigued' ? 'caution' : 'alert'}`}>
@@ -892,7 +936,8 @@ export function CrewAssessmentPage() {
                   ? '🟡 CAUTION · MONITOR & VERIFY'
                   : '🟢 NOMINAL · WITHIN MISSION BASELINE'}
             </span>
-            <h2>Overarching AI Crew Decision-Support ({triageResult?.source ?? 'Qwen3-8B'})</h2>
+            <h2>Crew Decision-Support</h2>
+            {triageResult ? <span className="badge">Answered by: {triageResult.source}</span> : null}
           </div>
           <span className="spacer" />
           <button type="button" onClick={() => setShowBenchmark((v) => !v)} style={{ fontSize: '0.8rem' }}>
@@ -920,7 +965,12 @@ export function CrewAssessmentPage() {
                 </div>
                 <div>
                   <h3>2. Personal Baseline & Location Norm Comparison</h3>
-                  <p>{triageResult.triage.baseline_comparison}</p>
+                  {/* The comparison is a run of separate facts joined by " · "; one per line reads far better. */}
+                  <ul className="compact-list">
+                    {triageResult.triage.baseline_comparison.split(' · ').map((fact) => (
+                      <li key={fact}>{fact}</li>
+                    ))}
+                  </ul>
                 </div>
                 <div>
                   <h3>3. Mission Environment Insight ({envInfo.shortLabel})</h3>

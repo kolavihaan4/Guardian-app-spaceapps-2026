@@ -1,5 +1,6 @@
 import { MEDICAL_DISCLAIMER } from '@astrovitals/shared'
 import { useState, type FormEvent } from 'react'
+import { Brand } from '../App'
 import { api } from '../lib/api'
 
 export function AuthPage({ onSignedIn }: { onSignedIn: () => void }) {
@@ -26,6 +27,7 @@ export function AuthPage({ onSignedIn }: { onSignedIn: () => void }) {
 
   return (
     <main className="auth card">
+      <Brand />
       <h1>Mission Baseline</h1>
       <p className="muted">Explore how astronauts’ recorded lab values changed compared with their own preflight readings, using NASA’s public Inspiration4 data. A NASA Space Apps 2026 prototype, not a diagnostic tool.</p>
       <form onSubmit={submit}>

@@ -241,7 +241,7 @@ export function BaselinePage() {
               return <MeasurementCard key={a.id} a={a} c={c} p={p} selected={open === a.id} onOpen={() => setOpen(open === a.id ? null : a.id)} />
             })}
           </div>
-          <p className="muted" style={{ fontSize: '0.78rem', marginTop: 8 }}>
+          <p className="page-note">
             Amber marks a reading outside the lab’s reference range or a data-quality notice, with the reason written out. How large a change is never turns a card amber on its own. Select a card for its timeline and calculation.
           </p>
           {opened ? <section className="section"><Detail a={opened} c={opened.byCrew[who]!} sample={sample} onClose={() => setOpen(null)} /></section> : null}

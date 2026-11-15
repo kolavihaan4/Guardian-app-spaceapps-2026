@@ -37,18 +37,18 @@ export const MISSION_ENVIRONMENTS: Record<MissionEnvironmentId, MissionEnvironme
     shortLabel: 'ISS / LEO (0g)',
     gravity: '0g Microgravity',
     commsDelay: '< 2 sec (Near-real-time)',
-    evidence: 'Project estimate informed by published ISS crew studies; varies by person and study.',
+    evidence: 'Norsk et al. 2015 (J Physiol): 24-hour blood pressure 8–10 mmHg lower and heart rate unchanged in eight astronauts after 85–192 days on the ISS. One small study; varies by person.',
     radiationLevel: 'Elevated (LEO/SAA)',
     expectedNorms:
-      'Cephalad fluid shift moves ~2L of fluid toward the head/chest; resting HR often sits near or slightly below preflight, while upright recovery Tolerance drops.',
+      'Cephalad fluid shift moves ~2L of fluid toward the head/chest; average heart rate was unchanged in the one long-duration study, while tolerance of standing drops on return to gravity.',
     environmentInsights: [
       'Schedule 2.5 hrs/day on ARED + treadmill to counter 1–1.5%/month bone density loss.',
       'Monitor cabin CO2 partial pressure; levels > 3 mmHg commonly trigger frontal headaches and sleep fragmentation.',
       'Perform weekly SANS eye checks due to microgravity intracranial venous congestion.',
     ],
     expectedDeltas: {
-      hrDeltaBpm: '-4 to +8 bpm vs preflight',
-      bpShift: 'Mean arterial pressure -5 to -10 mmHg in microgravity',
+      hrDeltaBpm: 'Unchanged on average (24-hour mean 64 vs 63 bpm)',
+      bpShift: '24-hour systolic about 8, diastolic 9 and mean 10 mmHg lower than on Earth',
       spo2Note: '96–99% typical (verify wrist strap fit as limb volume shrinks)',
       fluidShift: 'High cephalad shift (puffy face, nasal congestion, spinal elongation)',
     },
@@ -59,7 +59,7 @@ export const MISSION_ENVIRONMENTS: Record<MissionEnvironmentId, MissionEnvironme
     shortLabel: 'Lunar Base (1/6g)',
     gravity: '0.16g Lunar Gravity',
     commsDelay: '1.3 sec one-way',
-    evidence: 'Project estimate only. No resting baseline shift has been measured for long stays in lunar gravity.',
+    evidence: 'Project estimate only. No resting baseline shift has been measured for long stays in lunar gravity. Jones 2021 (NASA, ICES-2021-142) concludes that gravity below 0.4 g is probably insufficient to maintain heart, muscle and bone conditioning, with deconditioning probably less severe than in 0g.',
     radiationLevel: 'High (Deep Space / Unshielded)',
     expectedNorms:
       'Partial gravity reduces cephalad fluid pooling compared with 0g, but frequent surface EVAs increase metabolic load, dehydration risk, and lunar dust airway irritation.',
@@ -103,7 +103,7 @@ export const MISSION_ENVIRONMENTS: Record<MissionEnvironmentId, MissionEnvironme
     shortLabel: 'Mars Surface (3/8g)',
     gravity: '0.38g Martian Gravity',
     commsDelay: '4 to 22 min one-way',
-    evidence: 'Project estimate only. No human has been to Mars, so no Mars vital-sign data exists.',
+    evidence: 'Project estimate only. No human has been to Mars, so no Mars vital-sign data exists. Jones 2021 (NASA, ICES-2021-142) concludes that gravity below 0.4 g is probably insufficient to maintain heart, muscle and bone conditioning, with deconditioning probably less severe than in 0g.',
     radiationLevel: 'Variable (Surface Shielded)',
     expectedNorms:
       'Transitioning from months of 0g transit into 0.38g gravity stresses cardiovascular orthostasis, vestibular balance, and weakened load-bearing bones.',
@@ -383,6 +383,8 @@ export interface TriageVitalsInput {
   hr_bpm: number
   preflight_hr_median: number
   spo2_pct: number
+  /** The crew member's own usual SpO2; a fall of 3 points or more from it prompts a recheck. */
+  preflight_spo2_median?: number
   bp_systolic?: number
   bp_diastolic?: number
   /** Taken within 3 minutes of standing; only meaningful where there is gravity. */
@@ -513,3 +515,356 @@ export function assessOrthostaticChange(
 
 /** Environments with enough gravity for a standing blood pressure test to mean anything. */
 export const GRAVITY_ENVIRONMENTS: readonly MissionEnvironmentId[] = ['lunar_base', 'mars_surface', 'earth_preflight']
+
+export const LSAH_REFERENCE_SOURCE = 'NASA LSAH astronaut averages, sitting, Earth clinic (1998)'
+
+/**
+ * Mean sitting blood pressure by age group for astronauts in NASA's Longitudinal Study of Astronaut
+ * Health, from NASA LSDA dataset IDP-LSDA_DATASET-0000000000001812 (file JMLSAHNEWSV722_152; the CSV
+ * in information(DATASETS)/ is the source of these numbers and a test keeps the two in step).
+ * Averages only: the dataset gives no sample sizes or spread, was measured on Earth, and has no
+ * values for women aged 50 and over. Each entry is [systolic, diastolic] in mmHg.
+ */
+export const LSAH_ASTRONAUT_BP: Record<'male' | 'female', Record<string, readonly [number, number]>> = {
+  male: {
+    'under 35': [116.56, 73.23],
+    '35–39': [114.81, 74.13],
+    '40–44': [115.87, 75.12],
+    '45–49': [117.19, 77.14],
+    '50–54': [120.15, 78.58],
+    '55–59': [120.65, 78.93],
+    '60 and over': [121.86, 79.51],
+  },
+  female: {
+    'under 35': [101.57, 65.0],
+    '35–39': [105.68, 69.44],
+    '40–44': [101.73, 65.64],
+    '45–49': [103.4, 68.0],
+  },
+}
+
+function lsahAgeGroup(age: number): string {
+  if (age < 35) return 'under 35'
+  if (age < 40) return '35–39'
+  if (age < 45) return '40–44'
+  if (age < 50) return '45–49'
+  if (age < 55) return '50–54'
+  if (age < 60) return '55–59'
+  return '60 and over'
+}
+
+/**
+ * Compares a reading with the LSAH astronaut average for the crew member's age group and sex.
+ * Returns undefined when the dataset has no matching group (sex not recorded as male or female,
+ * or women aged 50 and over). An average shows what is typical, not what is safe.
+ */
+export function compareWithAstronautAverage(
+  systolic: number,
+  diastolic: number,
+  age: number,
+  gender: string,
+): { averageSystolic: number; averageDiastolic: number; group: string; summary: string } | undefined {
+  const g = gender.trim().toLowerCase()
+  const sex = g === 'male' || g === 'm' || g === 'man' ? 'male' : g === 'female' || g === 'f' || g === 'woman' ? 'female' : undefined
+  if (!sex) return undefined
+  const ageGroup = lsahAgeGroup(age)
+  const average = LSAH_ASTRONAUT_BP[sex][ageGroup]
+  if (!average) return undefined
+  const [averageSystolic, averageDiastolic] = [Math.round(average[0]), Math.round(average[1])]
+  const diff = (n: number) => (n === 0 ? 'level with' : `${Math.abs(n)} ${n > 0 ? 'above' : 'below'}`)
+  const group = `${sex === 'male' ? 'men' : 'women'} aged ${ageGroup}`
+  const summary =
+    `Astronaut average for ${group} is ${averageSystolic}/${averageDiastolic} mmHg (${LSAH_REFERENCE_SOURCE}); ` +
+    `this reading is systolic ${diff(Math.round(systolic - average[0]))} and diastolic ${diff(Math.round(diastolic - average[1]))} that average, which shows what is typical, not what is safe`
+  return { averageSystolic, averageDiastolic, group, summary }
+}
+
+export const HR_REFERENCE_SOURCE = 'resting adult range 60–100 bpm (StatPearls Vital Sign Assessment; Cleveland Clinic), Earth reference'
+
+/**
+ * 24-hour average heart rate in healthy adults aged 50–65 wearing an ambulatory ECG
+ * (Persson et al., Heart 2024, doi:10.1136/heartjnl-2023-323681, n=3942): 2.5th–97.5th percentile
+ * of the 24-hour mean, and the average lowest one-minute rate. Applies to a day-long wearable
+ * average, never to a single reading.
+ */
+export const AMBULATORY_HR_REFERENCE = {
+  male: { mean24hLow: 57, mean24hHigh: 90, averageMinimum: 48 },
+  female: { mean24hLow: 61, mean24hHigh: 92, averageMinimum: 51 },
+} as const
+
+export type HeartRateBand = 'below_range' | 'within_range' | 'above_range'
+
+/**
+ * Places one heart-rate reading against the 60–100 bpm resting adult range. The range applies only
+ * to a reading taken awake and at rest, so `atRest: false` (exercise, EVA) returns no band. A rate
+ * below 60 is common in fit adults and in sleep, so the personal preflight median always takes
+ * priority over this range.
+ */
+export function classifyRestingHeartRate(
+  hrBpm: number,
+  preflightMedian: number,
+  atRest: boolean,
+): { band?: HeartRateBand; summary: string } {
+  const delta = Math.round(hrBpm - preflightMedian)
+  const vsBaseline = `${delta >= 0 ? '+' : ''}${delta} bpm vs personal preflight median ${preflightMedian} bpm, which takes priority`
+  if (!atRest) {
+    return { summary: `HR ${hrBpm} bpm (${vsBaseline}): not compared with the ${HR_REFERENCE_SOURCE}, because that range applies only awake and at rest, not during exercise or EVA` }
+  }
+  const band: HeartRateBand = hrBpm < 60 ? 'below_range' : hrBpm > 100 ? 'above_range' : 'within_range'
+  const note =
+    band === 'below_range'
+      ? 'below the range; rates in the 40s and 50s are common in fit adults and in sleep (healthy adults average a lowest one-minute rate near 48–51 bpm over 24 hours), so judge it against the personal median and symptoms'
+      : band === 'above_range'
+        ? 'above the range for a reading at rest; confirm the crew member was awake and resting for 5 minutes, then repeat'
+        : 'within the range'
+  return { band, summary: `HR ${hrBpm} bpm (${vsBaseline}): ${note} on the ${HR_REFERENCE_SOURCE}` }
+}
+
+export const RR_REFERENCE_SOURCE = 'resting adult range 12–20 breaths/min (KORA-FF4 population study, 5th–95th percentile 12.1–20.1), Earth reference'
+
+/**
+ * Night-time respiratory rate from a wrist wearable in 10,000 adults aged 20–69 (Natarajan et al.,
+ * NPJ Digit Med 2021, doi:10.1038/s41746-021-00493-6): mean 15.4, with 95% of values in this range.
+ * Applies only to a rate measured during sleep, never to a waking reading.
+ */
+export const SLEEP_RR_REFERENCE = { low: 11.2, high: 20.0, mean: 15.4 } as const
+
+/**
+ * Conditions that the KORA-FF4 study (Rückert-Eheberg et al., PLoS One 2025,
+ * doi:10.1371/journal.pone.0318502; 2,224 adults aged 39–88, awake at rest) found associated with
+ * a resting respiratory rate of 18.6 breaths/min or more, with the adjusted odds ratio. An
+ * association in a population, not a prediction for one person.
+ */
+const RR_ASSOCIATED_CONDITIONS: { match: RegExp; name: string; oddsRatio: number }[] = [
+  { match: /\bcopd\b|chronic obstructive/i, name: 'COPD', oddsRatio: 1.86 },
+  { match: /pre-?diabet/i, name: 'pre-diabetes', oddsRatio: 1.39 },
+  { match: /diabet/i, name: 'diabetes', oddsRatio: 1.78 },
+  { match: /smok/i, name: 'smoking', oddsRatio: 1.66 },
+  { match: /obes/i, name: 'abdominal obesity', oddsRatio: 2.12 },
+]
+
+export type RespiratoryRateBand = 'below_range' | 'within_range' | 'above_range'
+
+/**
+ * Places one respiratory-rate reading against the 12–20 breaths/min resting adult range. The range
+ * applies only awake and at rest, so `atRest: false` (exercise, EVA) returns no band. If the
+ * recorded medical history names a condition the KORA-FF4 study linked to faster resting
+ * breathing, the summary says so, because that person's usual rate may sit higher.
+ */
+export function classifyRespiratoryRate(
+  breathsPerMin: number,
+  atRest: boolean,
+  medicalHistory = '',
+): { band?: RespiratoryRateBand; summary: string } {
+  if (!atRest) {
+    return { summary: `RR ${breathsPerMin} br/min: not compared with the ${RR_REFERENCE_SOURCE}, because that range applies only awake and at rest, not during exercise or EVA` }
+  }
+  const band: RespiratoryRateBand = breathsPerMin < 12 ? 'below_range' : breathsPerMin > 20 ? 'above_range' : 'within_range'
+  const note =
+    band === 'within_range'
+      ? 'within the range'
+      : `${band === 'below_range' ? 'below' : 'above'} the range for a reading at rest; count breaths for a full 60 seconds after 5 minutes of rest, then repeat`
+  // "pre-diabetes" also contains "diabet": report the first, more specific match only.
+  const condition = RR_ASSOCIATED_CONDITIONS.find((c) => c.match.test(medicalHistory))
+  const history = condition
+    ? `. Recorded history mentions ${condition.name}, which the KORA-FF4 study linked to faster resting breathing (odds ratio ${condition.oddsRatio} for 18.6 br/min or more), so compare with this person's own earlier readings`
+    : ''
+  return { band, summary: `RR ${breathsPerMin} br/min: ${note} on the ${RR_REFERENCE_SOURCE}${history}` }
+}
+
+export const GLUCOSE_REFERENCE_SOURCE = 'ADA Standards of Care 2026 and NIDDK fasting ranges, Earth reference'
+
+export type GlucoseBand = 'low' | 'fasting_normal' | 'above_fasting_normal' | 'fasting_line' | 'random_line'
+
+/**
+ * Medicines and conditions that Section 2 of the ADA Standards of Care 2026
+ * (doi:10.2337/dc26-S002) says raise the risk of glucose abnormalities or shift readings.
+ */
+const GLUCOSE_HISTORY_NOTES: { match: RegExp; note: string }[] = [
+  { match: /diabet/i, note: 'recorded history mentions diabetes or pre-diabetes, so these screening ranges do not describe this person; use the targets set with the Flight Surgeon' },
+  { match: /steroid|glucocortic|prednis|dexameth|hydrocortis/i, note: 'recorded history mentions a glucocorticoid, which the ADA lists as raising glucose' },
+  { match: /statin|thiazide|antipsychotic/i, note: 'recorded history mentions a medicine the ADA lists as raising the risk of glucose abnormalities' },
+]
+
+/**
+ * Places one glucose reading against the fasting ranges: normal is 99 mg/dL or below (NIDDK),
+ * 100–125 is the impaired-fasting range and 126 or above is the fasting criterion (ADA 2026,
+ * Tables 2.1 and 2.2), and 200 or above is the criterion for a reading taken at any time. Fasting
+ * means at least 8 hours without calories, so the fasting ranges mean nothing after a meal; the
+ * app does not know when the crew member last ate, and says so. The ADA requires two abnormal
+ * results before any category applies to a person, so this labels a reading only.
+ *
+ * `flag` marks a reading worth acting on whatever the meal timing: below 70, or 140 and above
+ * (NIDDK gives 139 or below as normal two hours after a glucose load). The below-70 line is the
+ * widely used low-glucose threshold; the ADA section that defines it (Section 6) could not be
+ * retrieved when this was written, so it is not attributed to that document.
+ */
+export function classifyBloodGlucose(mgPerDl: number, medicalHistory = ''): { band: GlucoseBand; flag: boolean; summary: string } {
+  const band: GlucoseBand =
+    mgPerDl < 70 ? 'low' : mgPerDl <= 99 ? 'fasting_normal' : mgPerDl <= 125 ? 'above_fasting_normal' : mgPerDl < 200 ? 'fasting_line' : 'random_line'
+  const label = {
+    low: 'below 70 mg/dL, a low reading; recheck now and follow the low-glucose procedure',
+    fasting_normal: 'within the normal fasting range (99 or below)',
+    above_fasting_normal: 'above the normal fasting range (100–125); this only means something after 8 hours without food',
+    fasting_line: 'at or above the 126 fasting line; this only means something after 8 hours without food',
+    random_line: 'at or above 200, the line that applies at any time of day',
+  }[band]
+  const history = GLUCOSE_HISTORY_NOTES.find((h) => h.match.test(medicalHistory))
+  const context =
+    band === 'fasting_normal'
+      ? ''
+      : '; one reading does not set a category (the ADA requires two abnormal results), and recent exercise, illness or acute stress can shift glucose'
+  return {
+    band,
+    flag: mgPerDl < 70 || mgPerDl >= 140,
+    summary: `Glucose ${mgPerDl} mg/dL: ${label} on the ${GLUCOSE_REFERENCE_SOURCE}${context}${history ? `; ${history.note}` : ''}`,
+  }
+}
+
+export const SPO2_REFERENCE_SOURCE = 'BTS 2017 oxygen guideline, Earth reference'
+
+export type OxygenSaturationBand = 'within_target' | 'within_lower_target' | 'below_target' | 'severe_line' | 'below_85'
+
+/**
+ * Conditions the BTS guideline (doi:10.1136/bmjresp-2016-000170, recommendations A3 and G5) lists
+ * as risk factors for hypercapnic respiratory failure, for which it suggests an 88–92% target.
+ */
+const LOWER_SPO2_TARGET_CONDITIONS: { match: RegExp; name: string }[] = [
+  { match: /copd|chronic obstructive|emphysema/i, name: 'COPD' },
+  { match: /cystic fibrosis/i, name: 'cystic fibrosis' },
+  { match: /bronchiectasis/i, name: 'bronchiectasis' },
+  { match: /neuromuscular|chest.wall|kyphoscoliosis/i, name: 'a neuromuscular or chest-wall condition' },
+  { match: /morbid(ly)? obes|obesity hypoventilation/i, name: 'morbid obesity or obesity hypoventilation' },
+]
+
+/**
+ * Places one SpO2 reading against the BTS 2017 guideline. Its target is 94–98% (A2); that is a
+ * target for acutely ill adults, used here as the reference line because the concise guideline
+ * gives no separate healthy-adult range. For people with the conditions above it suggests 88–92%,
+ * so the 94 line is not applied to them. 88% or below is the American Thoracic Society's line for
+ * severe resting hypoxaemia (doi:10.1164/rccm.202009-3608ST), and below 85% is where the BTS
+ * starts high-flow oxygen (D1). A fall of 3 points or more from the person's own baseline, even
+ * inside the range, "should prompt fuller assessment of the patient (and the oximeter signal)"
+ * (A4): the guideline means a sudden fall in a monitored patient, so this is a prompt to recheck.
+ *
+ * `flag` marks a reading that should raise the status to caution. This labels a reading only and
+ * recommends no oxygen treatment.
+ */
+export function classifyOxygenSaturation(
+  spo2Pct: number,
+  medicalHistory = '',
+  baselinePct?: number,
+): { band: OxygenSaturationBand; flag: boolean; summary: string } {
+  const condition = LOWER_SPO2_TARGET_CONDITIONS.find((c) => c.match.test(medicalHistory))
+  const band: OxygenSaturationBand =
+    spo2Pct < 85 ? 'below_85' : spo2Pct <= 88 ? 'severe_line' : spo2Pct >= 94 ? 'within_target' : condition ? 'within_lower_target' : 'below_target'
+  const label = {
+    within_target: 'within the 94–98% target range',
+    within_lower_target: `within the 88–92% range the guideline suggests for people with ${condition?.name}, which the recorded history mentions`,
+    below_target: 'below the 94% line; check the sensor, then repeat at rest with a warm, still hand',
+    severe_line: '88% or below, the American Thoracic Society line for severe low oxygen at rest; check the sensor and repeat now',
+    below_85: 'below 85%, the line at which the guideline starts high-flow oxygen; check the sensor and repeat now',
+  }[band]
+  const fall = baselinePct === undefined ? 0 : Math.round((baselinePct - spo2Pct) * 10) / 10
+  const fallNote =
+    fall >= 3
+      ? `; this is ${fall} points below this person's own baseline of ${baselinePct}%, and the guideline says a sudden fall of 3 or more, even within the range, should prompt a fuller check of the person and the oximeter signal`
+      : ''
+  const historyNote =
+    condition && band !== 'within_lower_target'
+      ? `; recorded history mentions ${condition.name}, for which the guideline suggests an 88–92% target, so compare with this person's own earlier readings`
+      : ''
+  return {
+    band,
+    flag: band === 'below_target' || band === 'severe_line' || band === 'below_85' || fall >= 3,
+    summary: `SpO2 ${spo2Pct}%: ${label} on the ${SPO2_REFERENCE_SOURCE}${fallNote}${historyNote}`,
+  }
+}
+
+export const SLEEP_REFERENCE_SOURCE = 'recommendation of 7 or more hours a night for adults (AASM and Sleep Research Society, cited in the AHA 2016 statement), Earth reference'
+
+export type SleepBand = 'recommended' | 'short' | 'very_short'
+
+/**
+ * Places one night's sleep against the 7-hour adult recommendation quoted in the American Heart
+ * Association's 2016 statement on sleep (doi:10.1161/CIR.0000000000000444), which defines short
+ * sleep as under 7 hours. The caution line at 5.5 hours is the project's own: no source sets one.
+ *
+ * Below that line the summary adds what two small laboratory studies measured, as context for
+ * reading the other vital signs and never as an adjustment to them. Thresholds for blood pressure
+ * and glucose are not loosened after short sleep: a pooled analysis of six trials found no
+ * significant change in blood pressure (Hu 2020, doi:10.1177/0193945919868143), and no source
+ * supports explaining one person's raised reading by their sleep.
+ */
+export function classifySleepDuration(hours: number, glucoseAboveFastingNormal = false): { band: SleepBand; summary: string } {
+  const band: SleepBand = hours >= 7 ? 'recommended' : hours >= 5.5 ? 'short' : 'very_short'
+  if (band === 'recommended') return { band, summary: `Sleep ${hours} h: meets the ${SLEEP_REFERENCE_SOURCE}` }
+  const heart =
+    band === 'very_short'
+      ? '; in a laboratory study of 15 men, five nights of 5 hours left daytime heart rate about 5.5 bpm and systolic pressure about 2.9 mmHg above baseline even after two recovery nights (Reichenberger 2023), so recovery can take more than two nights'
+      : ''
+  const glucose =
+    band === 'very_short' && glucoseAboveFastingNormal
+      ? '; two nights of about 4 hours raised the glucose peak after breakfast (about 122 against 110 mg/dL in 15 men, Schmid 2011) while fasting glucose was unchanged, so short sleep may add to a raised reading after a meal but does not explain it'
+      : ''
+  return { band, summary: `Sleep ${hours} h: below the ${SLEEP_REFERENCE_SOURCE}${heart}${glucose}` }
+}
+
+export const TEMPERATURE_REFERENCE_SOURCE = 'usual adult oral range 35.7–37.3 °C (Obermeyer 2017, 35,488 patients) and the Merck Manual fever line, Earth reference'
+
+export type TemperatureBand = 'hypothermia_line' | 'below_range' | 'usual_range' | 'above_range' | 'fever_line' | 'red_flag'
+
+/** Conditions and medicines the retrieved sources say shift temperature or blunt its regulation. */
+const TEMPERATURE_HISTORY_NOTES: { match: RegExp; note: string }[] = [
+  { match: /hypothyroid/i, note: 'recorded history mentions hypothyroidism, which is linked to a slightly lower baseline and trouble tolerating cold (Obermeyer 2017; NIDDK)' },
+  { match: /hyperthyroid|graves/i, note: 'recorded history mentions hyperthyroidism, which causes trouble tolerating heat (NIDDK)' },
+  { match: /beta.?blocker|olol\b|anticholinergic|antihistamine|tricyclic|antipsychotic|diuretic/i, note: 'recorded history mentions a medicine the CDC lists as reducing sweating or heat loss, so heat is tolerated less well' },
+  { match: /paracetamol|acetaminophen|ibuprofen|aspirin|nsaid|steroid|prednis/i, note: 'recorded history mentions a medicine that lowers fever (Merck Manual), so a normal reading does not rule one out' },
+]
+
+/** Environments in weightlessness, where the ISS core-temperature finding applies. */
+const WEIGHTLESS_ENVIRONMENTS: MissionEnvironmentId[] = ['iss_leo', 'deep_space_transit', 'eva_spacewalk']
+
+/**
+ * Places one oral temperature against published adult references. The usual range is the central
+ * 95% of 35,488 outpatients (mean 36.6 °C; Obermeyer, BMJ 2017, doi:10.1136/bmj.j5468). The Merck
+ * Manual counts an oral temperature of 37.8 °C or more as elevated at any time of day, lists above
+ * 40 °C or below 35 °C as red flags, and defines hypothermia as a core temperature of 35 °C or
+ * below. Temperature varies by about 0.6 °C through the day, lowest in the early morning.
+ *
+ * Resting core temperature rose about 1 °C over the first 2.5 months on the ISS in 11 astronauts
+ * (Stahn, Sci Rep 2017, doi:10.1038/s41598-017-15560-w), so in weightlessness a raised reading is
+ * noted as possibly adaptation. The note never removes a flag.
+ *
+ * `flag` marks a reading that should raise the status to caution: outside the usual range.
+ */
+export function classifyBodyTemperature(
+  tempC: number,
+  environment: MissionEnvironmentId = 'earth_preflight',
+  medicalHistory = '',
+  age?: number,
+): { band: TemperatureBand; flag: boolean; summary: string } {
+  const band: TemperatureBand =
+    tempC <= 35 ? 'hypothermia_line' : tempC < 35.7 ? 'below_range' : tempC <= 37.3 ? 'usual_range' : tempC < 37.8 ? 'above_range' : tempC <= 40 ? 'fever_line' : 'red_flag'
+  const label = {
+    hypothermia_line: '35 °C or below, the line for hypothermia; recheck now and warm the person',
+    below_range: 'below the usual range; oral readings can read falsely low, so recheck',
+    usual_range: 'within the usual range',
+    above_range: 'above the usual range and below the 37.8 °C fever line; temperature varies about 0.6 °C through the day and is highest in the late afternoon',
+    fever_line: 'at or above the 37.8 °C fever line',
+    red_flag: 'above 40 °C, a red-flag temperature',
+  }[band]
+  const raised = band === 'above_range' || band === 'fever_line' || band === 'red_flag'
+  const space =
+    raised && WEIGHTLESS_ENVIRONMENTS.includes(environment)
+      ? '; resting core temperature rose about 1 °C over the first 2.5 months on the ISS in 11 astronauts (Stahn 2017), so compare with this person\'s earlier in-flight readings'
+      : ''
+  const recheck = band === 'usual_range' ? '' : '; wait 20–30 minutes after eating or drinking and an hour after hard exercise before rechecking'
+  const older = age !== undefined && age >= 60 && band !== 'usual_range' ? '; adults aged 60 and over run about 0.2 °C lower on average' : ''
+  const history = TEMPERATURE_HISTORY_NOTES.find((h) => h.match.test(medicalHistory))
+  return {
+    band,
+    flag: band !== 'usual_range',
+    summary: `${label} on the ${TEMPERATURE_REFERENCE_SOURCE}${space}${recheck}${older}${history ? `; ${history.note}` : ''}`,
+  }
+}
