@@ -6,14 +6,43 @@
     <meta name="color-scheme" content="only light" />
     <!-- The design is light-only. This asks the Dark Reader extension not to recolour the page. -->
     <meta name="darkreader-lock" />
-    <meta name="theme-color" content="#e8eff3" />
-    <meta name="description" content="Mission Baseline — how astronauts' recorded lab values changed compared with their own preflight readings (NASA OSD-575). Data-exploration prototype, not a diagnostic tool." />
-    <link rel="icon" href="/scenery/favicon.svg" type="image/svg+xml" />
-    <title>AstroVitals · Mission Baseline</title>
+    <meta name="theme-color" content="#14273b" />
+    <meta name="description" content="Guardian Space Agency: a health assistant for astronauts on the space station, the Moon, Mars and in deep space. A NASA Space Apps 2026 prototype, not a diagnostic tool." />
+    <link rel="icon" href="/home/assets/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/home/assets/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap" />
+    <title>Guardian · Crew health</title>
+    <script>
+      // The bare address is the public home page; the app's own pages all carry a #/route.
+      if (!location.hash || location.hash === '#' || location.hash === '#/') location.replace('/home/index.html')
+      // Decide before first paint whether the orbit opening plays: once per browser session, and
+      // not at all if it was turned off in the home site's settings.
+      ;(function () {
+        var d = document.documentElement
+        d.classList.add('js', 'intro-active', 'intro-chrome')
+        try {
+          var s = JSON.parse(localStorage.getItem('still.v1') || '{}')
+          if (s.intro === false || sessionStorage.getItem('guardian.introSeen')) d.classList.add('no-intro')
+        } catch (e) {
+          /* storage blocked: play the opening */
+        }
+      })()
+    </script>
   </head>
   <body>
-    <div class="background-trees" aria-hidden="true"></div>
+    <div class="scenery" id="scenery" aria-hidden="true"></div>
     <div id="root"></div>
+    <div class="loader" id="loader">
+      <div class="loader__stars" aria-hidden="true"></div>
+      <div class="loader__tint" aria-hidden="true"></div>
+      <p class="loader__caption" role="status">Your assistant is getting ready</p>
+    </div>
+    <!-- The logo mark, opening animation and scenery come from the home site's own scripts. -->
+    <script src="/home/js/scenery.js"></script>
+    <script src="/home/js/mark.js"></script>
+    <script src="/home/js/loader.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

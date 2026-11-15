@@ -1,5 +1,6 @@
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { Disclaimer, Loading, useAsync } from './components/common'
+import { endIntroQuietly, mountMark, nudgeMark, playIntro } from './guardian'
 import { api, ApiError } from './lib/api'
 import { AuthPage } from './pages/AuthPage'
 import { BaselinePage } from './pages/BaselinePage'
@@ -24,14 +25,27 @@ const ROUTES = [
 ] as const
 
 /** The wordmark from the Still template: a small mountain mark beside a lowercase serif name. */
+/** Plays the opening once the header and page are on screen. */
+function PlayIntro() {
+  useEffect(playIntro, [])
+  return null
+}
+
+/** Ends the opening without playing it, on screens that have no header. */
+function EndIntro() {
+  useEffect(endIntroQuietly, [])
+  return null
+}
+
 export function Brand() {
+  const slot = useRef<HTMLSpanElement>(null)
+  useEffect(() => mountMark(slot.current), [])
   return (
-    <a className="brand" href="#/assessment" aria-label="AstroVitals, Mission Baseline">
-      <svg width="29" height="29" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-        <path d="M2 17 8.5 6 15 17M11.5 11 15.5 5 22 17M5.7 11l2.8-4 2.8 4M3 21h18" />
-      </svg>
-      <span>
-        astrovitals<span className="brand-dot">.</span>
+    <a className="brand" id="brand" href="/home/index.html" aria-label="Guardian Space Agency, home page" onMouseEnter={nudgeMark} onFocus={nudgeMark}>
+      <span className="brand__slot" id="brandSlot" ref={slot} />
+      <span className="brand__word" aria-hidden="true">
+        <span className="brand__name">GUARDIAN</span>
+        <span className="brand__tag">SPACE AGENCY</span>
       </span>
     </a>
   )
@@ -58,27 +72,22 @@ export function App() {
   const route = useHashRoute()
   const me = useAsync(() => api.me(), [])
 
-  if (me.loading && !me.data && !me.error) return <Loading what="Mission Baseline" />
-  if (me.error instanceof ApiError && me.error.status === 401) return <AuthPage onSignedIn={me.reload} />
-  if (me.error || !me.data) return <div className="shell"><div className="banner error">Cannot reach the Mission Baseline API. Is the server running? ({me.error?.message})</div></div>
+  if (me.loading && !me.data && !me.error) return <Loading what="crew health" />
+  if (me.error instanceof ApiError && me.error.status === 401) return <><EndIntro /><AuthPage onSignedIn={me.reload} /></>
+  if (me.error || !me.data) return <div className="shell"><EndIntro /><div className="banner error">Cannot reach the Guardian API. Is the server running? ({me.error?.message})</div></div>
 
   const realSources = me.data.providers.filter((p) => p.id !== 'demo' && p.connected).length
   return (
     <div className="shell">
-      <header className="topbar">
+      <PlayIntro />
+      <header className="topbar" id="topbar">
+        <div className="topbar__glass" aria-hidden="true" />
         <Brand />
-        <nav className="nav" aria-label="Main">
-          {/* The team's public home page, a separate static site served from public/home. */}
-          <a href="/home/index.html" aria-label="Guardian home page" title="Guardian home page">
-            <svg viewBox="0 0 24 24" aria-hidden>
-              <path d="M3 11.5 12 4l9 7.5M5.5 10v9.5h13V10" />
-            </svg>
-            Home
-          </a>
+        <nav className="nav" id="nav" aria-label="Main">
           {ROUTES.map((r, i) => (
             <Fragment key={r.path}>
               {r.group === 'account' && ROUTES[i - 1]?.group !== 'account' ? <span className="nav-divider" aria-hidden /> : null}
-              <a href={`#/${r.path}`} aria-label={r.label} title={r.label} aria-current={route === r.path ? 'page' : undefined}>
+              <a className="nav__link" href={`#/${r.path}`} aria-label={r.label} title={r.label} aria-current={route === r.path ? 'page' : undefined}>
                 <svg viewBox="0 0 24 24" aria-hidden>
                   <path d={r.icon} />
                 </svg>
@@ -96,7 +105,8 @@ export function App() {
         </div>
       ) : null}
 
-      <main>
+      {/* Keyed by route, so each page slides up as it opens. */}
+      <main id="main" key={route} className="page-enter">
         {route === 'assessment' && <CrewAssessmentPage />}
         {route === 'dashboard' && <DashboardPage />}
         {route === 'space' && <SpacePage />}

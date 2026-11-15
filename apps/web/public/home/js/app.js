@@ -52,6 +52,8 @@
   const envOf = id => ENVS.find(e => e.id === id) || null;
   const gated = () => !store.get().env;
 
+  // the crew health app (triage, hazards, vitals) this site launches into; same origin
+  const APP_URL = '/#/assessment';
   const NAV = [
     { key: 'dashboard', href: '#/dashboard', label: 'Dashboard', icon: 'dashboard' },
     { key: 'cards', href: '#/cards', label: 'My cards', icon: 'cards', badge: true },
@@ -504,7 +506,6 @@
         <div class="home-ctas">
           <button class="btn btn--primary btn--lg" data-action="launch">${env ? `Open the ${env.short} dashboard` : 'Launch assistant'}${icon('arrowRight')}</button>
           <button class="btn btn--ghost btn--lg" data-action="scroll-to" data-target="how">How it works</button>
-          <a class="btn btn--ghost btn--lg" href="/#/assessment">Open crew health triage${icon('arrowRight')}</a>
         </div>
       </section>
 
@@ -909,16 +910,16 @@ Possible cause: short sleep before the EVA</p>
         confirmBox({ title: 'Clear all data?', confirm: 'Clear everything', text: 'Every card and collection in this browser will be deleted. Export first if you want a copy.', onConfirm() { store.update(s => { s.cards = []; s.collections = []; }); toast('All data cleared'); } });
         break;
       case 'launch':
-        // no environment yet: the dashboard address shows the picker first
-        location.hash = '#/dashboard';
+        // with an environment chosen, open the crew health app; otherwise the picker comes first
+        if (store.get().env) location.href = APP_URL;
+        else location.hash = '#/dashboard';
         break;
       case 'launch-env': {
         const env = envOf(el.dataset.env);
         if (!env) break;
         const changed = store.get().env !== env.id;
         store.update(s => { s.env = env.id; });
-        location.hash = '#/dashboard';
-        toast(changed ? `${env.name} selected` : `Opening ${env.name}`);
+        location.href = APP_URL;
         break;
       }
       case 'scroll-to': {
@@ -976,6 +977,8 @@ Possible cause: short sleep before the EVA</p>
         topbar.classList.add('chrome-in');
         setTimeout(() => topbar.classList.remove('chrome-in'), 900);
       }
+      // a first choice goes on into the crew health app, which reads the saved environment
+      if (first) { location.href = APP_URL; return; }
       if (location.hash !== '#/dashboard') location.hash = '#/dashboard';
       else { window.scrollTo(0, 0); main.focus({ preventScroll: true }); }
       main.classList.remove('page-enter'); void main.offsetWidth; main.classList.add('page-enter');
@@ -1023,6 +1026,8 @@ Possible cause: short sleep before the EVA</p>
     const mark = (S.mark = S.createMark());
     $('#brandSlot').appendChild(mark.el);
     render();
+    // the crew health app skips its own opening once this one has played in the session
+    document.addEventListener('still:intro-done', () => { try { sessionStorage.setItem('guardian.introSeen', '1'); } catch (e) { /* storage blocked */ } }, { once: true });
     const intro = S.intro.start(mark);
     const fonts = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 2500))]) : Promise.resolve();
     const loaded = document.readyState === 'complete' ? Promise.resolve() : new Promise(r => { window.addEventListener('load', r, { once: true }); setTimeout(r, 4000); });

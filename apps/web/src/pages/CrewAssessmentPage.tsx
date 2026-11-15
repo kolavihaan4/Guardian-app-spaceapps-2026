@@ -19,6 +19,7 @@ import {
 } from '@astrovitals/shared'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Card, useAsync } from '../components/common'
+import { environmentFromHome, saveEnvironmentForHome } from '../guardian'
 import { api } from '../lib/api'
 
 type CrewId = 'C001' | 'C002' | 'C003' | 'C004'
@@ -165,7 +166,12 @@ const Anatomy3D = lazy(() => import('../components/Anatomy3D'))
 
 export function CrewAssessmentPage() {
   // 1. Mission Environment (Whiteboard Feature #1, #6, #20)
-  const [environment, setEnvironment] = useState<MissionEnvironmentId>('iss_leo')
+  // Starts on the environment chosen on the home page, and saves changes back for it.
+  const [environment, setEnvironmentState] = useState<MissionEnvironmentId>(() => environmentFromHome() ?? 'iss_leo')
+  const setEnvironment = (id: MissionEnvironmentId) => {
+    setEnvironmentState(id)
+    saveEnvironmentForHome(id)
+  }
   const envInfo = MISSION_ENVIRONMENTS[environment]
 
   // 2. Crew Profile & Vitals (Whiteboard #3-1)

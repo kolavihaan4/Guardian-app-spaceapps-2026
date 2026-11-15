@@ -4,13 +4,13 @@
    borders, and a darker "-ink" for text, so status text stays readable on glass. */
 :root {
   color-scheme: only light;
-  --ink: #233e59;
+  --ink: #1c3146;
   --ink-strong: #1d3652;
-  --accent: #527e78;
-  --accent-dark: #416b65;
-  --accent-rgb: 82, 126, 120;
+  --accent: #4d7870;
+  --accent-dark: #3f665f;
+  --accent-rgb: 77, 120, 112;
   --accent-ink: #ffffff;
-  --canvas: #d6dfed;
+  --canvas: #dfe7ee;
   --glass: rgba(247, 250, 254, 0.82);
   --lavender: #8b7bab;
   --page: var(--canvas);
@@ -35,11 +35,11 @@
   --status-critical-ink: #9a3533;
   --sim-bg: rgba(174, 153, 207, 0.24);
   --sim-ink: #56457a;
-  --radius: 18px;
-  --radius-inner: 12px;
+  --radius: 14px;
+  --radius-inner: 10px;
   --shadow: 0 6px 28px rgba(44, 76, 102, 0.06);
-  --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  --font-display: Georgia, 'Times New Roman', serif;
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Source Serif 4', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
 }
 
 * { box-sizing: border-box; }
@@ -54,38 +54,7 @@ body {
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
 }
-/* The scenery belongs to the whole canvas, so it continues behind every page. */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -3;
-  pointer-events: none;
-  background:
-    linear-gradient(180deg, rgba(223, 228, 241, 0.68) 0%, rgba(203, 214, 234, 0.47) 28%, rgba(164, 183, 211, 0.23) 57%, rgba(131, 161, 187, 0.19) 79%, rgba(172, 195, 211, 0.29) 100%),
-    url('/scenery/mountains.png') center / cover no-repeat;
-  filter: contrast(1.1) saturate(0.96);
-}
-body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  pointer-events: none;
-  background: url('/scenery/misty-waves.svg') center / 100% 100% no-repeat;
-  opacity: 0.64;
-}
-.background-trees { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-.background-trees::before, .background-trees::after {
-  content: '';
-  position: absolute;
-  bottom: -2vh;
-  width: clamp(220px, 28vw, 560px);
-  height: min(92vh, 1120px);
-  background: url('/scenery/misty-trees.svg') left bottom / contain no-repeat;
-  opacity: 0.92;
-  filter: blur(2px);
-}
+/* The scenery is drawn by the home site's script into .scenery (see guardian-shell.css). */
 .background-trees::before { left: -48px; }
 .background-trees::after {
   right: -12px;
@@ -137,60 +106,7 @@ input[type='range'], input[type='checkbox'], input[type='radio'] { accent-color:
 label { display: grid; gap: 0.3rem; font-size: 0.9rem; color: var(--text-secondary); }
 
 .shell { max-width: 1360px; margin: 0 auto; padding: 0 40px 48px; }
-/* A single frosted navigation bar, floating above the scenery. */
-.topbar {
-  position: sticky;
-  top: 16px;
-  z-index: 20;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 8px 24px;
-  margin: 18px 0 28px;
-  padding: 10px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.86);
-  border-radius: 20px;
-  background: linear-gradient(115deg, rgba(249, 252, 253, 0.96), rgba(236, 246, 243, 0.94));
-  -webkit-backdrop-filter: blur(28px) saturate(0.9);
-  backdrop-filter: blur(28px) saturate(0.9);
-  box-shadow: 0 8px 30px rgba(39, 70, 93, 0.065), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-}
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 5px;
-  font-family: var(--font-display);
-  font-size: 1.85rem;
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: -0.05em;
-  color: var(--ink-strong);
-  text-decoration: none;
-}
-.brand svg { color: var(--accent); flex: none; }
-.brand-dot { color: var(--accent); }
-.nav { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 2px 4px; min-width: 0; }
-.nav a {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 40px;
-  padding: 8px 11px;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  color: #4a6472;
-  font-size: 0.93rem;
-  font-weight: 500;
-  white-space: nowrap;
-  text-decoration: none;
-  transition: background 0.18s, color 0.18s, border-color 0.18s;
-}
-.nav a svg { width: 17px; height: 17px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.65; stroke-linecap: round; stroke-linejoin: round; }
-.nav a:hover { background: rgba(var(--accent-rgb), 0.08); color: var(--ink); }
-.nav a[aria-current='page'] { background: rgba(var(--accent-rgb), 0.14); border-color: rgba(var(--accent-rgb), 0.1); color: var(--accent-dark); }
-.nav a:focus-visible { outline-offset: -3px; }
-.nav .nav-divider { width: 1px; height: 22px; margin: 0 6px; background: var(--border); }
+/* The header, logo and navigation are styled in guardian-shell.css. */
 .spacer { flex: 1; }
 
 .banner {
@@ -707,7 +623,6 @@ a.button { text-decoration: none; display: inline-flex; align-items: center; }
   .nav { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -6px; padding: 0 6px; }
   .nav::-webkit-scrollbar { display: none; }
   .card { padding: 16px; }
-  .background-trees { display: none; }
   h1 { font-size: 1.45rem; }
 }
 @media (prefers-reduced-motion: reduce) {
