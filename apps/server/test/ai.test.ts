@@ -22,7 +22,7 @@ describe('Overarching AI triage engine & Qwen3-8B schema', () => {
     expect(() => TriageResponseSchema.parse(res)).not.toThrow()
     expect(res.overall_status).toBe('caution')
     expect(res.contact_ground_support).toBe(false)
-    expect(res.data_quality_check).toContain('±2–4% measurement error')
+    expect(res.data_quality_check).toContain('subject to artefact (BTS 2017 guideline)')
     expect(res.available_tool_action_plan.some((s) => s.includes('Pulse Oximeter'))).toBe(true)
   })
 
@@ -258,7 +258,12 @@ describe('Overarching AI triage engine & Qwen3-8B schema', () => {
     expect(out.ground_support_reason).toBeNull()
     expect(out.available_tool_action_plan).toEqual(['Re-check SpO2 with the Pulse Oximeter'])
     expect(out.simple_instructions).toEqual(rules.simple_instructions)
-    expect(out.workout_modification).toBe('Model wording')
+    // Anything flagged: workout guidance comes from the rules, so it cannot contradict the status.
+    expect(out.workout_modification).toBe(rules.workout_modification)
+    // Nothing flagged: the model's wording is kept.
+    const calm = buildDeterministicFallback(TriageRequestSchema.parse({ crew_id: 'C002', vitals: { hr_bpm: 64, preflight_hr_median: 64, spo2_pct: 98, sensor_verified: true }, available_tools: ['Pulse Oximeter'] }))
+    expect(calm.overall_status).toBe('nominal')
+    expect(applyRuleDecisions({ ...calm, workout_modification: 'Model wording' }, calm, ['Pulse Oximeter']).workout_modification).toBe('Model wording')
   })
 
   it('places a glucose reading against the fasting ranges and flags only what matters at any meal timing', () => {
@@ -316,6 +321,51 @@ describe('Overarching AI triage engine & Qwen3-8B schema', () => {
     expect(classifyBodyTemperature(36.6, 'earth_preflight', 'Hypothyroidism').summary).toContain('hypothyroidism')
   })
 
+  it('labels the severe blood pressure range and escalates the two combined low-oxygen patterns', () => {
+    expect(classifyBloodPressure(180, 120).category).toBe('stage_2')
+    expect(classifyBloodPressure(181, 80).category).toBe('severe')
+    expect(classifyBloodPressure(150, 121).category).toBe('severe')
+    const base = { crew_id: 'C1', environment: 'iss_leo' as const, available_tools: ['Pulse Oximeter'] }
+    const run = (vitals: object) => buildDeterministicFallback({ ...base, vitals: { preflight_hr_median: 70, sensor_verified: true, ...vitals } } as never)
+    // SpO2 89 with HR 102 alone does not escalate; adding fast breathing does.
+    expect(run({ hr_bpm: 102, spo2_pct: 89 }).contact_ground_support).toBe(false)
+    expect(run({ hr_bpm: 102, spo2_pct: 89, respiratory_rate: 24 }).contact_ground_support).toBe(true)
+    expect(run({ hr_bpm: 72, spo2_pct: 89, respiratory_rate: 8 }).contact_ground_support).toBe(true)
+    expect(run({ hr_bpm: 72, spo2_pct: 89, respiratory_rate: 8 }).ground_support_reason).toContain('slow breathing')
+    // Unverified sensor contact never escalates on these patterns.
+    expect(run({ hr_bpm: 102, spo2_pct: 89, respiratory_rate: 24, sensor_verified: false }).contact_ground_support).toBe(false)
+  })
+
+  it('describes the readings from the rules even when the model answers, and stays consistent at caution', () => {
+    const req = TriageRequestSchema.parse({ crew_id: 'C1', environment: 'mars_surface', vitals: { hr_bpm: 62, preflight_hr_median: 60, spo2_pct: 86, sensor_verified: false }, available_tools: ['Pulse Oximeter'] })
+    const rules = buildDeterministicFallback(req)
+    const model = { ...rules, baseline_comparison: 'SpO2 is 86%, which is within the normal range.', data_quality_check: 'All good.' }
+    const out = applyRuleDecisions(model, rules, req.available_tools)
+    expect(out.baseline_comparison).not.toContain('within the normal range')
+    expect(out.baseline_comparison).toContain('BP not measured')
+    expect(out.baseline_comparison).toContain('SpO2 86%: 88% or below')
+    expect(out.data_quality_check).toBe(rules.data_quality_check)
+
+    const caution = buildDeterministicFallback(TriageRequestSchema.parse({ crew_id: 'C1', environment: 'mars_surface', vitals: { hr_bpm: 62, preflight_hr_median: 60, spo2_pct: 98, bp_systolic: 148, bp_diastolic: 92, sensor_verified: true }, available_tools: ['Blood Pressure Cuff'] }))
+    expect(caution.overall_status).toBe('caution')
+    expect(caution.workout_modification).toContain('HOLD FOR RECHECK')
+    expect(caution.confirmation_prompt).not.toContain('routine')
+    expect(caution.simple_instructions[0]).toContain('Sit quietly')
+    expect(buildDeterministicFallback({ ...req, environment: 'iss_leo' }).simple_instructions[0]).toContain('Float or tether quietly')
+  })
+
+  it('adds mood context without discounting a raised reading', () => {
+    const base = { crew_id: 'C1', environment: 'iss_leo' as const, available_tools: ['Blood Pressure Cuff'] }
+    const vitals = { hr_bpm: 62, preflight_hr_median: 60, spo2_pct: 98, bp_systolic: 150, bp_diastolic: 95, sensor_verified: true }
+    const stressed = buildDeterministicFallback({ ...base, vitals: { ...vitals, mood: 'stressed' } } as never)
+    expect(stressed.overall_status).toBe('caution')
+    expect(stressed.baseline_comparison).toContain('Stage 2 range')
+    expect(stressed.baseline_comparison).toContain('does not explain a raised reading')
+    const calm = buildDeterministicFallback({ ...base, vitals: { ...vitals, mood: 'optimal' } } as never)
+    expect(calm.overall_status).toBe('caution')
+    expect(calm.baseline_comparison).not.toContain('Mood reported')
+  })
+
   it('places sleep against the 7-hour recommendation and adds study context only below 5.5 hours', () => {
     expect(classifySleepDuration(7).band).toBe('recommended')
     expect(classifySleepDuration(6.5)).toMatchObject({ band: 'short' })
@@ -358,9 +408,10 @@ describe('Overarching AI triage engine & Qwen3-8B schema', () => {
     expect(triage({ respiratory_rate: 24 }).baseline_comparison).toContain('above the range for a reading at rest')
   })
 
-  it('exposes the Qwen3-8B vs Qwen3-4B vs Gemma 3 4B benchmark table', () => {
+  it('exposes the measured benchmark table, with unmeasured columns left empty', () => {
     expect(MODEL_BENCHMARK_RESULTS.primarySelected).toContain('Qwen3-8B')
     expect(MODEL_BENCHMARK_RESULTS.models).toHaveLength(3)
+    expect(MODEL_BENCHMARK_RESULTS.models[0]).toMatchObject({ escalationAccuracyPct: 76.3, nonDiagnosisCompliancePct: null })
   })
 })
 

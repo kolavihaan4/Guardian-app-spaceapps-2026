@@ -135,6 +135,7 @@ export async function parseAppleHealthExport(input: Readable, opts: ParseOptions
   const workouts: Workout[] = []
   let openWorkout: Workout | null = null
   let sawHealthData = false
+  let sawEnd = false
 
   const flush = () => {
     if (batch.length) {
@@ -148,6 +149,7 @@ export async function parseAppleHealthExport(input: Readable, opts: ParseOptions
     lines++
     const line = rawLine.trim()
     if (!sawHealthData && line.startsWith('<HealthData')) sawHealthData = true
+    if (line.startsWith('</HealthData>')) sawEnd = true
 
     if (line.startsWith('<Record ')) {
       const a = parseAttributes(line)
@@ -227,6 +229,8 @@ export async function parseAppleHealthExport(input: Readable, opts: ParseOptions
   }
   flush()
   if (!sawHealthData) throw new Error('This does not look like an Apple Health export.xml (no <HealthData> element).')
+  // A file cut off part-way has no closing tag; reporting it as a finished import would hide the missing records.
+  if (!sawEnd) throw new Error('This does not look like a complete Apple Health export.xml (the file ends before </HealthData>).')
 
   return { metrics, sleep: buildSleepSessions(sleepSegs), workouts, skippedRecords: skipped, unsupportedTypes: [...unsupported].sort(), linesRead: lines }
 }

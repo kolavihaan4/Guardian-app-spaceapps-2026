@@ -153,7 +153,7 @@ export const MISSION_ENVIRONMENTS: Record<MissionEnvironmentId, MissionEnvironme
       'Personal preflight baseline readings (L-92, L-44, L-3) establish each astronaut’s individual reference median prior to launch.',
     environmentInsights: [
       'Log resting morning vitals to lock in personal preflight median before launch.',
-      'Consumer wearables (Apple Watch / HealthKit) act as Earth-analog telemetry stand-ins; wrist SpO2 carries ±2–4% optical error.',
+      'Consumer wearables (Apple Watch / HealthKit) act as Earth-analog telemetry stand-ins; wrist SpO2 readings are subject to artefact, so confirm with a fingertip oximeter.',
       'Compare all in-flight deviations against your personal preflight median alongside clinical reference ranges.',
     ],
     expectedDeltas: {
@@ -437,7 +437,7 @@ export interface TriageEnvelope {
 }
 
 
-export type BloodPressureCategory = 'normal' | 'elevated' | 'stage_1' | 'stage_2'
+export type BloodPressureCategory = 'normal' | 'elevated' | 'stage_1' | 'stage_2' | 'severe'
 
 export const BP_REFERENCE_SOURCE = '2025 AHA/ACC adult guideline, Earth clinic reference'
 
@@ -446,20 +446,25 @@ const BP_CATEGORY_LABELS: Record<BloodPressureCategory, string> = {
   elevated: 'Elevated range (120–129 and below 80)',
   stage_1: 'Stage 1 range (130–139 or 80–89)',
   stage_2: 'Stage 2 range (140 or higher, or 90 or higher)',
+  severe: 'Severe range (above 180 or above 120); repeat within minutes and report any new symptoms to Ground Support',
 }
 
 /**
  * Places one blood pressure reading in the 2025 AHA/ACC adult categories (doi:10.1161/HYP.0000000000000249).
  * These are Earth clinic reference ranges, not in-flight limits, and the guideline assigns a category
  * only from an average of two or more readings on two or more occasions, so this labels a reading
- * and never a person. The guideline defines no low-pressure category.
+ * and never a person. The guideline defines no low-pressure category. It calls a pressure above
+ * 180/120 without signs of organ damage "severe hypertension" (confirmed from summaries of the
+ * guideline, not its full text).
  */
 export function classifyBloodPressure(
   systolic: number,
   diastolic: number,
 ): { category: BloodPressureCategory; label: string } {
   const category: BloodPressureCategory =
-    systolic >= 140 || diastolic >= 90
+    systolic > 180 || diastolic > 120
+      ? 'severe'
+      : systolic >= 140 || diastolic >= 90
       ? 'stage_2'
       : systolic >= 130 || diastolic >= 80
         ? 'stage_1'
@@ -867,4 +872,23 @@ export function classifyBodyTemperature(
     flag: band !== 'usual_range',
     summary: `${label} on the ${TEMPERATURE_REFERENCE_SOURCE}${space}${recheck}${older}${history ? `; ${history.note}` : ''}`,
   }
+}
+
+/**
+ * Context for a self-reported mood, shown beside the readings. It never changes how a reading is
+ * judged: in 21,923 people measured in daily life, reported stress went with a rise of about
+ * 1 mmHg or less per step of a 0–4 scale (Gordon and Mendes, PNAS 2021, doi:10.1073/pnas.2105573118),
+ * far too small to explain a raised reading. Returns undefined for moods that need no note.
+ */
+export function describeMood(mood: MoodStatus | undefined): string | undefined {
+  if (mood === 'stressed') {
+    return 'Mood reported as stressed: in 21,923 people measured in daily life, each step up a 0–4 stress scale went with about 1 mmHg or less of extra blood pressure and about 1 bpm of heart rate (Gordon and Mendes 2021), so reported stress does not explain a raised reading; a mental-arithmetic stress task raised heart rate about 7 bpm and mean pressure about 7 mmHg in five astronauts, the same in flight as on the ground (Aubert 2010)'
+  }
+  if (mood === 'isolated') {
+    return 'Mood reported as isolated: in a 520-day simulated Mars mission, four of six crew members showed a behavioural disturbance or psychological distress, such as disturbed sleep or depressive symptoms (Basner 2014), and NASA lists sleep loss and circadian desynchronisation as compounding isolation'
+  }
+  if (mood === 'fatigued') {
+    return 'Mood reported as fatigued: in a 520-day simulated Mars mission, sleeping six hours or fewer a day on a chronic basis was linked to more vigilance errors (Basner 2014)'
+  }
+  return undefined
 }

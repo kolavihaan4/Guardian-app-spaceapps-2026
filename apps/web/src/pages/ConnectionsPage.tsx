@@ -140,7 +140,7 @@ export function ConnectionsPage({ onChange }: { onChange: () => void }) {
     <div>
       <h1>Telemetry & Data Sources</h1>
       <p className="muted">
-        Import Earth-analog biotelemetry or configure simulated crew sensor feeds. Note: wrist-worn optical SpO₂ sensors carry ±2–4% measurement uncertainty due to strap fit and microgravity fluid shifts.
+        Import Earth-analog biotelemetry or configure simulated crew sensor feeds. Note: wrist-worn optical SpO₂ readings are subject to artefact from strap fit and movement, so confirm low readings with a fingertip oximeter.
       </p>
       {status ? (
         <div className={`banner ${status === 'connected' ? '' : 'warn'}`} role="status">

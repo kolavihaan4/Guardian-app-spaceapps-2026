@@ -79,6 +79,34 @@ const NASA_CITATIONS = [
     usage: 'Notes on medicines that reduce sweating or heat loss, and on heat and cold intolerance in thyroid disease.',
   },
   {
+    name: 'A large-scale study of stress, emotions, and blood pressure in daily life using a digital platform',
+    source: 'Gordon, Mendes — PNAS 2021;118(31):e2105573118',
+    url: 'https://doi.org/10.1073/pnas.2105573118',
+    license: 'CC BY-NC-ND 4.0; cited for numeric findings only',
+    usage: 'Context for a stressed mood: reported stress went with about 1 mmHg or less of extra blood pressure per step of a 0–4 scale (21,923 people, phone sensor), so it does not explain a raised reading.',
+  },
+  {
+    name: 'Effects of mental stress on autonomic cardiac modulation during weightlessness',
+    source: "Aubert, Verheyden, d'Ydewalle, Beckers, Van den Bergh — Am J Physiol Heart Circ Physiol 2010;298(1):H202–H209",
+    url: 'https://doi.org/10.1152/ajpheart.00865.2009',
+    license: 'Publisher copyright; abstract read, cited for numeric findings only',
+    usage: 'Context for a stressed mood: a mental-arithmetic task raised heart rate about 7 bpm and mean arterial pressure about 7 mmHg, the same in flight as on the ground (five astronauts).',
+  },
+  {
+    name: 'Psychological and Behavioral Changes during Confinement in a 520-Day Simulated Interplanetary Mission to Mars',
+    source: 'Basner et al. — PLOS One 2014;9(3):e93298',
+    url: 'https://doi.org/10.1371/journal.pone.0093298',
+    license: 'Creative Commons Attribution (CC BY)',
+    usage: 'Context for isolated and fatigued moods: four of six crew members showed a behavioural disturbance or psychological distress; chronic sleep of six hours or fewer was linked to vigilance errors.',
+  },
+  {
+    name: 'Hazard: Isolation and Confinement',
+    source: 'NASA Human Research Program',
+    url: 'https://www.nasa.gov/hrp/hazard-isolation-and-confinement/',
+    license: 'NASA web page',
+    usage: 'Context for an isolated mood: sleep loss and circadian desynchronisation compound the effects of isolation.',
+  },
+  {
     name: 'Sleep Duration and Quality: Impact on Lifestyle Behaviors and Cardiometabolic Health (AHA Scientific Statement)',
     source: 'St-Onge et al. — Circulation 2016;134(18):e367–e386',
     url: 'https://doi.org/10.1161/CIR.0000000000000444',
@@ -302,7 +330,7 @@ export function CitationsPage() {
             <strong>Not a Medical Device:</strong> Mission Baseline is an educational and exploratory crew health decision-support prototype created for the 2026 NASA Space Apps Challenge. It never diagnoses, treats, or prescribes.
           </li>
           <li>
-            <strong>Wearable Optical SpO₂ Error:</strong> Wrist-worn optical photoplethysmography (PPG) sensors serve as Earth-analog stand-ins for crew biotelemetry and carry ±2–4% measurement uncertainty due to motion artifact, strap tension, and microgravity fluid redistribution.
+            <strong>Wearable Optical SpO₂ Error:</strong> Wrist-worn optical photoplethysmography (PPG) sensors serve as Earth-analog stand-ins for crew biotelemetry and are subject to artefact from motion and strap tension (the BTS 2017 guideline notes oximetry is "subject to artefact and errors of interpretation"), so low readings are confirmed with a fingertip oximeter before any action.
           </li>
           <li>
             <strong>Synthetic & De-Identified Data Only:</strong> No personally identifiable information (PII) is collected or transmitted. Crew profiles C001–C004 derive from NASA’s public, de-identified OSD-575 dataset.

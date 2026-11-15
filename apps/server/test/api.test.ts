@@ -318,13 +318,23 @@ describe('privacy controls', () => {
     expect(db.prepare('SELECT COUNT(*) AS n FROM sessions').get()).toEqual({ n: 0 })
   })
 
-  it('retention job deletes measurements older than RETENTION_DAYS', async () => {
-    const { app, ctx, db } = makeTestContext({ env: { RETENTION_DAYS: '30' } })
+  it('rejects an Apple Health export that is cut off before </HealthData>', async () => {
+    const { app, db } = makeTestContext()
     const agent = await signedIn(app)
-    await agent.post('/api/providers/apple-health-export/import?days=30').set('Origin', ORIGIN).set('content-type', 'application/xml').send(fixture('apple-health/export-sample.xml')).expect(200)
+    const res = await agent.post('/api/providers/apple-health-export/import').set('Origin', ORIGIN).set('content-type', 'application/xml').send('<HealthData><Record').expect(400)
+    expect(JSON.stringify(res.body)).toContain('complete Apple Health export')
+    // A rejected file must not leave the provider marked as connected.
+    expect((db.prepare("SELECT COUNT(*) AS n FROM provider_connections WHERE provider = 'apple-health-export'").get() as { n: number }).n).toBe(0)
+  })
+
+  it('retention job deletes measurements older than RETENTION_DAYS', async () => {
+    const { app, ctx, db } = makeTestContext({ env: { RETENTION_DAYS: '3650' } })
+    const agent = await signedIn(app)
+    // The fixture's dates are fixed, so use a window wide enough that the test does not expire as time passes.
+    await agent.post('/api/providers/apple-health-export/import?days=3650').set('Origin', ORIGIN).set('content-type', 'application/xml').send(fixture('apple-health/export-sample.xml')).expect(200)
     const before = (db.prepare('SELECT COUNT(*) AS n FROM metrics').get() as { n: number }).n
     expect(before).toBeGreaterThan(0)
-    runRetention(ctx, new Date('2027-06-01T00:00:00Z'))
+    runRetention(ctx, new Date(Date.now() + 3651 * 86_400_000))
     expect(db.prepare('SELECT COUNT(*) AS n FROM metrics').get()).toEqual({ n: 0 })
   })
 })

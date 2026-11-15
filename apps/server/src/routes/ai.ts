@@ -8,6 +8,7 @@ import {
   classifyBodyTemperature,
   classifyOxygenSaturation,
   classifySleepDuration,
+  describeMood,
   classifyBloodPressure,
   classifyRespiratoryRate,
   classifyRestingHeartRate,
@@ -122,6 +123,8 @@ export interface ComputedVitalFacts {
   oxygen_saturation: string
   /** Temperature against the usual adult oral range and fever line, or undefined when it was not sent. */
   body_temperature?: string
+  /** What published studies measured for the reported mood; context only, never a reason to discount a reading. */
+  mood?: string
   /** Sleep against the 7-hour adult recommendation, or undefined when it was not sent. */
   sleep?: string
   /** Glucose against the fasting ranges, or undefined when it was not sent. */
@@ -181,6 +184,7 @@ export function computeVitalFacts(input: TriageRequest): ComputedVitalFacts {
     facts.sleep = sleep.summary
     if (sleep.band === 'very_short') facts.minimum_status = 'caution'
   }
+  facts.mood = describeMood(vitals.mood)
   if (vitals.respiratory_rate !== undefined) {
     const breathing = classifyRespiratoryRate(vitals.respiratory_rate, envId !== 'eva_spacewalk', input.profile?.previous_conditions)
     facts.respiratory_rate = breathing.summary
@@ -213,7 +217,7 @@ export function computeVitalFacts(input: TriageRequest): ComputedVitalFacts {
 
 /** Adds any computed fact the model's answer does not already carry word for word, and holds the status at the computed minimum. */
 export function attachComputedFacts(triage: TriageResponse, facts: ComputedVitalFacts): TriageResponse {
-  const missing = [facts.heart_rate, facts.oxygen_saturation, facts.blood_pressure, facts.astronaut_average, facts.standing_check, facts.body_temperature, facts.blood_glucose, facts.respiratory_rate, facts.sleep].filter(
+  const missing = [facts.heart_rate, facts.oxygen_saturation, facts.blood_pressure, facts.astronaut_average, facts.standing_check, facts.body_temperature, facts.blood_glucose, facts.respiratory_rate, facts.sleep, facts.mood].filter(
     (fact): fact is string => fact !== undefined && !triage.baseline_comparison.includes(fact),
   )
   const overall_status = triage.overall_status === 'nominal' ? facts.minimum_status : triage.overall_status
@@ -236,7 +240,8 @@ function namesUnavailableTool(step: string, availableTools: string[]): boolean {
 }
 
 /**
- * The rule engine decides; the language model explains. Status and Ground Support escalation always
+ * The rule engine decides; the language model explains. Status, Ground Support escalation and the
+ * description of the readings (data_quality_check, baseline_comparison) always
  * come from the rules, and any step that names equipment missing from available_tools is dropped
  * (falling back to the rule engine's steps if none survive). Measured on 300 samples, the model
  * alone got 76% of escalation decisions right and named an unavailable tool in 30% of answers.
@@ -248,12 +253,17 @@ export function applyRuleDecisions(model: TriageResponse, rules: TriageResponse,
   }
   return {
     ...model,
+    // The readings are described by code only: the model has called an SpO2 of 86% "within the normal
+    // range", so its wording about the numbers is never shown.
+    data_quality_check: rules.data_quality_check,
+    baseline_comparison: rules.baseline_comparison,
     overall_status: rules.overall_status,
     contact_ground_support: rules.contact_ground_support,
     ground_support_reason: rules.ground_support_reason,
     available_tool_action_plan: keep(model.available_tool_action_plan, rules.available_tool_action_plan),
     simple_instructions: keep(model.simple_instructions, rules.simple_instructions),
-    workout_modification: rules.contact_ground_support ? rules.workout_modification : model.workout_modification,
+    // Workout guidance follows the rules whenever anything is flagged, so it cannot contradict the status.
+    workout_modification: rules.overall_status === 'nominal' ? model.workout_modification : rules.workout_modification,
   }
 }
 
@@ -312,8 +322,13 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
   const unverifiedArtifact = !vitals.sensor_verified && (lowSpo2 || highHr) && !highTemp && !usFlag
   // A solar particle event is reported as context (see environment_insight) and never changes the
   // escalation decision: radiation exposure is tracked by dosimetry and cannot be read from vital signs.
+  // Combined-vitals alerts. These two combinations are the project's own, suggested by the team's
+  // research notes; none of the cited guidelines defines them. They only ever add an escalation.
+  const rr = vitals.respiratory_rate
+  const lowOxygenFastBreathing = vitals.spo2_pct < 90 && rr !== undefined && rr > 22 && vitals.hr_bpm > 100
+  const lowOxygenSlowBreathing = vitals.spo2_pct < 90 && rr !== undefined && rr < 10
   const escalate =
-    (vitals.sensor_verified && ((highHr && lowSpo2) || highTemp || (highHr && highBp))) ||
+    (vitals.sensor_verified && ((highHr && lowSpo2) || highTemp || (highHr && highBp) || lowOxygenFastBreathing || lowOxygenSlowBreathing)) ||
     usFlag ||
     vitals.eye_exam_finding === 'amsler_grid_distortion' ||
     maxPain >= 8
@@ -326,7 +341,7 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
 
   // 1. Data quality check
   const data_quality_check = unverifiedArtifact
-    ? `Out-of-range reading (HR ${vitals.hr_bpm} bpm / SpO2 ${vitals.spo2_pct}%) reported with unverified sensor contact. Optical SpO2 sensors carry ±2–4% measurement error and frequently slip during microgravity fluid shifts or upper-body movement.`
+    ? `Out-of-range reading (HR ${vitals.hr_bpm} bpm / SpO2 ${vitals.spo2_pct}%) reported with unverified sensor contact. Optical SpO2 readings are subject to artefact (BTS 2017 guideline), and sensors frequently slip during microgravity fluid shifts or upper-body movement.`
     : vitals.sensor_verified
       ? 'Sensor placement verified by crew; readings are evaluated directly against personal preflight median and habitat norms.'
       : 'Routine check-in with standard sensor telemetry; confirm snug optical sensor contact before acting on single-metric spikes.'
@@ -342,6 +357,7 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
     bpFacts.blood_glucose ?? 'Glucose not measured',
     bpFacts.respiratory_rate ?? 'RR not measured',
     bpFacts.sleep ?? 'Sleep not reported',
+    ...(bpFacts.mood ? [bpFacts.mood] : []),
   ]
   const baseline_comparison = `${parts.join(' · ')}. Expected in ${env.shortLabel}: ${env.expectedDeltas.hrDeltaBpm}, ${env.expectedDeltas.bpShift} (${env.evidence})`
 
@@ -390,8 +406,10 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
     : escalate
       ? 'Please confirm immediately: are you experiencing shortness of breath, dizziness, vision distortion, or persistent pain at rest?'
       : firstPain
-        ? `Can you confirm if the ${BODY_REGIONS[firstPain.region]?.name ?? 'logged'} discomfort started after exercise/EVA or persists while floating at rest?`
-        : 'Confirming routine autonomous check-in: how is your energy and hydration level ahead of your next scheduled mission task?'
+        ? `Can you confirm if the ${BODY_REGIONS[firstPain.region]?.name ?? 'logged'} discomfort started after exercise/EVA or persists at rest?`
+        : caution
+          ? 'Some readings are outside the reference ranges listed above. Can you repeat them after 5 minutes at rest and say how you feel?'
+          : 'Confirming routine autonomous check-in: how is your energy and hydration level ahead of your next scheduled mission task?'
 
   // 6. Tool-bound action plan
   const plan: string[] = []
@@ -448,11 +466,13 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
       ? 'MODIFY WORKOUT (Musculoskeletal Protection): Reduce ARED axial squat/deadlift load by 30%, switch to non-impact cycle ergometer at 60% HR max, and add 10 min knees-to-chest lumbar decompression.'
       : modHr || lowSleep || vitals.mood === 'fatigued'
         ? 'MODIFY WORKOUT (Recovery Protocol): Down-regulate ARED resistance by 20% and replace high-intensity intervals with 25 min Zone-2 aerobic cycling.'
-        : 'NOMINAL WORKOUT: Cleared for full scheduled countermeasure block (60 min ARED resistive loading + 30 min aerobic treadmill/ergometer).'
+        : caution
+          ? 'HOLD FOR RECHECK: Repeat the flagged readings at rest before the scheduled workout, and proceed at normal load only if they are back in range.'
+          : 'NOMINAL WORKOUT: Cleared for full scheduled countermeasure block (60 min ARED resistive loading + 30 min aerobic treadmill/ergometer).'
 
   // 8. Simple step-by-step instructions (Whiteboard #9)
   const simple_instructions = [
-    'Step 1 (Prepare): Float or sit quietly for 5 minutes away from exercise equipment; warm cold hands before optical readings.',
+    `Step 1 (Prepare): ${GRAVITY_ENVIRONMENTS.includes(envId) ? 'Sit' : 'Float or tether'} quietly for 5 minutes away from exercise equipment; warm cold hands before optical readings.`,
     `Step 2 (Measure): Use ${available_tools[0] ?? 'Pulse Oximeter'} to verify HR and SpO2—keep your hand at heart level so fluid shifts do not skew the sensor.`,
     firstPain
       ? `Step 3 (Targeted Check): Follow the ${BODY_REGIONS[firstPain.region]?.name} self-check: ${BODY_REGIONS[firstPain.region]?.selfCheckInstruction}`
@@ -463,6 +483,8 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
   const reasons: string[] = []
   if (vitals.sensor_verified && highHr) reasons.push(`HR ${vitals.hr_bpm} bpm (+${hrDelta} bpm vs baseline)`)
   if (vitals.sensor_verified && lowSpo2) reasons.push(`SpO2 ${vitals.spo2_pct}%`)
+  if (vitals.sensor_verified && lowOxygenFastBreathing) reasons.push(`SpO2 ${vitals.spo2_pct}% with fast breathing (${rr} br/min) and HR ${vitals.hr_bpm} bpm`)
+  if (vitals.sensor_verified && lowOxygenSlowBreathing) reasons.push(`SpO2 ${vitals.spo2_pct}% with slow breathing (${rr} br/min)`)
   if (highTemp && tempC !== undefined) reasons.push(`Temp ${tempC.toFixed(1)}°C`)
   if (usFlag) reasons.push(`Ultrasound flag (${vitals.ultrasound_finding?.replace(/_/g, ' ')})`)
   if (vitals.eye_exam_finding === 'amsler_grid_distortion') reasons.push('Amsler grid visual distortion (SANS check)')
@@ -487,43 +509,64 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
   }
 }
 
-export const MODEL_BENCHMARK_RESULTS = {
+/**
+ * Measured on this project's 300 synthetic scenarios on 2026-11-14 (Qwen3-8B Q4_K_M under Ollama on
+ * an Apple-silicon laptop, first version of the prompt). The expected answers come from the
+ * project's own rules, so the rule-engine rows agree with them by construction. `null` means the
+ * column was not measured.
+ */
+export const MODEL_BENCHMARK_RESULTS: {
+  evaluatedOn: string
+  testSuite: string
+  primarySelected: string
+  models: {
+    model: string
+    params: string
+    validJsonPct: number | null
+    nonDiagnosisCompliancePct: number | null
+    sensorArtifactDetectionPct: number | null
+    toolRestrictionAdherencePct: number | null
+    escalationAccuracyPct: number | null
+    avgLatencySec: number | null
+    verdict: string
+  }[]
+} = {
   evaluatedOn: '2026-11-14',
-  testSuite: '300 synthetic astronaut scenarios (nominal, sensor_artifact, mild_drift, escalate)',
-  primarySelected: 'Qwen3-8B (Ollama Q4_K_M)',
+  testSuite: "300 synthetic scenarios; expected answers come from the project's own rules",
+  primarySelected: 'Qwen3-8B explains, onboard rules decide',
   models: [
     {
-      model: 'Qwen3-8B (Selected)',
+      model: 'Qwen3-8B alone',
       params: '8.2B (Q4_K_M)',
-      validJsonPct: 99.3,
-      nonDiagnosisCompliancePct: 100.0,
-      sensorArtifactDetectionPct: 96.7,
-      toolRestrictionAdherencePct: 98.0,
-      escalationAccuracyPct: 97.3,
-      avgLatencySec: 1.8,
-      verdict: 'Best overall: reliably separates optical SpO2 strap artifacts from true multi-vital drift and never invents unavailable medical tools.',
+      validJsonPct: 99.7,
+      nonDiagnosisCompliancePct: null,
+      sensorArtifactDetectionPct: 37.0,
+      toolRestrictionAdherencePct: 70.2,
+      escalationAccuracyPct: 76.3,
+      avgLatencySec: 7.75,
+      verdict: 'Not used for decisions: it escalated every unverified or mild case during an S2 solar event, named a tool that was not on board in 89 of 299 answers, and 103 of 300 answers took longer than 8 seconds (the cut-off is now 12).',
     },
     {
-      model: 'Qwen3-4B',
-      params: '4.0B (Q4_K_M)',
-      validJsonPct: 97.0,
-      nonDiagnosisCompliancePct: 98.3,
-      sensorArtifactDetectionPct: 89.0,
-      toolRestrictionAdherencePct: 92.5,
-      escalationAccuracyPct: 91.0,
-      avgLatencySec: 1.1,
-      verdict: 'Fastest latency, but occasionally over-escalates unverified wrist SpO2 drops during EVA motion.',
+      model: 'Qwen3-8B with rule decisions (shipped)',
+      params: '8.2B (Q4_K_M)',
+      validJsonPct: 99.7,
+      nonDiagnosisCompliancePct: null,
+      sensorArtifactDetectionPct: 100,
+      toolRestrictionAdherencePct: 100,
+      escalationAccuracyPct: 100,
+      avgLatencySec: 7.75,
+      verdict: 'The same 299 logged answers with status and escalation taken from the rules and steps naming missing tools dropped. Latency is the median model time.',
     },
     {
-      model: 'Gemma 3 4B',
-      params: '4.3B (Q4_K_M)',
-      validJsonPct: 95.3,
-      nonDiagnosisCompliancePct: 96.0,
-      sensorArtifactDetectionPct: 86.5,
-      toolRestrictionAdherencePct: 88.0,
-      escalationAccuracyPct: 89.5,
-      avgLatencySec: 1.3,
-      verdict: 'Strong prose explanations, but occasionally suggests Earth hospital labs outside the spacecraft available_tools list.',
+      model: 'Rule engine alone (fallback)',
+      params: 'none (code)',
+      validJsonPct: 100,
+      nonDiagnosisCompliancePct: null,
+      sensorArtifactDetectionPct: 100,
+      toolRestrictionAdherencePct: 100,
+      escalationAccuracyPct: 100,
+      avgLatencySec: 0,
+      verdict: 'Answers when the model is unavailable or slower than the 12-second cut-off. It agrees with the expected answers by construction, so this is a consistency check, not clinical accuracy.',
     },
   ],
 }
@@ -549,7 +592,9 @@ export function aiRoutes(ctx: AppContext): Router {
     const payload = parsed.data
     const bpFacts = computeVitalFacts(payload)
     const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 8_000)
+    // The model's answers took a median of 7.75 s and at most 10.5 s when measured, so an 8-second
+    // cut-off made it close to chance whether the model or the rule engine answered.
+    const timeout = setTimeout(() => controller.abort(), 12_000)
 
     try {
       const ollamaRes = await fetch(`${OLLAMA_URL}/api/chat`, {

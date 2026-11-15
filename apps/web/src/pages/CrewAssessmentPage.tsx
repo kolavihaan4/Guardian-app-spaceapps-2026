@@ -408,7 +408,7 @@ export function CrewAssessmentPage() {
   const astronautAverage = compareWithAstronautAverage(bpSys, bpDia, age, gender)
   // Colour follows the guideline category; the low side keeps the project's own cut-offs.
   const bpStatus: 'nominal' | 'caution' | 'alert' =
-    bpCategory.category === 'stage_2' || bpSys < 88
+    bpCategory.category === 'stage_2' || bpCategory.category === 'severe' || bpSys < 88
       ? 'alert'
       : bpCategory.category !== 'normal' || bpSys < 95
         ? 'caution'
@@ -816,7 +816,8 @@ export function CrewAssessmentPage() {
                   <span className={`status-dot ${spo2Status}`} />
                 </span>
                 <input type="number" value={spo2Pct} onChange={(e) => setSpo2Pct(Number(e.target.value))} />
-                <input type="number" value={spo2Baseline} onChange={(e) => setSpo2Baseline(e.target.value)} placeholder="Usual SpO₂ (optional)" aria-label="Usual SpO2 baseline, optional" />
+                <span>Usual SpO₂ for this person (optional)</span>
+                <input type="number" value={spo2Baseline} onChange={(e) => setSpo2Baseline(e.target.value)} aria-label="Usual SpO2 baseline, optional" />
                 <small>Target range: 94–98% (BTS 2017), Earth reference; 88–92% for some lung conditions. A fall of 3 points from the usual value prompts a recheck.</small>
               </label>
 
@@ -847,7 +848,7 @@ export function CrewAssessmentPage() {
                   <option value="stressed">Stressed / High Cognitive Load</option>
                   <option value="isolated">Isolated / Confinement Strain</option>
                 </select>
-                <small>Behavioral & psychological status</small>
+                <small>Stressed or isolated raises the status to caution. A reported mood never explains away a reading (Gordon and Mendes 2021).</small>
               </label>
 
               <label className={`vital-input ${sensorVerified ? 'nominal' : 'caution'}`}>
@@ -941,7 +942,7 @@ export function CrewAssessmentPage() {
           </div>
           <span className="spacer" />
           <button type="button" onClick={() => setShowBenchmark((v) => !v)} style={{ fontSize: '0.8rem' }}>
-            {showBenchmark ? 'Hide LLM Benchmark' : '📊 View Qwen3-8B vs 4B vs Gemma 3 Benchmark'}
+            {showBenchmark ? 'Hide LLM Benchmark' : '📊 View Measured Model Benchmark'}
           </button>
         </div>
 
@@ -1059,14 +1060,14 @@ export function CrewAssessmentPage() {
               <table className="data">
                 <thead>
                   <tr>
-                    <th>Ollama Model</th>
+                    <th>What answers</th>
                     <th>Params</th>
                     <th>Valid JSON</th>
                     <th>Refuses to Diagnose</th>
-                    <th>Flags SpO₂ Sensor Artifact</th>
+                    <th>Holds Back on Unverified Sensor</th>
                     <th>Stays Within Available Tools</th>
                     <th>Ground Escalation Accuracy</th>
-                    <th>Avg Latency</th>
+                    <th>Median Latency</th>
                     <th>Evaluation Notes</th>
                   </tr>
                 </thead>
@@ -1075,12 +1076,10 @@ export function CrewAssessmentPage() {
                     <tr key={m.model}>
                       <td><strong>{m.model}</strong></td>
                       <td>{m.params}</td>
-                      <td>{m.validJsonPct}%</td>
-                      <td>{m.nonDiagnosisCompliancePct}%</td>
-                      <td>{m.sensorArtifactDetectionPct}%</td>
-                      <td>{m.toolRestrictionAdherencePct}%</td>
-                      <td>{m.escalationAccuracyPct}%</td>
-                      <td>{m.avgLatencySec}s</td>
+                      {[m.validJsonPct, m.nonDiagnosisCompliancePct, m.sensorArtifactDetectionPct, m.toolRestrictionAdherencePct, m.escalationAccuracyPct].map((pct, i) => (
+                        <td key={i}>{pct === null ? 'not measured' : `${pct}%`}</td>
+                      ))}
+                      <td>{m.avgLatencySec === null ? 'not measured' : m.avgLatencySec === 0 ? 'under 0.01s' : `${m.avgLatencySec}s`}</td>
                       <td>{m.verdict}</td>
                     </tr>
                   ))}

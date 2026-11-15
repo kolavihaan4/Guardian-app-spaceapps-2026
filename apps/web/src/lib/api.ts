@@ -82,12 +82,12 @@ export const api = {
       models: {
         model: string
         params: string
-        validJsonPct: number
-        nonDiagnosisCompliancePct: number
-        sensorArtifactDetectionPct: number
-        toolRestrictionAdherencePct: number
-        escalationAccuracyPct: number
-        avgLatencySec: number
+        validJsonPct: number | null
+        nonDiagnosisCompliancePct: number | null
+        sensorArtifactDetectionPct: number | null
+        toolRestrictionAdherencePct: number | null
+        escalationAccuracyPct: number | null
+        avgLatencySec: number | null
         verdict: string
       }[]
     }>('/api/ai/benchmark'),
