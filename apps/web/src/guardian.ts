@@ -91,7 +91,48 @@ export function renderScenery(): void {
   void still().scenery?.render(document.getElementById('scenery'))
 }
 
-const HOME_KEY = 'still.v1'
+/**
+ * Where the crew is. The rule lives in the home site's public/home/js/env.js, loaded as a plain
+ * script in index.html and shared with that site: a signed-out visitor's choice lasts for the tab
+ * only; a signed-in user's choice is also saved for their account and comes back next visit.
+ */
+interface GuardianEnv {
+  get(): string | null
+  choose(id: string): void
+  account(userId: string | null, justSignedIn?: boolean): string | null
+  signOut(): void
+  forget(userId: string): void
+}
+const crewLocation = (): GuardianEnv | undefined => (window as unknown as { GuardianEnv?: GuardianEnv }).GuardianEnv
+
+/** Where everyone lands after signing in or signing up, whatever they clicked to get there: the dashboard on the home site. */
+export const DASHBOARD_ADDRESS = '/home/index.html#/dashboard'
+export function goToDashboard(go: (url: string) => void = (url) => window.location.assign(url)): void {
+  go(DASHBOARD_ADDRESS)
+}
+
+/** Where signing out ends: the home page. */
+export const HOME_ADDRESS = '/home/index.html'
+
+/**
+ * Tells the location rule who is signed in, once /api/me has answered (null: nobody). A signed-in
+ * user with no location yet this visit gets their saved one back. `justSignedIn` is for the moment
+ * after the sign-in form: a location already chosen this visit is then saved for the account.
+ */
+export function locationAccount(userId: string | null, justSignedIn = false): void {
+  crewLocation()?.account(userId, justSignedIn)
+}
+
+/** Signing out: forget this visit's location, so the next person is asked. The account keeps its own. */
+export function forgetLocationForVisit(): void {
+  crewLocation()?.signOut()
+}
+
+/** Deleting an account or its data: remove the location saved for it in this browser. */
+export function forgetSavedLocation(userId: string): void {
+  crewLocation()?.forget(userId)
+}
+
 /** The home site's environment ids and the app's. */
 const ENVIRONMENT_FOR_HOME: Record<string, 'iss_leo' | 'mars_surface' | 'lunar_base' | 'deep_space_transit'> = {
   iss: 'iss_leo',
@@ -100,24 +141,14 @@ const ENVIRONMENT_FOR_HOME: Record<string, 'iss_leo' | 'mars_surface' | 'lunar_b
   spacecraft: 'deep_space_transit',
 }
 
-/** The environment chosen on the home site, as one of the app's environment ids, if any. */
+/** The environment chosen for this visit, as one of the app's environment ids, if any. */
 export function environmentFromHome(): 'iss_leo' | 'mars_surface' | 'lunar_base' | 'deep_space_transit' | undefined {
-  try {
-    const saved = JSON.parse(localStorage.getItem(HOME_KEY) ?? '{}') as { env?: string }
-    return saved.env ? ENVIRONMENT_FOR_HOME[saved.env] : undefined
-  } catch {
-    return undefined
-  }
+  const chosen = crewLocation()?.get()
+  return chosen ? ENVIRONMENT_FOR_HOME[chosen] : undefined
 }
 
-/** Saves the app's environment back, so the home site shows the same one. Others are left alone. */
+/** Records the app's environment as the crew's location, so the home site shows the same one. Others are left alone. */
 export function saveEnvironmentForHome(environment: string): void {
   const home = Object.entries(ENVIRONMENT_FOR_HOME).find(([, id]) => id === environment)?.[0]
-  if (!home) return
-  try {
-    const saved = JSON.parse(localStorage.getItem(HOME_KEY) ?? '{}') as Record<string, unknown>
-    localStorage.setItem(HOME_KEY, JSON.stringify({ ...saved, env: home }))
-  } catch {
-    /* storage blocked */
-  }
+  if (home) crewLocation()?.choose(home)
 }

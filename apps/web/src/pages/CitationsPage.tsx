@@ -1,6 +1,12 @@
+import { useState } from 'react'
 import { Card } from '../components/common'
+import { NAMED_REFERENCES, RESEARCH_CITATIONS } from '../lib/researchCitations'
+import '../citations.css'
 
 const NASA_CITATIONS = [
+  {"name": "CSA Bio-Monitor — wearable vital signs", "source": "Canadian Space Agency", "url": "https://www.csa-asc.gc.ca/eng/sciences/bio-monitor.asp", "license": "Agency publication; paraphrased", "usage": "Add card help for the smart shirt, headband and tablet workflow, breathing rate and skin temperature. Skin temperature is identified separately from core temperature."},
+  {"name": "SunTech Tango M2 — User Manual", "source": "SunTech Medical", "url": "https://suntechmed.com/support/document-library/send/96-archive-tango-m2-instructions-manuals/1201-tango-m2-user-manual-english-rev-b", "license": "Manufacturer copyright; linked and paraphrased", "usage": "Add card upper-arm cuff and artery-marker guidance. This later-model reference is not presented as an original ISS flight checklist."},
+  {"name": "Pulse oximetry — how the test is performed", "source": "NIH MedlinePlus", "url": "https://medlineplus.gov/lab-tests/pulse-oximetry/", "license": "US National Library of Medicine publication; paraphrased", "usage": "Add card fingertip pulse-oximeter instructions for pulse and oxygen saturation: clean finger, still hand and a settled reading. Sleep and mood entries are personal logs rather than measurements from this equipment."},
   {
     name: 'NASA Life Sciences Data Archive (LSDA) — IDP-LSDA_DATASET-0000000000001812 (JMLSAHNEWSV722_152)',
     source: 'NASA Johnson Space Center (JSC) Flight Medicine Clinic / Longitudinal Study of Astronaut Health (LSAH)',
@@ -20,7 +26,7 @@ const NASA_CITATIONS = [
     source: 'NASA Johnson Space Center / Human Research Program',
     url: 'https://www.nasa.gov/hrp/hazards/',
     license: 'U.S. Government Public Domain',
-    usage: 'Framework mapping Space Radiation, Isolation & Confinement, Distance from Earth, Gravity Fields, and Hostile/Closed Environments to physiological indicators and countermeasures.',
+    usage: 'Five simple summaries on the Hazards page: space radiation, isolation and confinement, distance from Earth, gravity fields, and hostile/closed environments. Each summary links to NASA’s hazard page.',
   },
   {
     name: '2025 AHA/ACC Guideline for the Prevention, Detection, Evaluation and Management of High Blood Pressure in Adults',
@@ -179,30 +185,30 @@ const NASA_CITATIONS = [
   {
     name: 'NASA DONKI (Space Weather Database Of Notifications, Knowledge, Information)',
     source: 'NASA Goddard Space Flight Center / Community Coordinated Modeling Center (CCMC)',
-    url: 'https://ccmc.gsfc.nasa.gov/DONKI-API/',
+    url: 'https://ccmc.gsfc.nasa.gov/tools/DONKI/',
     license: 'U.S. Government Public Domain',
-    usage: 'Live solar flare (FLR), coronal mass ejection (CME), geomagnetic storm (GST / Kp index), and solar energetic particle (SEP) alerts.',
+    usage: 'Hazards page timeline of solar flares (FLR), solar clouds (CME), magnetic storms (GST) and fast-particle events (SEP); Kp storm readings; and daily counts of SEP catalog reports. A rolling 14-day UTC window refreshes at midnight UTC and on the next visit. Counts are reports, not particle flux, radiation dose or a crew safety rating. DONKI is preliminary research information and may be revised.',
   },
   {
     name: 'NOAA Space Weather Prediction Center (SWPC) — GOES Integral Proton Flux & Scales',
     source: 'NOAA / National Weather Service',
     url: 'https://services.swpc.noaa.gov/',
     license: 'U.S. Government Public Domain',
-    usage: '24-hour ≥10 MeV integral proton flux series and official NOAA S1–S5 solar radiation storm scale.',
+    usage: 'Existing backend integration for GOES proton measurements and NOAA’s radiation-storm scale. The Hazards page now uses NASA DONKI reports instead; none of its graphs use this NOAA feed.',
   },
   {
     name: 'NASA EONET v3 (Earth Observatory Natural Event Tracker)',
     source: 'NASA Earthdata',
     url: 'https://eonet.gsfc.nasa.gov/api/v3/events',
     license: 'U.S. Government Public Domain',
-    usage: 'Global natural event tracking (wildfires, severe storms, volcanic activity) for Earth-analog comparison.',
+    usage: 'Hazards page Earth-event map and list, from EONET v3 /events (status=all, days=14, limit=60), refreshed daily. The first 40 reports are listed. This is Earth context, not spacecraft telemetry; locations are approximate. API documentation: https://eonet.gsfc.nasa.gov/docs/v3.',
   },
   {
     name: 'NASA POWER (Prediction Of Worldwide Energy Resources)',
     source: 'NASA Langley Research Center',
-    url: 'https://power.larc.nasa.gov/',
+    url: 'https://power.larc.nasa.gov/docs/services/api/temporal/daily/',
     license: 'U.S. Government Public Domain',
-    usage: 'Surface temperature, humidity, atmospheric pressure, wind speed, and solar irradiance time-series.',
+    usage: 'Hazards page daily Earth-surface graphs from POWER /api/temporal/daily/point: T2M (temperature), RH2M (humidity), PS (pressure), WS10M (wind), ALLSKY_SFC_SW_DWN (sunlight), and ALLSKY_SFC_UV_INDEX (UV). Original returned units and values are retained. Each graph names its latest available reading. Dates advance daily; missing values remain gaps. These are grid-area estimates for the selected Earth site, not spacecraft cabin readings. Weather typically lags 2–3 days, sunlight 5–7 days, and UV can lag longer.',
   },
   {
     name: 'NASA APOD (Astronomy Picture of the Day)',
@@ -231,6 +237,18 @@ const SOFTWARE_CITATIONS = [
     license: 'Public domain (NASA)',
     url: 'https://commons.wikimedia.org/wiki/File:International_Space_Station_after_undocking_of_STS-132.jpg',
     usage: 'Mission environment picker on the Crew Triage page: ISS after STS-132 undocking (NASA / STS-132 crew); Buzz Aldrin on Apollo 11 (NASA, photo by Neil Armstrong); Mount Sharp, PIA16099 (NASA/JPL-Caltech/MSSS); Orion with the Moon and Earth, Artemis I flight day 13, art001e000673 (NASA). Resized to 960 px wide, otherwise unmodified.',
+  },
+  {
+    name: 'SegThy — neck ultrasound volumes with thyroid, carotid artery and jugular vein outlines',
+    license: 'CC BY 4.0',
+    url: 'https://doi.org/10.1371/journal.pone.0268550',
+    usage: 'Training and cross-validation data for the jugular vein ultrasound check on the Crew Triage page, and its sample frame. Kroenke et al., PLOS ONE 2022. 31 volumes from 16 healthy volunteers; the check reports vein geometry only and is not validated on astronauts or for clinical use.',
+  },
+  {
+    name: 'CAMUS — cardiac ultrasound with left-ventricle outlines (500 patients)',
+    license: 'CC BY-NC-SA 4.0',
+    url: 'https://www.creatis.insa-lyon.fr/Challenge/camus/',
+    usage: 'Training and test data for the heart ultrasound check on the Crew Triage page (left-ventricle outline and ejection fraction). Leclerc et al., IEEE Transactions on Medical Imaging 2019. No CAMUS images are included in the app. Non-commercial research use; not validated on astronauts or for clinical use.',
   },
   {
     name: 'open-anatomy-3d — male and female anatomy models (v0.1.0)',
@@ -264,92 +282,25 @@ const SOFTWARE_CITATIONS = [
   },
 ]
 
-export function CitationsPage() {
-  return (
-    <div className="stack" style={{ gap: 16 }}>
-      <Card
-        title="Citations, NASA Data Sources & Open-Source Licenses"
-        actions={<span className="badge">2026 NASA Space Apps Challenge · Apache-2.0 Licensed</span>}
-      >
-        <p className="muted">
-          In compliance with the NASA Space Apps Challenge Participant Terms & Conditions, every scientific dataset, space-environment API, AI model, and open-source library used in <strong>Guardian</strong> is cited below with its license and operational role.
-        </p>
-      </Card>
-
-      <Card title="NASA, NOAA & Space Biomedical Datasets">
-        <div className="table-wrap" style={{ maxHeight: 'none' }}>
-          <table className="data">
-            <thead>
-              <tr>
-                <th>Dataset / API</th>
-                <th>Agency / Provider</th>
-                <th>License</th>
-                <th>How It Is Used in Guardian</th>
-              </tr>
-            </thead>
-            <tbody>
-              {NASA_CITATIONS.map((c) => (
-                <tr key={c.name}>
-                  <td>
-                    <strong>
-                      <a href={c.url} target="_blank" rel="noreferrer">
-                        {c.name}
-                      </a>
-                    </strong>
-                  </td>
-                  <td>{c.source}</td>
-                  <td><span className="badge">{c.license}</span></td>
-                  <td>{c.usage}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      <Card title="AI Models & Open-Source Software Stack">
-        <div className="table-wrap" style={{ maxHeight: 'none' }}>
-          <table className="data">
-            <thead>
-              <tr>
-                <th>Component</th>
-                <th>License</th>
-                <th>Role in System</th>
-              </tr>
-            </thead>
-            <tbody>
-              {SOFTWARE_CITATIONS.map((s) => (
-                <tr key={s.name}>
-                  <td>
-                    <strong>
-                      <a href={s.url} target="_blank" rel="noreferrer">
-                        {s.name}
-                      </a>
-                    </strong>
-                  </td>
-                  <td><span className="badge">{s.license}</span></td>
-                  <td>{s.usage}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      <Card title="Medical Disclaimer & Measurement Error Transparency">
-        <ul className="compact-list">
-          <li>
-            <strong>Not a Medical Device:</strong> Guardian is an educational and exploratory crew health decision-support prototype created for the 2026 NASA Space Apps Challenge. It never diagnoses, treats, or prescribes.
-          </li>
-          <li>
-            <strong>Wearable Optical SpO₂ Error:</strong> Wrist-worn optical photoplethysmography (PPG) sensors serve as Earth-analog stand-ins for crew biotelemetry and may read 2% to 4% higher or lower than the true blood oxygen level (MedlinePlus); poor circulation, skin pigmentation, cold skin and nail polish also affect them (US FDA), so low readings are confirmed with a fingertip oximeter before any action.
-          </li>
-          <li>
-            <strong>Synthetic & De-Identified Data Only:</strong> No personally identifiable information (PII) is collected or transmitted. Crew profiles C001–C004 derive from NASA’s public, de-identified OSD-575 dataset.
-          </li>
-        </ul>
-      </Card>
-    </div>
-  )
+interface Citation {name:string;url:string;source?:string;license?:string;usage?:string}
+const normalized=(url:string)=>url.replace('www.','').replace('asc-csa.gc.ca','csa-asc.gc.ca').replace(/\/$/,'').toLowerCase()
+const existing=new Set([...NASA_CITATIONS,...SOFTWARE_CITATIONS].map(c=>normalized(c.url)))
+const research=RESEARCH_CITATIONS.filter((c,i,all)=>!existing.has(normalized(c.url))&&all.findIndex(other=>normalized(other.url)===normalized(c.url))===i)
+function SourceList({rows}:{rows:Citation[]}){
+ return <ul className="citations-list">{rows.map(c=><li key={c.url+c.name}><a href={c.url} target="_blank" rel="noreferrer">{c.name} ↗</a>{c.source?<small>{c.source}</small>:null}{c.license?<details className="citation-details"><summary>Credit &amp; license</summary><p>{c.license}</p></details>:null}</li>)}</ul>
 }
-
+export function CitationsPage() {
+ const [query,setQuery]=useState('')
+ const match=(text:string)=>text.toLowerCase().includes(query.trim().toLowerCase())
+ const groups=[{title:'NASA data & health references',rows:NASA_CITATIONS},{title:'Added research & equipment sources',rows:research},{title:'Software & image credits',rows:SOFTWARE_CITATIONS}]
+ const names=NAMED_REFERENCES.filter(match)
+ return <div className="citations-page">
+  <header><h1>Sources &amp; citations</h1><p>References for Guardian’s graphs, health information and equipment tips.</p></header>
+  <label className="citations-search">Find a source<input type="search" placeholder="Search NASA, sleep, equipment…" value={query} onChange={e=>setQuery(e.target.value)}/></label>
+  {groups.map(group=>{const rows=group.rows.filter(c=>match(c.name+' '+('source' in c?c.source:'')));return rows.length?<Card key={group.title} title={group.title} actions={<span className="badge">{rows.length} sources</span>}><SourceList rows={rows}/></Card>:null})}
+  {names.length?<Card title="More references named in your notes"><details className="citations-named" open={query.trim()?true:undefined}><summary>{names.length} named references</summary><p>These titles were supplied without exact publication links. They are kept here for reference.</p><ul>{names.map(name=><li key={name}>{name}</li>)}</ul></details></Card>:null}
+  {!groups.some(g=>g.rows.some(c=>match(c.name+' '+('source' in c?c.source:''))))&&!names.length?<p role="status">No matching sources. Try another word.</p>:null}
+  <Card title="AI assistance"><p className="citations-note">Codex and Claude helped build Guardian. Qwen3-8B and the ultrasound models produce AI estimates. Synthetic examples stay separate from recorded measurements. Image credits follow their original sources; some media credits still need team confirmation.</p><a href="/si-provenance.json" target="_blank" rel="noreferrer">AI, data and media credits</a></Card>
+  <p className="citations-note">Research references are not automatically training datasets. The original source sets its access and reuse rules. User vitals come from your saved cards; NASA graphs describe the environment. Guardian is an educational prototype, not a medical device.</p>
+ </div>
+}

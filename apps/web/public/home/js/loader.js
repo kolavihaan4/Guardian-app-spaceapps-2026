@@ -2,7 +2,7 @@
 (function () {
   const S = (window.Still = window.Still || {});
   const html = document.documentElement;
-  const ORBIT_MS = 5000; // how long the ship circles the planet before the reveal
+  const ORBIT_MS = 450; // short opening; no artificial three-second wait
 
   S.intro = {
     start(mark) {
@@ -71,7 +71,7 @@
 
       async function finish(ready) {
         const hold = new URLSearchParams(location.search).has('hold');
-        const minShow = wait(ORBIT_MS);       // the ship orbits for at least 5 s
+        const minShow = wait(ORBIT_MS);       // brief opening while the page becomes ready
         const capped = Promise.race([Promise.resolve(ready).catch(() => {}), wait(6000)]);
         await Promise.all([minShow, capped, hold ? new Promise(r => { S.releaseIntro = r; }) : null]);
         timing.ready = performance.now();
@@ -85,21 +85,21 @@
 
       // ~1.7 s: the ship finishes its lap and lands while the blue is absorbed and the mark flies home
       async function cinematic() {
-        const T = 1700;
+        const T = 650;
         const { dx, dy, s } = geo;
         sampleFrames(T + 200);
         html.classList.add('intro-revealing');
         const landed = mark.settle(T);
         loader.classList.add('is-revealing');
         const anims = [
-          loader.animate([{ '--hole': '-18vmax' }, { '--hole': '96vmax' }], { duration: 1500, delay: 140, easing: 'cubic-bezier(.55,0,.3,1)', fill: 'both' }),
-          tint.animate([{ opacity: 0 }, { opacity: 0.6, offset: 0.55 }, { opacity: 0.6 }], { duration: 1500, easing: 'ease-in-out', fill: 'both' }),
+          loader.animate([{ '--hole': '-18vmax' }, { '--hole': '96vmax' }], { duration: 560, delay: 50, easing: 'cubic-bezier(.55,0,.3,1)', fill: 'both' }),
+          tint.animate([{ opacity: 0 }, { opacity: 0.6, offset: 0.55 }, { opacity: 0.6 }], { duration: 560, easing: 'ease-in-out', fill: 'both' }),
           loader.animate([{ opacity: 1 }, { opacity: 1, offset: 0.62 }, { opacity: 0 }], { duration: T, fill: 'both' }),
           flip.animate([
             { transform: `translate(${dx}px, ${dy}px) scale(${s})`, easing: 'cubic-bezier(.62,0,.22,1)' },
             { transform: 'translate(0px, 0px) scale(0.93)', offset: 0.86, easing: 'cubic-bezier(.3,0,.3,1)' },
             { transform: 'translate(0px, 0px) scale(1)' }
-          ], { duration: 1480, delay: 220, fill: 'both' })
+          ], { duration: 560, delay: 70, fill: 'both' })
         ];
         flip.style.transform = '';
         if (caption) anims.push(caption.animate([{ opacity: 1, transform: 'translate(-50%, 0)' }, { opacity: 0, transform: 'translate(-50%, 8px)' }], { duration: 360, easing: 'ease-in', fill: 'both' }));

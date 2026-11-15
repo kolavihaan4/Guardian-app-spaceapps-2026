@@ -20,6 +20,8 @@ import {
   type TriageResponse,
 } from '@astrovitals/shared'
 import { Router, type Request, type Response } from 'express'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { z } from 'zod'
 import type { AppContext } from '../context.ts'
 
@@ -100,9 +102,12 @@ export const TriageRequestSchema = z.object({
 })
 
 export const TriageResponseSchema = z.object({
+  // First on purpose: a model writes fields in this order, and the fine-tuned model is taught to put
+  // its rule checklist here before it commits to a status (ai/training). The server replaces this
+  // field with the rule engine's own description of the readings either way (applyRuleDecisions).
+  baseline_comparison: z.string(),
   overall_status: z.enum(['nominal', 'caution', 'alert']),
   data_quality_check: z.string(),
-  baseline_comparison: z.string(),
   environment_insight: z.string(),
   common_causes: z.array(z.string()),
   confirmation_prompt: z.string(),
@@ -113,8 +118,51 @@ export const TriageResponseSchema = z.object({
   ground_support_reason: z.string().nullable(),
 })
 
+// Which model writes the explanation. The rules decide the status and the escalation either way.
+//   mlx (default): the fine-tuned model, round 2 of ai/training (adapters/v2, on the Mac that trained
+//     it), served by mlx_lm exactly as it was scored: `npm run model`, see ai/README.md.
+//   ollama: the untuned astrovitals-triage model from ai/Modelfile, or OLLAMA_TRIAGE_MODEL.
+const TRIAGE_BACKEND = process.env.TRIAGE_BACKEND === 'ollama' ? 'ollama' : 'mlx'
+const MLX_URL = process.env.MLX_URL ?? 'http://localhost:8080'
 const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://localhost:11434'
 const OLLAMA_MODEL = process.env.OLLAMA_TRIAGE_MODEL ?? 'astrovitals-triage-ft-v2'
+// How long to wait for the model before the rule engine answers alone. 20 s suits the fine-tuned
+// model on a Mac or an L4 GPU; a slower machine, such as a T4, needs more.
+const MODEL_TIMEOUT_MS = Number(process.env.TRIAGE_MODEL_TIMEOUT_MS) || 20_000
+// The fine-tuned model was trained with this system prompt word for word; mlx_lm has no Modelfile to hold it.
+const FINE_TUNED_SYSTEM_PROMPT = readFileSync(resolve(import.meta.dirname, '../../../../ai/training/system_prompt.txt'), 'utf8').trim()
+
+/** The model's answer to one triage request, as JSON text with any thinking block in front of it removed. */
+async function askModel(content: string, signal: AbortSignal): Promise<string> {
+  const post = (url: string, body: unknown) =>
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal, body: JSON.stringify(body) })
+  let text: string | undefined
+  if (TRIAGE_BACKEND === 'mlx') {
+    // The request ai/training/evaluate.py scored: the trained system prompt, thinking off, the likeliest token every time.
+    const res = await post(`${MLX_URL}/v1/chat/completions`, {
+      messages: [
+        { role: 'system', content: FINE_TUNED_SYSTEM_PROMPT },
+        { role: 'user', content },
+      ],
+      temperature: 0,
+      max_tokens: 1100,
+      chat_template_kwargs: { enable_thinking: false },
+    })
+    if (!res.ok) throw new Error(`mlx_lm returned HTTP ${res.status}`)
+    text = ((await res.json()) as { choices?: { message?: { content?: string } }[] }).choices?.[0]?.message?.content
+  } else {
+    const res = await post(`${OLLAMA_URL}/api/chat`, {
+      model: OLLAMA_MODEL,
+      stream: false,
+      think: false,
+      format: z.toJSONSchema(TriageResponseSchema),
+      messages: [{ role: 'user', content }],
+    })
+    if (!res.ok) throw new Error(`Ollama returned HTTP ${res.status}`)
+    text = ((await res.json()) as { message?: { content?: string } }).message?.content
+  }
+  return (text ?? '{}').split('</think>').pop() ?? '{}'
+}
 
 export interface ComputedVitalFacts {
   /** Heart rate against the personal preflight median and, when at rest, the 60–100 bpm resting adult range. */
@@ -268,6 +316,16 @@ export function applyRuleDecisions(model: TriageResponse, rules: TriageResponse,
 }
 
 export function buildDeterministicFallback(input: TriageRequest): TriageResponse {
+  return evaluateRules(input).triage
+}
+
+/**
+ * The rule engine. Returns its answer and the same checks written out as a fixed-order checklist:
+ * one entry per rule with the reading and its verdict, then the flags raised and the escalation
+ * decision. The fine-tuned model is taught to write that checklist before its status, so every
+ * rule is graded in training instead of only the final decision.
+ */
+export function evaluateRules(input: TriageRequest): { triage: TriageResponse; checklist: string } {
   const { vitals, available_tools } = input
   const envId: MissionEnvironmentId = input.environment ?? 'iss_leo'
   const env = MISSION_ENVIRONMENTS[envId] ?? MISSION_ENVIRONMENTS.iss_leo
@@ -293,9 +351,16 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
   const highHr = hrDelta >= 35 || vitals.hr_bpm >= 115
   // Above 100 bpm is the top of the resting adult range; the rise over the personal median still flags first.
   const modHr = hrDelta >= 15 || vitals.hr_bpm > 100
+  // A fall of 15 bpm or more below the personal median is the project's own line, mirroring the rise.
+  // The 60 bpm bottom of the cited range is not used: rates below it are common in fit adults.
+  const lowHr = hrDelta <= -15
   // 91 or below is the project's own escalation line (no guideline sets one there); caution follows
   // the BTS guideline through bpFacts.minimum_status: below 94, or 3 points below the personal baseline.
   const lowSpo2 = vitals.spo2_pct <= 91
+  // Red-flag readings that reach Ground Support on their own once the sensor is verified: the BTS
+  // guideline starts high-flow oxygen below 85%, and the Merck Manual lists 35 °C or below as hypothermia.
+  const veryLowSpo2 = vitals.spo2_pct < 85
+  const lowTemp = vitals.temp_c !== undefined && vitals.temp_c <= 35
   // 38.0 °C and the rises of 0.6 and 1.2 °C over the personal baseline are the project's own lines; the
   // cited ranges reach the status through bpFacts.minimum_status.
   const highTemp = (tempC !== undefined && tempC >= 38.0) || (tempDelta !== undefined && tempDelta >= 1.2)
@@ -328,16 +393,73 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
   const lowOxygenFastBreathing = vitals.spo2_pct < 90 && rr !== undefined && rr > 22 && vitals.hr_bpm > 100
   const lowOxygenSlowBreathing = vitals.spo2_pct < 90 && rr !== undefined && rr < 10
   const escalate =
-    (vitals.sensor_verified && ((highHr && lowSpo2) || highTemp || (highHr && highBp) || lowOxygenFastBreathing || lowOxygenSlowBreathing)) ||
+    (vitals.sensor_verified && ((highHr && lowSpo2) || veryLowSpo2 || highTemp || lowTemp || (highHr && highBp) || lowOxygenFastBreathing || lowOxygenSlowBreathing)) ||
     usFlag ||
     vitals.eye_exam_finding === 'amsler_grid_distortion' ||
     maxPain >= 8
 
   const caution =
     !escalate &&
-    (unverifiedArtifact || modHr || modSpo2 || modTemp || highBp || orthostaticDrop || bpFacts.minimum_status === 'caution' || highGlucose || lowSleep || eyeFlag || maxPain >= 4 || vitals.mood === 'stressed' || vitals.mood === 'isolated')
+    (unverifiedArtifact || modHr || lowHr || modSpo2 || modTemp || highBp || orthostaticDrop || bpFacts.minimum_status === 'caution' || highGlucose || lowSleep || eyeFlag || maxPain >= 4 || vitals.mood === 'stressed' || vitals.mood === 'isolated')
 
   const overall_status: 'nominal' | 'caution' | 'alert' = escalate ? 'alert' : caution ? 'caution' : 'nominal'
+
+  const signed = (n: number) => `${n >= 0 ? '+' : ''}${n}`
+  const tempOutsideUsual = tempC !== undefined && classifyBodyTemperature(tempC).flag
+  const rrBand = rr === undefined ? undefined : classifyRespiratoryRate(rr, envId !== 'eva_spacewalk', input.profile?.previous_conditions).band
+  const rrFlag = rrBand === 'below_range' || rrBand === 'above_range'
+  const amsler = vitals.eye_exam_finding === 'amsler_grid_distortion'
+  const moodFlag = vitals.mood === 'stressed' || vitals.mood === 'isolated'
+  const flagged = [
+    ['sensor', unverifiedArtifact],
+    ['HR', modHr || lowHr],
+    ['SpO2', modSpo2],
+    ['temp', modTemp || tempOutsideUsual],
+    ['BP', highBp],
+    ['standing', orthostaticDrop],
+    ['glucose', highGlucose],
+    ['breathing', rrFlag],
+    ['sleep', lowSleep],
+    ['mood', moodFlag],
+    ['pain', maxPain >= 4],
+    ['ultrasound', usFlag],
+    ['eye', eyeFlag],
+  ].filter(([, on]) => on).map(([name]) => name)
+  // Each entry is paired with whether it needs a verified sensor, so an unverified reading that
+  // would otherwise escalate can be reported as held back.
+  const triggers: [string, boolean, boolean][] = [
+    ['high HR with SpO2 91 or below', highHr && lowSpo2, true],
+    ['SpO2 below 85', veryLowSpo2, true],
+    ['high temperature', highTemp, true],
+    ['low temperature', lowTemp, true],
+    ['high HR with flagged BP', highHr && highBp, true],
+    ['SpO2 below 90 with fast breathing and HR above 100', lowOxygenFastBreathing, true],
+    ['SpO2 below 90 with slow breathing', lowOxygenSlowBreathing, true],
+    ['ultrasound finding', usFlag, false],
+    ['eye distortion', amsler, false],
+    ['severe pain', maxPain >= 8, false],
+  ]
+  const fired = triggers.filter(([, on, needsSensor]) => on && (!needsSensor || vitals.sensor_verified)).map(([name]) => name)
+  const heldBack = !escalate && triggers.some(([, on, needsSensor]) => on && needsSensor)
+  const checklist = [
+    `sensor ${vitals.sensor_verified ? 'verified' : 'not verified'}`,
+    `HR ${vitals.hr_bpm} vs ${vitals.preflight_hr_median} (${signed(hrDelta)}) ${highHr ? 'high' : modHr ? 'raised' : lowHr ? 'low' : 'ok'}${vitals.hr_bpm > 100 ? ', above 100' : ''}`,
+    `SpO2 ${vitals.spo2_pct} ${veryLowSpo2 ? 'below 85' : vitals.spo2_pct < 90 ? 'below 90' : lowSpo2 ? '91 or below' : modSpo2 ? 'flagged' : 'ok'}`,
+    tempC === undefined
+      ? 'temp not measured'
+      : `temp ${tempC.toFixed(1)}${tempDelta === undefined ? '' : ` (${signed(tempDelta)})`} ${lowTemp ? 'low' : highTemp ? 'high' : modTemp ? 'raised' : tempOutsideUsual ? 'outside usual range' : 'ok'}`,
+    sys === undefined && dia === undefined ? 'BP not measured' : `BP ${sys ?? '—'}/${dia ?? '—'} ${highBp ? 'flagged' : 'ok'}`,
+    `standing ${orthostaticDrop ? 'drop' : bpFacts.standing_check === undefined ? 'not checked' : GRAVITY_ENVIRONMENTS.includes(envId) ? 'no drop' : 'not assessed'}`,
+    glucose === undefined ? 'glucose not measured' : `glucose ${glucose} ${highGlucose ? 'flagged' : 'ok'}`,
+    rr === undefined ? 'breathing not measured' : `breathing ${rr} ${rr > 22 ? 'fast' : rr < 10 ? 'slow' : rrFlag ? 'outside range' : 'ok'}`,
+    sleep === undefined ? 'sleep not reported' : `sleep ${sleep} ${lowSleep ? 'short' : 'ok'}`,
+    `mood ${vitals.mood === undefined ? 'not reported' : moodFlag ? 'flagged' : 'ok'}`,
+    `pain ${maxPain === 0 ? 'none' : `max ${maxPain} ${maxPain >= 8 ? 'severe' : maxPain >= 4 ? 'flagged' : 'ok'}`}`,
+    `ultrasound ${usFlag ? 'flagged' : vitals.ultrasound_finding === 'normal' ? 'ok' : 'not performed'}`,
+    `eye ${amsler ? 'distortion' : eyeFlag ? 'flagged' : vitals.eye_exam_finding === undefined || vitals.eye_exam_finding === 'not_performed' ? 'not performed' : 'ok'}`,
+    `flags: ${flagged.length > 0 ? flagged.join(', ') : 'none'}`,
+    `escalate: ${escalate ? `yes (${fired.join('; ')})` : heldBack ? 'no (sensor not verified)' : 'no'}`,
+  ].join('; ')
 
   // 1. Data quality check
   const data_quality_check = unverifiedArtifact
@@ -374,6 +496,9 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
   }
   if (modHr || highTemp) {
     common_causes.push('Microgravity plasma volume reduction, mild dehydration, or post-exercise thermal load')
+  }
+  if (lowHr) {
+    common_causes.push('Optical sensor under-reading from loose contact, or a slower rate during rest or sleep')
   }
   if (highBp || eyeFlag || vitals.ultrasound_finding === 'optic_nerve_sheath_elevated') {
     common_causes.push('Cephalad fluid shift increasing intracranial/ocular venous pressure (SANS pathway)')
@@ -422,7 +547,7 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
   const sleepTool = hasTool('Sleep')
   const co2Tool = hasTool('CO2')
 
-  if (unverifiedArtifact || lowSpo2 || modSpo2) {
+  if (unverifiedArtifact || lowSpo2 || modSpo2 || lowHr) {
     plan.push(`Re-seat sensor and cross-check SpO2 and pulse rate at rest using ${oxTool}`)
   }
   if ((highBp || modHr || escalate) && bpTool) {
@@ -486,6 +611,7 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
   if (vitals.sensor_verified && lowOxygenFastBreathing) reasons.push(`SpO2 ${vitals.spo2_pct}% with fast breathing (${rr} br/min) and HR ${vitals.hr_bpm} bpm`)
   if (vitals.sensor_verified && lowOxygenSlowBreathing) reasons.push(`SpO2 ${vitals.spo2_pct}% with slow breathing (${rr} br/min)`)
   if (highTemp && tempC !== undefined) reasons.push(`Temp ${tempC.toFixed(1)}°C`)
+  if (vitals.sensor_verified && lowTemp && tempC !== undefined) reasons.push(`Temp ${tempC.toFixed(1)}°C, at or below the 35 °C hypothermia line`)
   if (usFlag) reasons.push(`Ultrasound flag (${vitals.ultrasound_finding?.replace(/_/g, ' ')})`)
   if (vitals.eye_exam_finding === 'amsler_grid_distortion') reasons.push('Amsler grid visual distortion (SANS check)')
   if (maxPain >= 8) reasons.push(`Severe localized pain (${maxPain}/10)`)
@@ -495,17 +621,20 @@ export function buildDeterministicFallback(input: TriageRequest): TriageResponse
     : null
 
   return {
-    overall_status,
-    data_quality_check,
-    baseline_comparison,
-    environment_insight,
-    common_causes,
-    confirmation_prompt,
-    available_tool_action_plan: plan,
-    workout_modification,
-    simple_instructions,
-    contact_ground_support: Boolean(escalate),
-    ground_support_reason,
+    triage: {
+      baseline_comparison,
+      overall_status,
+      data_quality_check,
+      environment_insight,
+      common_causes,
+      confirmation_prompt,
+      available_tool_action_plan: plan,
+      workout_modification,
+      simple_instructions,
+      contact_ground_support: Boolean(escalate),
+      ground_support_reason,
+    },
+    checklist,
   }
 }
 
@@ -592,39 +721,17 @@ export function aiRoutes(ctx: AppContext): Router {
     const payload = parsed.data
     const bpFacts = computeVitalFacts(payload)
     const controller = new AbortController()
-    // The model's answers took a median of 7.75 s and at most 10.5 s when measured, so an 8-second
-    // cut-off made it close to chance whether the model or the rule engine answered.
-    const timeout = setTimeout(() => controller.abort(), 12_000)
+    // The fine-tuned model writes its rule checklist before the rest, so it is slower than the untuned
+    // one (median 7.75 s, at most 10.5 s). It took a median of 11.1 s and at most 18.1 s on the
+    // validation cases, where a 12-second cut-off sent about a third of the answers to the rule engine.
+    const timeout = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS)
 
     try {
-      const ollamaRes = await fetch(`${OLLAMA_URL}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: OLLAMA_MODEL,
-          stream: false,
-          think: false,
-          format: z.toJSONSchema(TriageResponseSchema),
-          messages: [
-            {
-              role: 'user',
-              content: JSON.stringify({ ...payload, computed_facts: bpFacts }),
-            },
-          ],
-        }),
-      })
-
-      if (!ollamaRes.ok) {
-        throw new Error(`Ollama returned HTTP ${ollamaRes.status}`)
-      }
-
-      const data = (await ollamaRes.json()) as { message?: { content?: string } }
-      const rawContent = data.message?.content ?? '{}'
+      const rawContent = await askModel(JSON.stringify({ ...payload, computed_facts: bpFacts }), controller.signal)
       const validatedOutput = TriageResponseSchema.parse(JSON.parse(rawContent))
 
       const out: TriageEnvelope = {
-        source: 'Qwen3-8B explanation, decisions by onboard rules',
+        source: `${TRIAGE_BACKEND === 'mlx' ? 'Fine-tuned Qwen3-8B' : 'Qwen3-8B'} explanation, decisions by onboard rules`,
         disclaimer:
           'Not a medical device. Exploratory crew decision-support prototype only; does not diagnose, treat, or prescribe.',
         triage: applyRuleDecisions(attachComputedFacts(validatedOutput, bpFacts), buildDeterministicFallback(payload), payload.available_tools),

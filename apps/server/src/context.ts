@@ -2,6 +2,7 @@ import type { ProviderId } from '@astrovitals/shared'
 import type { Logger } from 'pino'
 import type { Config } from './config.ts'
 import type { SecretBox } from './lib/crypto.ts'
+import type { FetchLike } from './lib/http.ts'
 import type { NasaService } from './nasa/service.ts'
 import type { Repo, UserRow } from './repo.ts'
 import type { WearableProvider } from './wearables/types.ts'
@@ -13,6 +14,8 @@ export interface AppContext {
   log: Logger
   nasa: NasaService
   providers: Map<ProviderId, WearableProvider>
+  /** Used for the Supabase sign-in check; the global fetch when not set (tests pass a stand-in). */
+  fetchImpl?: FetchLike
 }
 
 declare global {

@@ -1,0 +1,82 @@
+/* A calmer, readable Triage page; scoped to this page. */
+.triage-page { gap: 28px !important; padding: 10px 0 24px; }
+.triage-page > .card, .triage-page .triage-columns > .card { padding: 26px; }
+.triage-page .card-head { gap: 12px; margin-bottom: 20px; }
+.triage-page h1 { margin: 8px 0 0 !important; font-size: 30px; }
+.triage-page .eyebrow { font-size: 10px; letter-spacing: .12em; color: var(--accent-dark); }
+.triage-lead { max-width: 660px; margin: 12px 0 0; color: var(--text-secondary); font-size: 14px; line-height: 1.7; }
+.triage-source { font-size: 12px; color: var(--accent-dark); }
+.triage-page .env-grid { gap: 16px; margin: 24px 0 12px; }
+.triage-page .env-grid button { padding-bottom: 16px; border-radius: 14px; overflow: hidden; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.triage-page .env-grid button strong { font-size: 14px; }
+.triage-page .env-grid button span { font-size: 11px; line-height: 1.6; padding: 0 10px; }
+.triage-page .env-norms { gap: 24px; padding: 20px; margin-top: 18px; border: 1px solid var(--border); line-height: 1.75; }
+.triage-page .env-deltas { gap: 10px; font-size: 12px; padding-left: 20px; }
+.triage-details summary { cursor: pointer; color: var(--accent-dark); font-size: 12px; }
+.triage-details p { margin: 12px 0 0; line-height: 1.7; }
+.triage-page .triage-examples { flex-wrap: wrap; gap: 20px; padding: 22px 26px !important; }
+.triage-page .triage-examples > .row { flex-wrap: wrap; gap: 10px !important; }
+.triage-page .triage-examples > .row > div { flex-basis: 100%; margin-bottom: 6px; }
+.triage-caption { margin: 6px 0 0; font-size: 12px; color: var(--text-secondary); line-height: 1.65; }
+.triage-page .triage-columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 24px; }
+.triage-page .triage-columns > :first-child { position: static; }
+.triage-page .body-explorer { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+.triage-page .body-svg-wrap { padding: 18px; }
+.triage-page .body-3d { width: 100%; max-width: 400px; }
+.triage-page .body-zone-pills { gap: 8px; }
+.triage-page .body-zone-pills .zone-btn { min-height: 34px; padding: 7px 10px; font-size: 12px; }
+.triage-page .body-detail { gap: 22px; line-height: 1.7; }
+.triage-page .body-detail h2 { font-size: 22px; margin: 7px 0 12px; }
+.triage-page .body-detail h3 { margin-bottom: 10px; }
+.triage-page .form-grid { gap: 16px; }
+.triage-page .form-grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.triage-page .form-grid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.triage-page .vital-input { padding: 16px; gap: 10px; min-width: 0; border-radius: 12px; }
+.triage-page .vital-input.wide { grid-column: 1 / -1; }
+.triage-page .vital-input input { min-width: 0; width: 100%; }
+.triage-page .vital-input small { font-weight: 400; font-size: 11.5px; line-height: 1.7; }
+.triage-page .subcard { padding: 20px; min-width: 0; }
+.triage-page .subcard .form-grid { margin-top: 18px; }
+.triage-page .tools-grid { gap: 10px; margin-top: 16px; }
+.triage-page .tool-chip { white-space: normal; text-align: left; line-height: 1.5; min-height: 38px; }
+.triage-page .compact-list { gap: 10px; line-height: 1.75; }
+.triage-page .ai-panel .grid.two { gap: 22px; }
+.triage-page .ai-panel .subcard.stack { gap: 24px; }
+.triage-page .ai-panel h3 { margin-bottom: 10px; }
+.triage-page .ai-panel p { line-height: 1.75; font-size: 13px; }
+.triage-page .confirm-box .row { flex-wrap: wrap; }
+.triage-page .quest-card { padding: 22px; background: rgba(255,255,255,.48); border-left: 3px solid var(--border); border-radius: 14px; }
+.triage-page .quest-card > .row { gap: 16px; align-items: flex-start; }
+.triage-page .quest-card label { gap: 12px; flex: 1; font-size: 15px; line-height: 1.5; }
+.triage-page .quest-card input[type=checkbox] { width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; }
+.triage-page .quest-card > small { display: block; margin: 14px 0 8px 32px; font-size: 11px; }
+.triage-page .quest-card > p { margin: 0 0 0 32px !important; font-size: 13px !important; line-height: 1.75; }
+.triage-page .quest-card.done { border-left-color: var(--accent); background: rgba(222,238,232,.65); }
+.triage-page .xp-bar-wrap { height: 9px; border-radius: 12px; margin: 6px 0 18px; }
+.triage-page .xp-bar-fill { transition: width .35s ease; }
+.routine-count { color: var(--accent-dark); font-size: 30px; font-weight: 600; line-height: 1.2; }
+.routine-count small { color: var(--text-secondary); font-size: 12px; font-weight: 400; }
+@media (prefers-reduced-motion: no-preference) {
+  .triage-page .body-detail { animation: triage-appear .24s ease; }
+  .triage-page .quest-card { transition: transform .2s ease, background-color .25s ease, box-shadow .2s ease, border-color .2s ease; }
+  @keyframes triage-appear { from { opacity: .3; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .triage-page .quest-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(44,76,102,.1); }
+}
+@media (max-width: 1050px) {
+  .triage-page .triage-columns { grid-template-columns: minmax(0,1fr); }
+  .triage-page .body-explorer { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+}
+@media (max-width: 650px) {
+  .triage-page > .card, .triage-page .triage-columns > .card { padding: 20px; }
+  .triage-page .body-explorer, .triage-page .form-grid.three, .triage-page .form-grid.four { grid-template-columns: minmax(0,1fr); }
+  .triage-page .env-norms { padding: 16px; }
+  .triage-page .env-deltas { padding-left: 0; border-left: 0; }
+  .triage-page .quest-card { padding: 18px; }
+  .triage-page .quest-card .row { flex-wrap: wrap; }
+  .triage-page .quest-card .badge { margin-left: 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .triage-page .quest-card, .triage-page .xp-bar-fill, .triage-page .env-grid button { transition: none; animation: none; }
+}

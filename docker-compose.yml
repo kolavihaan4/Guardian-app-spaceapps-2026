@@ -1,0 +1,38 @@
+# The whole site on one machine: the Node server, the ultrasound model service, and Caddy in front
+# for HTTPS. See docs/DEPLOY_GOOGLE_CLOUD.md.
+#
+#   SITE_DOMAIN=guardian.example.com docker compose up -d --build
+services:
+  scans:
+    build:
+      context: ./ai
+      dockerfile: ultrasound_service/Dockerfile
+    restart: unless-stopped
+    # Not published: only the app container can reach it.
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on: [scans]
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      APP_ORIGIN: https://${SITE_DOMAIN:?set SITE_DOMAIN to the site's host name}
+      TRUST_PROXY: "1"
+      DATABASE_PATH: /data/guardian.sqlite
+      ULTRASOUND_URL: http://scans:8790
+    volumes:
+      - app-data:/data
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [app]
+    ports: ["80:80", "443:443"]
+    command: caddy reverse-proxy --from ${SITE_DOMAIN} --to app:8787
+    volumes:
+      - caddy-data:/data
+
+volumes:
+  app-data:
+  caddy-data:

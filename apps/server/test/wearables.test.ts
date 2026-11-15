@@ -52,7 +52,7 @@ describe('DemoProvider', () => {
 
   it('cannot be persisted', async () => {
     const { repo } = makeTestContext()
-    repo.createUser({ id: 'u', email: 'u@example.com', passwordHash: 'x' })
+    repo.userForSupabase('u', 'u@example.com')
     const m = await demo.getMetrics('u', start, end, ['spo2'])
     expect(() => repo.saveHealthData('u', 'demo', { metrics: m })).toThrow(/simulated/)
   })

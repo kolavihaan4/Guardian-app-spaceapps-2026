@@ -1,7 +1,7 @@
 import { PROVIDER_INFO, type MeResponse, type ProviderStatusDto } from '@astrovitals/shared'
 import { Router } from 'express'
 import { z } from 'zod'
-import { endSession, parse } from '../auth.ts'
+import { parse } from '../auth.ts'
 import type { AppContext } from '../context.ts'
 import { isOAuthProvider } from '../wearables/types.ts'
 
@@ -66,14 +66,16 @@ export function meRoutes(ctx: AppContext): Router {
     res.json({ ok: true })
   })
 
-  /** Delete the account: revoke every OAuth grant, then cascade-delete everything. */
+  /**
+   * Delete this server's copy of the account: revoke every OAuth grant, then cascade-delete everything.
+   * The sign-in itself lives in Supabase and is deleted there by the page (delete_my_account()).
+   */
   r.delete('/', async (req, res) => {
     parse(z.object({ confirm: z.literal('DELETE') }), req.body)
     const u = req.user!
     for (const p of ctx.providers.values()) {
       if (isOAuthProvider(p) && ctx.repo.connection(u.id, p.id)) await p.disconnect(u.id)
     }
-    endSession(ctx, req, res)
     ctx.repo.deleteUser(u.id)
     ctx.repo.audit(null, 'user.delete')
     res.json({ ok: true })

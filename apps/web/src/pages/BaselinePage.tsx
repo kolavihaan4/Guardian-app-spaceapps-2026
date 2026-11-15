@@ -1,7 +1,7 @@
 import { attentionReasons, summaryCsv, type BaselineComparison, type BaselineDatasetResponse, type ComparedPoint } from '@astrovitals/shared'
 import { useMemo, useState } from 'react'
 import { CartesianGrid, ComposedChart, Line, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { Card, ErrorNote, Loading, useAsync } from '../components/common'
+import { Card, ErrorNote, Loading, useAsync, VitalsTabs } from '../components/common'
 import { api } from '../lib/api'
 
 type Analyte = BaselineDatasetResponse['analytes'][number]
@@ -185,8 +185,8 @@ export function BaselinePage() {
     return d ? d.featured.map((id) => d.analytes.find((a) => a.id === id)!).filter(Boolean) : []
   }, [data.data])
 
-  if (data.error) return <ErrorNote error={data.error} retry={data.reload} />
-  if (!data.data) return <Loading what="Inspiration4 lab data" />
+  if (data.error) return <><VitalsTabs current="baseline" /><ErrorNote error={data.error} retry={data.reload} /></>
+  if (!data.data) return <><VitalsTabs current="baseline" /><Loading what="Inspiration4 lab data" /></>
   const d = data.data
   const post = d.timepoints.filter((t) => t.phase === 'post')
   const opened = featured.find((a) => a.id === open)
@@ -201,10 +201,11 @@ export function BaselinePage() {
 
   return (
     <div>
+      <VitalsTabs current="baseline" />
       <div style={{ marginBottom: 12 }}>
-        <h1>Mission Baseline</h1>
+        <h1>NASA study readings</h1>
         <p className="muted" style={{ marginTop: 4 }}>
-          How did an astronaut’s recorded lab values change compared with their <strong>own</strong> preflight readings? A data-exploration prototype using recorded NASA data, not a live feed and not a diagnosis.
+          Explore recorded astronaut lab results before and after a mission. A baseline is the person’s usual reading before flight. These are study results, not your saved cards or live health readings.
         </p>
       </div>
       <div className="mb-tabs" role="tablist">
@@ -216,14 +217,14 @@ export function BaselinePage() {
         <>
           <div className="mb-controls">
             <div>
-              <div className="group-label">Crew profile</div>
-              <div className="row" role="group" aria-label="Crew profile">
+              <div className="group-label">Study participant</div>
+              <div className="row" role="group" aria-label="Study participant">
                 {d.crew.map((c) => <button key={c} type="button" className={c === who ? 'primary' : ''} aria-pressed={c === who} onClick={() => setWho(c)}>{c}</button>)}
               </div>
             </div>
             <div>
-              <div className="group-label">Follow-up sample</div>
-              <div className="row" role="group" aria-label="Follow-up sample">
+              <div className="group-label">Reading after return</div>
+              <div className="row" role="group" aria-label="Reading after return">
                 {post.map((t) => (
                   <button key={t.label} type="button" className={t.label === sample ? 'primary' : ''} aria-pressed={t.label === sample} onClick={() => setSample(t.label)} title={`${t.day} days after return`}>
                     {t.label} <span style={{ fontWeight: 400, opacity: 0.8 }}>· {t.day} d</span>

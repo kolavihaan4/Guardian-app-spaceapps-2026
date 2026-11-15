@@ -1,7 +1,4 @@
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, scrypt, timingSafeEqual } from 'node:crypto'
-import { promisify } from 'node:util'
-
-const scryptAsync = promisify(scrypt) as (pw: string, salt: Buffer, len: number, opts: object) => Promise<Buffer>
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'node:crypto'
 
 /**
  * AES-256-GCM envelope for secrets at rest (OAuth tokens, PKCE verifiers).
@@ -53,25 +50,4 @@ export function randomId(): string {
 /** RFC 7636 S256 code challenge. */
 export function pkceChallenge(verifier: string): string {
   return createHash('sha256').update(verifier).digest('base64url')
-}
-
-const SCRYPT = { N: 16384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 }
-
-export async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16)
-  const dk = await scryptAsync(password, salt, 64, SCRYPT)
-  return `scrypt$${SCRYPT.N}$${SCRYPT.r}$${SCRYPT.p}$${salt.toString('base64url')}$${dk.toString('base64url')}`
-}
-
-export async function verifyPassword(password: string, stored: string): Promise<boolean> {
-  const [alg, n, r, p, salt, hash] = stored.split('$')
-  if (alg !== 'scrypt' || !n || !r || !p || !salt || !hash) return false
-  const expected = Buffer.from(hash, 'base64url')
-  const dk = await scryptAsync(password, Buffer.from(salt, 'base64url'), expected.length, {
-    N: Number(n),
-    r: Number(r),
-    p: Number(p),
-    maxmem: SCRYPT.maxmem,
-  })
-  return dk.length === expected.length && timingSafeEqual(dk, expected)
 }

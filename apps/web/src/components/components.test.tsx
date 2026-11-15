@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { Metric } from '@astrovitals/shared'
 import { dailyMean, latest, overlaySeries, seriesBySource } from '../lib/series'
-import { Disclaimer, QualityNote, SourceBadge } from './common'
+import { Disclaimer, QualityNote, SourceBadge, VitalsTabs } from './common'
 
 describe('labelling', () => {
   it('marks simulated sources unmistakably', () => {
@@ -14,6 +14,17 @@ describe('labelling', () => {
     render(<SourceBadge source="apple-health-export" simulated={false} />)
     expect(screen.queryByText(/SIMULATED/)).not.toBeInTheDocument()
     expect(screen.getByText(/Apple Health export/)).toBeInTheDocument()
+  })
+
+  it('links the three Vitals pages and marks the open one', () => {
+    render(<VitalsTabs current="baseline" />)
+    const links = screen.getAllByRole('link')
+    expect(links.map((a) => [a.textContent, a.getAttribute('href')])).toEqual([
+      ['Over time', '#/dashboard'],
+      ['Lab baseline', '#/baseline'],
+      ['Compare with NASA data', '#/correlation'],
+    ])
+    expect(links.map((a) => a.getAttribute('aria-current'))).toEqual([null, 'page', null])
   })
 
   it('shows the medical disclaimer', () => {

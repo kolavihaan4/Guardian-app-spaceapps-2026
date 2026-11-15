@@ -3,13 +3,7 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import type { BaselineDatasetResponse } from '@astrovitals/shared'
 import { buildOsd575, OSD575_CSV, parseCsv, parseSampleName } from '../src/datasets/osd575.ts'
-import { makeTestContext, ORIGIN } from './helpers.ts'
-
-async function signedIn(app: ReturnType<typeof makeTestContext>['app']) {
-  const agent = request.agent(app)
-  await agent.post('/api/auth/register').set('Origin', ORIGIN).send({ email: 'labs@example.com', password: 'correct-horse-battery' }).expect(201)
-  return agent
-}
+import { makeTestContext, signedIn } from './helpers.ts'
 
 const real = () => buildOsd575(readFileSync(OSD575_CSV, 'utf8'))
 
@@ -66,7 +60,7 @@ describe('OSD-575 Inspiration4 metabolic panel (vendored NASA file)', () => {
   it('is served at /api/datasets/osd-575 to signed-in users only', async () => {
     const { app } = makeTestContext()
     await request(app).get('/api/datasets/osd-575').expect(401)
-    const agent = await signedIn(app)
+    const agent = await signedIn(app, 'labs@example.com')
     const body = (await agent.get('/api/datasets/osd-575').expect(200)).body as BaselineDatasetResponse
     expect(body.analytes).toHaveLength(17)
     expect(body.caveats.join(' ')).toMatch(/median/)

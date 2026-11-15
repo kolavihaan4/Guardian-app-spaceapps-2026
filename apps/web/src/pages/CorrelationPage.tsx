@@ -1,7 +1,7 @@
 import { describeR, exploratoryCorrelation, METRIC_INFO, PROVIDER_INFO, type MetricType, type ProviderId } from '@astrovitals/shared'
 import { useMemo, useState } from 'react'
 import { DailyLine, PairScatter } from '../components/charts'
-import { Card, ErrorNote, Loading, SourceBadge, useAsync } from '../components/common'
+import { Card, ErrorNote, Loading, SourceBadge, useAsync, VitalsTabs } from '../components/common'
 import { api } from '../lib/api'
 import { dailyMean, dailySum, DAY, daysBetween, isoDay, OVERLAYS, overlaySeries, sleepPerNight, sourceColor, type OverlayKey } from '../lib/series'
 import { LOCATIONS } from './SpacePage'
@@ -61,15 +61,16 @@ export function CorrelationPage() {
 
   return (
     <div>
-      <h1>Exploratory overlay</h1>
+      <VitalsTabs current="correlation" />
+      <h1>Compare with NASA data</h1>
       <div className="banner warn" role="note">
-        <strong>Exploratory observations only.</strong> This view lines up your wearable data with NASA data by date. It cannot show that space weather or
+        <strong>A pattern does not prove a cause.</strong> This view lines up your health data with NASA data by date. It cannot show that space weather or
         environmental events caused any change in your body, and it is not medical advice.
       </div>
 
       <div className="card row" style={{ marginBottom: 12, alignItems: 'end' }}>
         <label>
-          Wearable measurement
+          Health measurement
           <select value={vital} onChange={(e) => setVital(e.target.value as VitalKey)}>
             {VITALS.map((v) => <option key={v.key} value={v.key}>{v.label}</option>)}
           </select>
@@ -99,7 +100,7 @@ export function CorrelationPage() {
           </label>
         ) : null}
         <label>
-          Window
+          Days to show
           <select value={days} onChange={(e) => setDays(Number(e.target.value))}>
             {[14, 30, 60, 90].map((d) => <option key={d} value={d}>{d} days</option>)}
           </select>
@@ -110,12 +111,12 @@ export function CorrelationPage() {
       {sw.error && !overlay.startsWith('power_') ? <ErrorNote error={sw.error} retry={sw.reload} /> : null}
       {env.error && overlay.startsWith('power_') ? <ErrorNote error={env.error} retry={env.reload} /> : null}
       {vitals.loading && !vitals.data ? <Loading what="data" /> : null}
-      {vitals.data && !active ? <div className="card empty">No wearable source is connected and demo mode is off.</div> : null}
+      {vitals.data && !active ? <div className="card empty">There is no health data to compare, and demo mode is off.</div> : null}
 
       {active ? (
         <div className="grid two">
           <Card
-            title="Both series by day"
+            title="Readings on the same dates"
             table={
               <table className="data">
                 <thead><tr><th>Date</th><th>{vInfo.label}</th><th>{oInfo.label}</th></tr></thead>
@@ -131,23 +132,24 @@ export function CorrelationPage() {
               {oInfo.label} ({oInfo.unit}) <span className="badge">NASA</span>
             </h3>
             <DailyLine points={overlayPoints} unit={oInfo.unit} label={oInfo.label} color="var(--text-secondary)" />
-            <p className="muted" style={{ fontSize: '0.75rem' }}>Two separate charts on the same dates (never a shared dual axis). {oInfo.note}</p>
+            <p className="muted" style={{ fontSize: '0.75rem' }}>The dates match on both graphs. Each graph has its own units. {oInfo.note}</p>
           </Card>
 
-          <Card title="Paired days">
+          <Card title="How the readings line up">
+            <p className="muted" style={{fontSize:'0.8rem'}}>Each dot is one day with both readings. A score near 1 means they rose together; near −1 means they moved in opposite directions; near 0 means no clear straight-line pattern. This does not show a cause.</p>
             <PairScatter pairs={result.pairs} xLabel={`${oInfo.label} (${oInfo.unit})`} yLabel={`${vInfo.label} (${vInfo.unit})`} color={color} />
             <div className="stack" style={{ gap: 4 }}>
               <div>
                 <strong>Days with both values:</strong> {result.n}
                 {result.r !== null ? (
                   <>
-                    {' '}· <strong>Pearson r:</strong> {result.r.toFixed(2)} — {describeR(result.r)}
+                    {' '}· <strong>Pattern score (Pearson r):</strong> {result.r.toFixed(2)} — {describeR(result.r)}
                   </>
                 ) : (
-                  <> · coefficient not shown</>
+                  <> · not enough data to show a score</>
                 )}
               </div>
-              {active.simulated ? <div className="banner sim">This uses SIMULATED wearable data; any pattern here is an artefact of the generator.</div> : null}
+              {active.simulated ? <div className="banner sim">This uses SIMULATED health data; any pattern here is an artefact of the generator.</div> : null}
               <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.8rem' }} className="muted">
                 {result.caveats.map((c) => <li key={c}>{c}</li>)}
               </ul>

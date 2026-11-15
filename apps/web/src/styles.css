@@ -10,15 +10,15 @@
   --accent-dark: #3f665f;
   --accent-rgb: 77, 120, 112;
   --accent-ink: #ffffff;
-  --canvas: #dfe7ee;
+  --canvas: #dde4e9;
   --glass: rgba(247, 250, 254, 0.82);
   --lavender: #8b7bab;
   --page: var(--canvas);
   --surface-1: rgba(255, 255, 255, 0.72);
   --surface-2: rgba(255, 255, 255, 0.5);
   --text-primary: var(--ink-strong);
-  --text-secondary: #4d6577;
-  --text-muted: #566c7c;
+  --text-secondary: #3b5266;
+  --text-muted: #44586a;
   --grid: rgba(97, 126, 147, 0.18);
   --axis: rgba(97, 126, 147, 0.42);
   --border: rgba(97, 126, 147, 0.2);
@@ -643,3 +643,56 @@ a.button { text-decoration: none; display: inline-flex; align-items: center; }
 .body-3d-hint { margin: 0; min-height: 1.5em; text-align: center; font-size: 0.82rem; font-weight: 500; color: var(--text-secondary); }
 .body-3d-views { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
 @media (max-width: 640px) { .body-3d-canvas, .body-3d-canvas.tall { height: 380px; } }
+
+/* Ultrasound check in the body-region panel */
+.us-card { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-inner); background: var(--surface-2); }
+.us-card h3 { margin: 2px 0 0; }
+.us-card p { margin: 0; }
+.us-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.us-slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.us-slots.single { grid-template-columns: minmax(0, 1fr); }
+.us-slot { display: grid; gap: 4px; min-width: 0; }
+.us-drop { display: grid; place-items: center; box-sizing: border-box; width: 100%; min-width: 0; aspect-ratio: 4 / 3; padding: 0; overflow: hidden; border: 1.5px dashed rgba(97, 126, 147, 0.5); border-radius: var(--radius-inner); background: rgba(255, 255, 255, 0.55); color: var(--text-secondary); font-size: 0.82rem; cursor: pointer; }
+.us-slots.single .us-drop { aspect-ratio: 16 / 9; }
+.us-drop:hover, .us-drop.over { border-color: var(--accent-dark); background: rgba(255, 255, 255, 0.85); transform: none; }
+.us-drop.filled { border-style: solid; background: #0d1620; }
+.us-frame { position: relative; display: block; max-width: 100%; max-height: 100%; }
+.us-drop.filled { aspect-ratio: auto; }
+.us-frame img { display: block; width: 100%; height: auto; }
+.us-frame .us-overlay { position: absolute; inset: 0; height: 100%; }
+.us-results { display: grid; gap: 8px; padding: 12px; border-radius: var(--radius-inner); background: rgba(255, 255, 255, 0.7); border: 1px solid var(--border); font-size: 0.88rem; }
+.us-results p { margin: 0; }
+.us-results dl { display: grid; gap: 4px; margin: 0; }
+.us-results dl div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; }
+.us-results dt { color: var(--text-secondary); }
+.us-results dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.us-quality { font-weight: 600; }
+.us-quality.rescan { color: #8a4b12; }
+.us-quality.ok { color: #2f5f57; }
+.us-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.8rem; color: var(--text-secondary); }
+.us-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.us-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.us-drop-empty { padding: 8px; text-align: center; }
+.us-slot-foot { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 2px 6px; font-size: 0.82rem; }
+.us-slot-foot span { display: grid; min-width: 0; flex: 1 1 110px; }
+.us-slot-foot small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.us-clear { padding: 0.1rem 0.5rem; font-size: 0.78rem; flex: none; }
+.us-depth { max-width: 280px; }
+.us-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.us-actions small { flex: 1; min-width: 200px; }
+@media (max-width: 420px) { .us-slots { grid-template-columns: minmax(0, 1fr); } }
+
+/* Triage page interactions */
+.triage-page .card, .triage-page .quest-card, .triage-page .subcard { transition: box-shadow .2s ease, border-color .2s ease, transform .2s ease; }
+.triage-page .quest-card { padding: 18px; border-radius: 14px; }
+.triage-page .quest-card p { line-height: 1.6; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .triage-page .quest-card:hover, .triage-page .env-grid button:hover, .triage-page .tool-chip:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(44,76,102,.12); }
+}
+@media (prefers-reduced-motion: reduce) { .triage-page .card, .triage-page .quest-card, .triage-page .subcard { transition: none; } }
+
+/* Small loading indicator; page content stays visible during refreshes. */
+.simple-loading { display:flex; align-items:center; justify-content:center; gap:10px; min-height:100px; font-size:14px; color:var(--text-secondary); }
+.simple-loading-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); animation:loading-breathe 1s ease-in-out infinite alternate; }
+@keyframes loading-breathe { to { opacity:.25; } }
+@media(prefers-reduced-motion:reduce) { .simple-loading-dot {animation:none} }

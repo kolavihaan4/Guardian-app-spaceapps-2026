@@ -51,24 +51,18 @@
   ];
   const envOf = id => ENVS.find(e => e.id === id) || null;
   const gated = () => !store.get().env;
+  // Signed out, a visitor sees the home page and the location picker on the way in to it, and nothing
+  // else: every other address, and everything that leads further in, goes to the sign-in page. Signing
+  // in or signing up lands on the dashboard (the health app sends them there: src/guardian.ts).
+  const signedIn = () => !!window.GuardianEnv.user();
+  const toSignIn = () => { location.assign(APP.signIn); };
 
   // the crew health app (triage, vitals, hazards) shares this origin; its pages sit in the same nav
-  const APP = { triage: '/#/assessment', vitals: '/#/dashboard', hazards: '/#/space' };
+  const APP = { triage: '/#/assessment', vitals: '/#/dashboard', hazards: '/#/space', account: '/#/privacy', signIn: '/#/sign-in' };
   // the navigation bar is shared with the health app: js/sitenav.js
   const NAV = window.GuardianNav.pages;
 
   /* ---------------------------------------------------------------- dates */
-  const dayKey = t => { const d = new Date(t); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
-  function lastDays(n) {
-    const out = [], today = new Date(); today.setHours(0, 0, 0, 0);
-    for (let i = n - 1; i >= 0; i--) { const d = new Date(today); d.setDate(today.getDate() - i); out.push(d); }
-    return out;
-  }
-  function perDay(cards, days) {
-    const m = new Map(days.map(d => [dayKey(d), 0]));
-    cards.forEach(c => { const k = dayKey(c.createdAt); if (m.has(k)) m.set(k, m.get(k) + 1); });
-    return days.map(d => m.get(dayKey(d)));
-  }
   const fmtDate = t => new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   function ago(t) {
     const s = (Date.now() - t) / 1000;
@@ -81,8 +75,6 @@
 
   /* ---------------------------------------------------------------- lookups */
   const findCard = id => store.get().cards.find(c => c.id === id);
-  const findCol = id => store.get().collections.find(c => c.id === id);
-  const colName = id => { const c = id && findCol(id); return c ? c.name : ''; };
   const newest = list => list.slice().sort((a, b) => b.createdAt - a.createdAt);
 
   /* ---------------------------------------------------------------- shared bits */
@@ -103,310 +95,412 @@
     return `<div class="empty">${chipIcon(name, 'chip-icon--round')}<p class="empty__title">${title}</p><p class="empty__text">${text}</p>${action || ''}</div>`;
   }
 
-  function spark(series) {
-    const w = 64, h = 20;
-    if (!series || series.length < 2 || series.every(v => v === series[0] && v === 0)) {
-      const vals = [8, 10, 8.5, 11, 9.5, 12, 11, 14];
-      const d = vals.map((v, i) => (i ? 'L' : 'M') + (i * w / (vals.length - 1)).toFixed(1) + ' ' + (h - v).toFixed(1)).join('');
-      return `<svg class="spark spark--empty" viewBox="0 0 ${w} ${h}" aria-hidden="true"><path d="${d}"/></svg>`;
-    }
-    const max = Math.max(...series), min = Math.min(...series), span = max - min || 1;
-    const pts = series.map((v, i) => [i * w / (series.length - 1), h - 3 - (v - min) / span * (h - 6)]);
-    const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
-    const end = pts[pts.length - 1];
-    return `<svg class="spark" viewBox="0 0 ${w} ${h}" aria-hidden="true"><path d="${d}"/><circle cx="${end[0].toFixed(1)}" cy="${end[1].toFixed(1)}" r="1.8"/></svg>`;
-  }
-
   /* ---------------------------------------------------------------- dashboard */
+  // The dashboard has one job: get the person to what they came to do in one click. What the cards
+  // hold is on the Cards pages, and vital signs are private to each crew member, so neither is
+  // repeated here. A greeting (always shown), then four panels that Customize view can hide.
+  const PANELS = [
+    { key: 'actions', icon: 'task', name: 'What do you want to do?', text: 'Four big buttons for the things you do most.' },
+    { key: 'where', icon: 'satellite', name: 'Where the crew is', text: 'The crew’s location, and a switch to change it.' },
+    { key: 'today', icon: 'clock', name: 'Today', text: 'Space weather and your last entry, in one line.' },
+    { key: 'check', icon: 'check', name: 'Today’s check', text: 'Whether vitals are logged today, and how many days in a row.' }
+  ];
+  // "Log vitals" opens the add-card form on the crew health template, when the library has one
+  const vitalsTemplate = TEMPLATES.find(t => t.id === 'crew-health') || TEMPLATES.find(t => /vital|health/i.test(t.id + ' ' + t.name));
+  const ACTIONS = [
+    { key: 'log', icon: 'pulse', name: 'Log vitals', text: 'Write down a reading while it is fresh.', go: 'Start a card',
+      action: vitalsTemplate ? 'use-template' : 'add-card', id: vitalsTemplate ? vitalsTemplate.id : '' },
+    { key: 'check', icon: 'heart', name: 'Check a crew member', text: 'Compare their readings with safe ranges and get a plan.', go: 'Open Triage', href: APP.triage },
+    { key: 'binder', icon: 'cards', name: 'Open the binder', text: 'Every card you have saved, in one place.', go: 'Open My cards', href: '#/cards' },
+    { key: 'hazards', icon: 'radiation', name: 'See the hazards', text: 'What space does to the body, and today’s space weather.', go: 'Open Hazards', href: APP.hazards }
+  ];
+  const CREW_IS = { iss: 'aboard the International Space Station', mars: 'on Mars', moon: 'on the Moon', spacecraft: 'aboard the spacecraft' };
+  function greeting(now) {
+    const h = now.getHours();
+    return h >= 5 && h < 12 ? 'Good morning' : h >= 12 && h < 18 ? 'Good afternoon' : 'Good evening';
+  }
+
+  // "Today's check": have vitals been logged today, and for how many days in a row. A card counts
+  // when it was started from the crew health template (the one the Log vitals tile opens): new cards
+  // carry the template's id, and cards made before that are known by the template's type and the
+  // start of its title. Only that such a card exists, and the day it was made, is read; never what
+  // it says, because vitals are private.
+  const isVitals = c => !!vitalsTemplate && (c.template ? c.template === vitalsTemplate.id
+    : c.type === vitalsTemplate.type && String(c.title).indexOf(vitalsTemplate.title.trim()) === 0);
+  const dayKey = d => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+  function vitalsCheck(cards, now) {
+    const days = new Set(cards.filter(isVitals).map(c => dayKey(new Date(c.createdAt))));
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const today = days.has(dayKey(d));
+    // the run of days ends today once today is logged; until then it ends yesterday, and today can still join it
+    if (!today) d.setDate(d.getDate() - 1);
+    let streak = 0;
+    while (days.has(dayKey(d))) { streak++; d.setDate(d.getDate() - 1); }
+    return { today, streak };
+  }
+
   function viewDashboard(s) {
-    const v = s.view;
-    const both = v.activity && v.collections;
-    const any = v.hero || v.glance || v.activity || v.collections || v.recent;
-    return pageHead({
-      eyebrow: s.workspace, title: 'Dashboard', sub: 'Your project cards and collections in one place.',
-      action: `<button class="btn btn--ghost" data-action="customize">${icon('sliders')}Customize view</button>`
-    }) +
-      summary(s) +
-      (v.hero ? hero(s) : '') +
-      crewHealth() +
-      (v.glance ? glance(s) : '') +
-      (v.activity || v.collections ? `<div class="split${both ? '' : ' split--one'}">${v.activity ? activity(s) : ''}${v.collections ? collectionsPanel(s) : ''}</div>` : '') +
-      (v.recent ? recent(s) : '') +
-      (any ? '' : `<section class="panel">${emptyBlock('sliders', 'Every panel is hidden', 'Turn panels back on in Customize view.', `<button class="btn btn--ghost" data-action="customize">${icon('sliders')}Customize view</button>`)}</section>`);
+    const v = s.view, env = envOf(s.env), now = new Date();
+    // where the crew is and today's check share a row; either one alone takes all of it
+    const where = v.where && env ? whereCrewIs(env) : '', check = v.check ? todaysCheck() : '';
+    const iso = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    const customize = `<button class="btn btn--ghost" data-action="customize">${icon('sliders')}Customize view</button>`;
+    return `<div class="dash">
+      <header class="dash-head">
+        <div class="dash-head__text">
+          <p class="dash-kicker">${icon('dashboard')}Dashboard</p>
+          <h1 class="dash-title" id="page-title">${greeting(now)}</h1>
+          <p class="dash-sub">The crew is ${env ? CREW_IS[env.id] : 'on the way'}<span class="sep" aria-hidden="true">·</span><time datetime="${iso}">${now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</time></p>
+        </div>
+        <div class="dash-head__action">${customize}</div>
+      </header>
+      ${v.actions ? actionTiles() : ''}
+      ${where || check ? `<div class="dash-row${where && check ? ' dash-row--two' : ''}">${where}${check}</div>` : ''}
+      ${v.today ? `<section class="panel dash-strip" aria-labelledby="dash-today-title" data-panel="today">
+        <h2 class="dash-strip__label" id="dash-today-title">Today</h2>
+        <div class="dash-strip__body" id="dashToday"></div>
+      </section>` : ''}
+      ${PANELS.some(p => v[p.key]) ? '' : `<section class="panel dash-none" data-panel="none">${emptyBlock('sliders', 'Every panel is hidden', 'Turn panels back on in Customize view.', customize)}</section>`}
+    </div>`;
   }
 
-  function hero(s) {
-    const n = s.cards.length, c = s.collections.length;
-    const title = n ? 'Keep the thread going.' : 'Start with a card.';
-    const text = n
-      ? `You have ${plural(n, 'card')}${c ? ' across ' + plural(c, 'collection') : ''}. Add the next one while it is fresh.`
-      : 'Capture an idea or observation. Add a card, then find it in My cards.';
-    const env = envOf(s.env);
-    return `<section class="panel hero" aria-labelledby="hero-title">
-      <p class="hero__eyebrow">${icon('satellite')}NASA Space Apps project${env ? `<span class="sep">·</span><a class="hero__env" href="#/environment" title="Change environment">${env.name}</a>` : ''}</p>
-      <h2 class="hero__title" id="hero-title">${title}</h2>
-      <p class="hero__text">${text}</p>
-      <div class="hero__actions">
-        ${addBtn()}
-        ${n ? `<a class="btn btn--link" href="#/cards">Open My cards${icon('arrowRight')}</a>` : `<button class="btn btn--link" data-action="guide">Quick guide${icon('arrowRight')}</button>`}
+  // "What do you want to do?": four tiles, each one whole link or button
+  function actionTiles() {
+    const tile = a => {
+      const attrs = `class="dash-tile" data-tile="${a.key}" aria-labelledby="tile-${a.key}" aria-describedby="tile-${a.key}-text"`;
+      const inner = `<span class="dash-tile__top">${chipIcon(a.icon)}<span class="dash-tile__arrow" aria-hidden="true">${icon('arrowUpRight')}</span></span>
+          <span class="dash-tile__name" id="tile-${a.key}">${a.name}</span>
+          <span class="dash-tile__text" id="tile-${a.key}-text">${a.text}</span>
+          <span class="dash-tile__go" aria-hidden="true">${a.go}${icon('arrowRight')}</span>`;
+      return `<li>${a.href
+        ? `<a ${attrs} href="${a.href}">${inner}</a>`
+        : `<button type="button" ${attrs} data-action="${a.action}"${a.id ? ` data-id="${a.id}"` : ''}>${inner}</button>`}</li>`;
+    };
+    return `<section class="dash-do" aria-labelledby="dash-do-title" data-panel="actions">
+      <h2 class="dash-h2" id="dash-do-title">What do you want to do?</h2>
+      <ul class="dash-tiles">${ACTIONS.map(tile).join('')}</ul>
+    </section>`;
+  }
+
+  // "Where the crew is": the photo, the name, one line, and the four locations as a switch
+  function whereCrewIs(env) {
+    const i = ENVS.indexOf(env);
+    return `<section class="panel dash-where" aria-labelledby="dash-where-title" data-panel="where" data-env="${env.id}">
+      <div class="dash-where__media"><img src="${env.img}" alt="${esc(env.alt)}" width="${env.w}" height="${env.h}" decoding="async"></div>
+      <div class="dash-where__body">
+        <h2 class="dash-label" id="dash-where-title">Where the crew is</h2>
+        <p class="dash-where__name">${env.name}</p>
+        <p class="dash-where__line">${HOME_LINES[env.id]}</p>
+        <div class="dash-where__switch">
+          <p class="dash-where__hint" id="dash-seg-label">Somewhere else? Change it here.</p>
+          <div class="dash-seg" role="group" aria-labelledby="dash-seg-label" style="--i:${i};--cx:${i % 2};--cy:${i > 1 ? 1 : 0}">
+            <span class="dash-seg__thumb" aria-hidden="true"></span>
+            ${ENVS.map(e => `<button type="button" class="dash-seg__btn" data-action="set-env" data-env="${e.id}" aria-pressed="${e.id === env.id}">${e.short}</button>`).join('')}
+          </div>
+        </div>
       </div>
     </section>`;
   }
 
-  function metric(o) {
-    return `<article class="panel metric${o.tint ? ' metric--tint' : ''}">
-      <div class="metric__head">${chipIcon(o.icon)}<h3 class="metric__label">${o.label}</h3>
-        <a class="metric__go" href="${o.href}" aria-label="${o.go}">${icon('arrowUpRight')}</a></div>
-      <p class="metric__value">${o.value == null ? '<span class="metric__dash" aria-label="No data"></span>' : o.value}</p>
-      <div class="metric__foot"><span class="metric__note"><span class="dot${o.value == null ? '' : ' dot--live'}"></span>${o.note}</span>${spark(o.series)}</div>
-    </article>`;
-  }
-
-  /* ------------------------------------------------------------ dashboard summary */
-  // the crew's latest readings, read from the health assistant's API on this same origin
-  const health = { state: 'idle', data: null };
-  function loadHealth() {
-    if (health.state === 'loading') return;
-    health.state = 'loading';
-    const get = url => fetch(url, { headers: { accept: 'application/json' }, credentials: 'same-origin' });
-    Promise.all([get('/api/vitals'), get('/api/nasa/radiation')]).then(async ([vitals, radiation]) => {
-      if (vitals.status === 401) { health.state = 'signedout'; return; }
-      if (!vitals.ok) { health.state = 'error'; return; }
-      const v = await vitals.json();
-      const r = radiation.ok ? (await radiation.json()).data : null;
-      const latest = type => {
-        let best = null;
-        (v.metrics || []).forEach(m => { if (m.metricType === type && (!best || m.timestamp > best.timestamp)) best = m; });
-        return best;
-      };
-      const sleep = (v.sleep || []).reduce((a, b) => (!a || b.end > a.end ? b : a), null);
-      health.data = {
-        heart: latest('heart_rate') || latest('resting_heart_rate'),
-        oxygen: latest('spo2'),
-        breathing: latest('respiratory_rate'),
-        sleepHours: sleep ? sleep.minutesAsleep / 60 : null,
-        simulated: (v.sources || []).some(x => x.simulated),
-        radiation: r
-      };
-      health.state = 'ready';
-    }).catch(() => { health.state = 'error'; }).then(() => {
-      const el = document.getElementById('summaryBody');
-      if (el) el.innerHTML = summaryBody(store.get());
-    });
-  }
-
-  function summaryBody(s) {
-    const d = health.data;
-    const stat = (label, value, note) => `<div class="summary__stat"><p class="summary__label">${label}</p><p class="summary__value">${value}</p><p class="summary__note">${note}</p></div>`;
-    const reading = (m, digits) => (m ? `${Number(m.value).toFixed(digits)}<span class="summary__unit">${esc(m.unit === 'percent' ? '%' : m.unit)}</span>` : '<span class="metric__dash" aria-label="No data"></span>');
-    const total = s.cards.length;
-    const cards = stat('Cards', total || '<span class="metric__dash" aria-label="No data"></span>', total ? `${plural(s.collections.length, 'collection')}` : 'None yet');
-    if (health.state === 'signedout') {
-      return `<div class="summary__grid">${cards}</div>
-        <p class="summary__msg">Sign in to the health assistant to see the crew’s vital signs and space weather here. <a href="${APP.triage}">Sign in</a></p>`;
+  // The location changes in place. The store decides whether it is saved (js/env.js: only for a
+  // signed-in user); the page is drawn again, so the thumb glides and the photo cross-fades from
+  // where they were, and the keyboard focus stays on the button that was pressed.
+  function setEnvHere(id) {
+    const env = envOf(id), was = store.get().env;
+    if (!env || env.id === was) return;
+    const from = ENVS.findIndex(e => e.id === was);
+    const oldImg = main.querySelector('.dash-where__media img');
+    const ghost = oldImg && !reduceMotion.matches ? oldImg.cloneNode(false) : null;
+    if (ghost) ghost.style.objectPosition = getComputedStyle(oldImg).objectPosition;
+    store.update(s => { s.env = env.id; });
+    const btn = main.querySelector(`.dash-seg__btn[data-env="${env.id}"]`);
+    if (btn) btn.focus({ preventScroll: true });
+    toast(`Location set to ${env.name}`);
+    if (reduceMotion.matches) return;
+    const seg = main.querySelector('.dash-seg'), media = main.querySelector('.dash-where__media');
+    if (seg && from >= 0) {
+      const to = ENVS.indexOf(env);
+      const put = n => { seg.style.setProperty('--i', n); seg.style.setProperty('--cx', n % 2); seg.style.setProperty('--cy', n > 1 ? 1 : 0); };
+      seg.classList.add('is-jump'); put(from);
+      void seg.offsetWidth;
+      seg.classList.remove('is-jump'); put(to);
     }
-    if (health.state === 'error') {
-      return `<div class="summary__grid">${cards}</div><p class="summary__msg">The health assistant could not be reached, so vital signs are not shown.</p>`;
+    if (media && ghost) {
+      ghost.className = 'dash-where__ghost';
+      ghost.alt = '';
+      ghost.setAttribute('aria-hidden', 'true');
+      media.appendChild(ghost);
+      media.classList.add('is-swap');
+      setTimeout(() => { ghost.remove(); media.classList.remove('is-swap'); }, 700);
     }
-    if (!d) return `<div class="summary__grid">${cards}</div><p class="summary__msg" role="status">Loading the crew’s latest readings…</p>`;
-    const storm = d.radiation ? (d.radiation.sScale > 0 ? `S${d.radiation.sScale}` : 'Quiet') : '<span class="metric__dash" aria-label="No data"></span>';
-    return `<div class="summary__grid">
-      ${stat('Heart rate', reading(d.heart, 0), 'Latest reading')}
-      ${stat('Blood oxygen', reading(d.oxygen, 1), 'Latest reading')}
-      ${stat('Breathing rate', reading(d.breathing, 1), 'Latest reading')}
-      ${stat('Sleep', d.sleepHours == null ? '<span class="metric__dash" aria-label="No data"></span>' : `${d.sleepHours.toFixed(1)}<span class="summary__unit">h</span>`, 'Last night')}
-      ${stat('Radiation', storm, d.radiation ? (d.radiation.sScale > 0 ? 'Solar radiation storm' : 'No radiation storm (NOAA)') : 'Not available')}
-      ${cards}
-    </div>
-    <div class="summary__foot">
-      ${d.simulated ? '<span class="tag">Simulated wearable data</span>' : '<span class="tag">Connected wearable data</span>'}
-      <span class="summary__links"><a class="btn btn--link" href="${APP.triage}">Run a triage check${icon('arrowRight')}</a><a class="btn btn--link" href="${APP.vitals}">Open Vitals${icon('arrowRight')}</a></span>
-    </div>`;
+    main.querySelectorAll('.dash-where__name, .dash-where__line').forEach(el => el.classList.add('is-fresh'));
   }
 
-  // "Dashboard": the environment option and a summary of where the crew stands
-  function summary(s) {
-    const env = envOf(s.env);
-    if (health.state === 'idle') loadHealth();
-    return `<div class="section-label"><h2>Dashboard</h2><span>${env ? `Summary for ${esc(env.name)}` : 'Summary'}</span></div>
-    <section class="panel summary" aria-label="Dashboard summary">
-      <div class="summary__env" role="group" aria-label="Mission environment">
-        <span class="summary__label">Environment</span>
-        <div class="chips">${ENVS.map(e => `<button class="chip" data-action="launch-env" data-env="${e.id}" aria-pressed="${e.id === s.env}">${e.short}</button>`).join('')}</div>
+  /* ------------------------------------------------------------ dashboard: today's check */
+  // A ring that fills once vitals are logged today, one line of plain words, the run of days, and a
+  // button to log them now when they have not been (the same action as the Log vitals tile). The
+  // ring is a picture of the words beside it, so it is hidden from screen readers.
+  function todaysCheck() {
+    return `<section class="panel dash-check" aria-labelledby="dash-check-title" data-panel="check">
+      <h2 class="dash-label" id="dash-check-title">Today’s check</h2>
+      <div class="dash-check__body" id="dashCheck" aria-live="polite"></div>
+    </section>`;
+  }
+  function checkHtml(s) {
+    const c = vitalsCheck(s.cards, new Date()), log = ACTIONS[0];
+    return `<div class="dash-ring${c.today ? ' is-done' : ''}" data-n="${c.streak}" aria-hidden="true">
+        <svg viewBox="0 0 100 100" focusable="false"><circle class="dash-ring__track" cx="50" cy="50" r="42"/><circle class="dash-ring__arc" cx="50" cy="50" r="42" transform="rotate(-90 50 50)"/></svg>
+        <span class="dash-ring__n"><b>${c.streak}</b><small>${c.streak === 1 ? 'day' : 'days'}</small></span>
       </div>
-      <div id="summaryBody">${summaryBody(s)}</div>
-    </section>`;
-  }
-
-  // the way into the crew health app: triage, vital signs and the hazards reference
-  function crewHealth() {
-    const link = o => `<a class="panel metric crew-link" href="${o.href}">
-      <div class="metric__head">${chipIcon(o.icon)}<h3 class="metric__label">${o.label}</h3><span class="metric__go" aria-hidden="true">${icon('arrowUpRight')}</span></div>
-      <p class="crew-link__text">${o.text}</p>
-    </a>`;
-    return `<div class="section-label"><h2>Crew health</h2><span>Opens the health assistant</span></div>
-    <div class="glance">
-      ${link({ icon: 'heart', label: 'Triage', href: APP.triage, text: 'Check a crew member: vital signs against cited ranges, a 3D body map and a step-by-step plan.' })}
-      ${link({ icon: 'pulse', label: 'Vitals', href: APP.vitals, text: 'Heart rate, sleep and activity over time from connected wearables.' })}
-      ${link({ icon: 'radiation', label: 'Hazards', href: APP.hazards, text: 'NASA’s hazards of spaceflight with sources, and live space weather.' })}
-    </div>`;
-  }
-
-  function glance(s) {
-    const days = lastDays(7), daily = perDay(s.cards, days);
-    const week = daily.reduce((a, b) => a + b, 0), total = s.cards.length;
-    let run = total - week;
-    const cumulative = daily.map(v => (run += v));
-    const has = total > 0;
-    const sizes = s.collections.map(c => s.cards.filter(x => x.collectionId === c.id).length);
-    const filed = sizes.reduce((a, b) => a + b, 0);
-    return `<div class="section-label"><h2>At a glance</h2><span>${has ? 'Last 7 days' : 'Fills in as you add cards'}</span></div>
-    <div class="glance">
-      ${metric({ icon: 'pulse', label: 'Total cards', value: has ? total : null, note: has ? `${week} added this week` : 'No data yet', href: '#/cards', go: 'Open My cards', series: has ? cumulative : null })}
-      ${metric({ icon: 'clock', label: 'Added this week', value: has ? week : null, note: has ? (daily[6] ? `${daily[6]} today` : 'None today yet') : 'No data yet', href: '#/cards', go: 'Open My cards', series: has ? daily : null })}
-      ${metric({ icon: 'bars', label: 'Collections', value: s.collections.length ? s.collections.length : null, note: s.collections.length ? `${plural(filed, 'card')} filed` : 'No data yet', href: '#/collections', go: 'Open Collections', series: sizes.length > 1 ? sizes : null, tint: true })}
-    </div>`;
-  }
-
-  function activity(s) {
-    const n = s.range, days = lastDays(n), counts = perDay(s.cards, days);
-    const total = counts.reduce((a, b) => a + b, 0), max = Math.max(1, ...counts);
-    const every = n <= 7 ? 1 : n <= 14 ? 2 : 5;
-    const label = (d, i) => (i % every === 0 || (n > 7 && i === n - 1 && (n - 1) % every > every / 2))
-      ? (n <= 7 ? d.toLocaleDateString(undefined, { weekday: 'short' }) : fmtDate(d)) : '';
-    const bars = counts.map((c, i) => `<div class="bar" style="--v:${(c / max).toFixed(3)}" title="${fmtDate(days[i])}: ${plural(c, 'card')}">${c ? `<span>${c}</span>` : ''}</div>`).join('');
-    const labels = days.map((d, i) => `<span>${label(d, i)}</span>`).join('');
-    return `<section class="panel activity" aria-labelledby="activity-title">
-      <div class="panel__head">
-        <div><h2 class="panel__title" id="activity-title">Activity overview</h2><p class="panel__sub">Cards added per day.</p></div>
-        <label class="sr-only" for="rangeSelect">Time range</label>
-        <select class="select" id="rangeSelect" data-change="range">
-          ${[7, 14, 30].map(r => `<option value="${r}"${r === n ? ' selected' : ''}>Last ${r} days</option>`).join('')}
-        </select>
+      <div class="dash-check__text">
+        <p class="dash-check__state">${c.today ? 'Vitals logged today' : 'No vitals logged yet today'}</p>
+        <p class="dash-check__streak">${plural(c.streak, 'day')} in a row</p>
       </div>
-      <div class="chart${total ? '' : ' chart--empty'}" style="--n:${n}">
-        <div class="chart__grid" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-        <div class="chart__bars" aria-hidden="${total ? 'false' : 'true'}">${bars}</div>
-        ${total ? '' : `<div class="chart__empty">${chipIcon('chartLine')}<p class="empty__title">No activity to display</p><p class="empty__text">Add a card and it shows up here.</p></div>`}
-      </div>
-      <div class="chart__labels" style="--n:${n}">${labels}</div>
-    </section>`;
+      ${c.today ? '' : `<button type="button" class="btn btn--primary dash-check__go" data-action="${log.action}"${log.id ? ` data-id="${log.id}"` : ''}>${icon('pulse')}Log vitals now</button>`}`;
+  }
+  // Fills the panel without drawing the page again. The ring draws itself and its number counts up
+  // when the panel arrives, and again when the day's vitals are logged; both play once, never behind
+  // the opening, and under reduced motion the finished ring and number simply show.
+  function fillCheck() {
+    const el = document.getElementById('dashCheck');
+    if (!el) return;
+    const html = checkHtml(store.get());
+    if (el.__html === html) return;
+    const old = el.querySelector('.dash-ring');
+    const from = old ? Number(old.dataset.n) || 0 : 0, wasDone = !!old && old.classList.contains('is-done');
+    el.innerHTML = html; el.__html = html;
+    if (reduceMotion.matches) return;
+    const ring = el.querySelector('.dash-ring'), num = ring.querySelector('b'), to = Number(ring.dataset.n) || 0;
+    const draw = ring.classList.contains('is-done') && !wasDone;
+    if (draw) ring.classList.remove('is-done');
+    if (to !== from) num.textContent = from;
+    if (old) el.querySelector('.dash-check__text').classList.add('is-fresh');
+    const play = () => {
+      if (draw) {
+        void getComputedStyle(ring.querySelector('.dash-ring__arc')).strokeDashoffset;   // start from the empty ring
+        ring.classList.add('is-done', 'is-fresh');
+      }
+      countTo(num, from, to);
+    };
+    // on arrival, wait for the panel itself to come in
+    const go = () => setTimeout(play, old ? 0 : 600);
+    if (S.introDone) go(); else document.addEventListener('still:intro-done', go, { once: true });
+  }
+  function countTo(el, from, to) {
+    if (from === to) return;
+    const t0 = performance.now(), ms = Math.min(900, 320 + Math.abs(to - from) * 90);
+    const step = now => {
+      const k = Math.min(1, Math.max(0, (now - t0) / ms));
+      el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
   }
 
-  function collectionsPanel(s) {
-    const cols = newest(s.collections).slice(0, 4);
-    const body = cols.length
-      ? `<ul class="col-list">${cols.map(c => {
-          const n = s.cards.filter(x => x.collectionId === c.id).length;
-          return `<li><a href="#/collections/${c.id}">${chipIcon('folder')}<span class="col-list__name">${esc(c.name)}</span><span class="col-list__count">${n}</span></a></li>`;
-        }).join('')}</ul>
-        <button class="btn btn--link btn--small" data-action="create-collection">${icon('plus')}Create collection</button>`
-      : emptyBlock('layers', 'No collections yet', 'Keep related cards together in a collection.', `<button class="btn btn--link btn--small" data-action="create-collection">${icon('plus')}Create collection</button>`);
-    return `<section class="panel collections-panel" aria-labelledby="cols-title">
-      <div class="panel__head"><h2 class="panel__title" id="cols-title">Your collections</h2>
-        <a class="icon-btn icon-btn--small" href="#/collections" aria-label="Open Collections">${icon('arrowUpRight')}</a></div>
-      ${body}
-    </section>`;
+  /* ------------------------------------------------------------ dashboard: today */
+  // Space weather near Earth, read from the health assistant's API on this same origin, and asked
+  // for only once someone is signed in. Vital signs are never shown here: they are private.
+  const weather = { state: 'idle', data: null };
+  let whoKnown = false;   // whether we know who is signed in (store.account settles after 1.5 s at most)
+  function loadWeather() {
+    if (weather.state !== 'idle') return;
+    weather.state = 'loading';
+    GuardianAuth.headers()
+      .then(h => fetch('/api/nasa/radiation', { headers: Object.assign({ accept: 'application/json' }, h), credentials: 'same-origin' }))
+      .then(r => (r.ok ? r.json() : Promise.reject(new Error('unavailable'))))
+      .then(j => { weather.data = j && j.data ? j.data : null; weather.state = weather.data ? 'ready' : 'error'; })
+      .catch(() => { weather.state = 'error'; })
+      .then(fillToday);
   }
+  function todayHtml(s) {
+    const note = (name, html, live) => `<p class="dash-strip__text"${live ? ' role="status"' : ''}>${chipIcon(name)}<span>${html}</span></p>`;
+    // the dashboard is only reached signed in, so this shows for a moment at most
+    if (!signedIn()) return note('clock', 'Getting today ready…', true);
+    if (weather.state === 'idle') loadWeather();
+    const w = weather.data;
+    const line = weather.state === 'error' ? note('radiation', 'Space weather is not available right now.')
+      : !w ? note('radiation', 'Checking today’s space weather…', true)
+        : w.sScale > 0 ? note('radiation', `<strong>Solar radiation storm near Earth, level S${Number(w.sScale)} of 5.</strong> From NOAA.`)
+          : w.sScale === 0 ? note('radiation', '<strong>Space weather is quiet.</strong> No radiation storm near Earth right now, says NOAA.')
+            : note('radiation', 'NOAA has not published a storm level right now.');
+    const last = newest(s.cards)[0];
+    return line + (last ? `<button type="button" class="dash-strip__last" data-action="open-card" data-id="${last.id}">
+        <b>Last entry</b><span class="dash-strip__title">${esc(last.title)}</span><small>${ago(last.createdAt)}</small>${icon('arrowRight')}</button>` : '');
+  }
+  // fills the strip without drawing the page again, so the arrival is never cut short
+  function fillToday() {
+    const el = document.getElementById('dashToday');
+    if (!el) return;
+    const html = todayHtml(store.get());
+    if (el.__html === html) return;
+    const first = el.__html === undefined, line = el.querySelector('.dash-strip__text'), last = el.querySelector('.dash-strip__last');
+    const lineWas = line ? line.textContent : '', lastWas = last ? last.dataset.id : '';
+    el.innerHTML = html; el.__html = html;
+    if (first || reduceMotion.matches) return;
+    // the icon answers a change in its line with a small pop, and a new last entry slides in: once each
+    const lineNow = el.querySelector('.dash-strip__text'), lastNow = el.querySelector('.dash-strip__last');
+    if (lineNow && lineNow.textContent !== lineWas) lineNow.classList.add('is-changed');
+    if (lastNow && lastNow.dataset.id !== lastWas) lastNow.classList.add('is-new');
+  }
+  // Once we know who is here: a signed-out visitor anywhere but the home page goes to the sign-in page.
+  // The page is not drawn again for this (that would cut the home page's arrival short); a signed-in
+  // user's answer already redraws it through the store.
+  store.account.then(() => {
+    whoKnown = true;
+    if (!signedIn() && currentPath() !== '/') { toSignIn(); return; }
+    launchLabel();
+    accountButton();
+    fillToday();
+    fillCheck();
+  });
 
-  function recent(s) {
-    const rows = newest(s.cards).slice(0, 6);
-    const body = rows.length
-      ? rows.map(c => `<tr data-action="open-card" data-id="${c.id}">
-          <td><button class="row-link" data-action="open-card" data-id="${c.id}">${esc(c.title)}</button><span class="row-meta">${ago(c.createdAt)}</span></td>
-          <td>${typeTag(c.type)}</td>
-          <td class="col-collection">${esc(colName(c.collectionId)) || '<span class="muted">—</span>'}</td>
-        </tr>`).join('')
-      : `<tr class="table__empty"><td colspan="3"><div class="empty-inline">${chipIcon('file')}<div><p class="empty__title">No cards yet</p><p class="empty__text">Cards you add will appear here.</p></div></div></td></tr>`;
-    return `<section class="panel recent" aria-labelledby="recent-title">
-      <div class="panel__head"><h2 class="panel__title" id="recent-title">Recent items</h2>
-        <a class="btn btn--link btn--small" href="#/cards">View all cards${icon('arrowRight')}</a></div>
-      <table class="table">
-        <thead><tr><th scope="col">Name</th><th scope="col">Type</th><th scope="col" class="col-collection">Collection</th></tr></thead>
-        <tbody>${body}</tbody>
-      </table>
-    </section>`;
+  // the dashboard arrives the way the home page does: the greeting, then each block in turn
+  function revealDash() {
+    if (reduceMotion.matches) return;
+    const blocks = [...main.querySelectorAll('.dash-head, .dash-h2, .dash-tile, .dash-where, .dash-check, .dash-strip')];
+    blocks.forEach(el => el.classList.add('rv'));
+    const start = () => requestAnimationFrame(() => requestAnimationFrame(() => blocks.forEach((el, i) => {
+      const delay = Math.min(i, 8) * 70;
+      el.style.setProperty('--rv-d', delay + 'ms');
+      el.classList.add('is-in');
+      setTimeout(() => { el.classList.remove('rv', 'is-in'); el.style.removeProperty('--rv-d'); }, delay + 750);
+    })));
+    if (S.introDone) start(); else document.addEventListener('still:intro-done', start, { once: true });
   }
 
   /* ---------------------------------------------------------------- my cards */
-  const filters = { q: '', type: 'all', col: 'all' };
+  const filters = { q: '' };
+  // The order of the cards: one menu, newest first unless another is chosen. The choice is a
+  // preference, remembered in this browser (js/store.js).
+  const SORTS = [
+    { id: 'new', label: 'Newest first' },
+    { id: 'old', label: 'Oldest first' },
+    { id: 'az', label: 'A to Z' }
+  ];
+  const sortOf = id => SORTS.find(o => o.id === id) || SORTS[0];
+  const SORT_ICON = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 5v14M3.5 15.5 7 19l3.5-3.5M17 19V5M13.5 8.5 17 5l3.5 3.5"/></svg>';
+  const byTitle = new Intl.Collator(undefined, { sensitivity: 'base', numeric: true });
+  function sorted(list, how) {
+    const out = newest(list);
+    if (how === 'old') out.reverse();
+    else if (how === 'az') out.sort((a, b) => byTitle.compare(a.title, b.title));   // the same title twice: the newer one first
+    return out;
+  }
+
+  // Cards are saved to the account a moment after each change (js/store.js). If that fails they stay
+  // on screen and the save is tried again; this line says so, near the cards, until it works.
+  const SYNC_TEXT = {
+    error: 'Could not save. Trying again.',
+    limit: 'Could not save: an account holds up to 500 cards. Delete some and it will try again.',
+    load: 'Could not load your cards. Trying again.'
+  };
+  const saveNote = () => `<p class="save-note" data-save-note role="status" aria-live="polite">${esc(SYNC_TEXT[store.sync()] || '')}</p>`;
+  store.onSync(st => document.querySelectorAll('[data-save-note]').forEach(el => { el.textContent = SYNC_TEXT[st] || ''; }));
 
   function viewCards(s) {
-    return pageHead({ eyebrow: s.workspace, title: 'My cards', sub: 'Every card you have captured, newest first.', action: addBtn() }) +
+    const cur = sortOf(s.sort);
+    return pageHead({ eyebrow: s.workspace, title: 'My cards', sub: 'Every card you have captured.', action: addBtn() }) + saveNote() +
       `<div class="toolbar panel">
         <label class="search-field">${icon('search')}<span class="sr-only">Search cards</span>
           <input type="search" id="cardSearch" placeholder="Search cards" value="${esc(filters.q)}" data-input="q" autocomplete="off"></label>
-        <div class="chips" role="group" aria-label="Filter by type">
-          ${[{ id: 'all', label: 'All' }].concat(TYPES).map(t => `<button class="chip" data-action="filter-type" data-type="${t.id}" aria-pressed="${filters.type === t.id}">${t.label}</button>`).join('')}
+        <div class="sort" data-sort>
+          <span class="sort__label" id="sortLabel">Sort</span>
+          <span class="sort__box">
+            <button type="button" class="sort__btn" id="cardSort" aria-haspopup="listbox" aria-expanded="false" aria-controls="sortList" aria-labelledby="sortLabel cardSortValue">${SORT_ICON}<span id="cardSortValue">${cur.label}</span>${icon('chevron')}</button>
+            <ul class="sort__list" id="sortList" role="listbox" aria-labelledby="sortLabel" tabindex="-1" hidden>
+              ${SORTS.map(o => `<li class="sort__opt" role="option" id="sort-${o.id}" data-sort-id="${o.id}" aria-selected="${o.id === cur.id}">${icon('check')}<span>${o.label}</span></li>`).join('')}
+            </ul>
+          </span>
         </div>
-        <label class="sr-only" for="colFilter">Filter by collection</label>
-        <select class="select" id="colFilter" data-change="col">
-          <option value="all">All collections</option>
-          <option value="none"${filters.col === 'none' ? ' selected' : ''}>No collection</option>
-          ${s.collections.map(c => `<option value="${c.id}"${filters.col === c.id ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}
-        </select>
       </div>
       <div id="cardGrid" class="card-grid">${cardGrid(s)}</div>`;
   }
 
   function filtered(s, list) {
     const q = filters.q.trim().toLowerCase();
-    return newest(list || s.cards).filter(c =>
-      (filters.type === 'all' || c.type === filters.type) &&
-      (filters.col === 'all' || (filters.col === 'none' ? !c.collectionId : c.collectionId === filters.col)) &&
-      (!q || (c.title + ' ' + (c.notes || '')).toLowerCase().includes(q)));
+    return sorted(list || s.cards, sortOf(s.sort).id).filter(c => !q || (c.title + ' ' + (c.notes || '')).toLowerCase().includes(q));
   }
 
   function cardGrid(s) {
     if (!s.cards.length) return `<div class="panel grid-empty">${emptyBlock('cards', 'No cards yet', 'Capture an idea, an observation or a question. It lands here.', addBtn())}</div>`;
     const list = filtered(s);
-    if (!list.length) return `<div class="panel grid-empty">${emptyBlock('search', 'No cards match', 'Try another word or clear the filters.', `<button class="btn btn--ghost" data-action="clear-filters">Clear filters</button>`)}</div>`;
+    if (!list.length) return `<div class="panel grid-empty">${emptyBlock('search', 'No cards match', 'Try another word, or clear the search.', `<button class="btn btn--ghost" data-action="clear-filters">Clear search</button>`)}</div>`;
     return list.map(cardTile).join('');
   }
 
   function cardTile(c) {
-    const col = colName(c.collectionId);
     return `<article class="panel card" data-action="open-card" data-id="${c.id}" role="button" tabindex="0" aria-label="Open card: ${esc(c.title)}">
       ${typeTag(c.type)}
       <h3 class="card__title">${esc(c.title)}</h3>
       ${c.notes ? `<p class="card__notes">${esc(c.notes)}</p>` : ''}
-      <p class="card__meta">${col ? `${icon('folder')}<span>${esc(col)}</span><span class="sep">·</span>` : ''}<span>${ago(c.createdAt)}</span></p>
+      <p class="card__meta"><span>${ago(c.createdAt)}</span></p>
     </article>`;
   }
 
   function refreshGrid() {
     const g = $('#cardGrid');
     if (g) g.innerHTML = cardGrid(store.get());
-    document.querySelectorAll('[data-action="filter-type"]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.type === filters.type)));
   }
 
-  /* ---------------------------------------------------------------- collections */
-  function viewCollections(s) {
-    const cols = newest(s.collections);
-    const grid = cols.length
-      ? `<div class="col-grid">${cols.map(c => {
-          const n = s.cards.filter(x => x.collectionId === c.id).length;
-          return `<a class="panel col-tile" href="#/collections/${c.id}">
-            ${chipIcon('layers')}
-            <h3 class="col-tile__name">${esc(c.name)}</h3>
-            <p class="col-tile__text">${c.description ? esc(c.description) : '<span class="muted">No description</span>'}</p>
-            <p class="col-tile__meta">${plural(n, 'card')}<span class="sep">·</span>Created ${fmtDate(c.createdAt)}</p>
-          </a>`;
-        }).join('')}</div>`
-      : `<div class="panel grid-empty">${emptyBlock('layers', 'No collections yet', 'Group cards by theme, sensor or question so they are easy to find.', `<button class="btn btn--primary" data-action="create-collection">${icon('plus')}Create collection</button>`)}</div>`;
-    return pageHead({ eyebrow: s.workspace, title: 'Collections', sub: 'Related cards, kept together.', action: `<button class="btn btn--primary" data-action="create-collection">${icon('plus')}New collection</button>` }) + grid;
+  // The sort menu is a button that opens a short list. Enter, Space or an arrow key opens it; the
+  // arrows, Home, End or a first letter move through it; Enter or Space chooses; Escape closes it
+  // and so does Tab, which then moves on as usual. A click outside closes it too.
+  function sortActive(list, opt) {
+    list.querySelectorAll('.sort__opt').forEach(o => o.classList.toggle('is-active', o === opt));
+    list.setAttribute('aria-activedescendant', opt.id);
   }
-
-  function viewCollection(s, id) {
-    const c = findCol(id);
-    if (!c) return notFound();
-    const cards = newest(s.cards.filter(x => x.collectionId === id));
-    return pageHead({
-      back: { href: '#/collections', label: 'All collections' }, title: esc(c.name),
-      sub: (c.description ? esc(c.description) + ' · ' : '') + plural(cards.length, 'card'),
-      action: `<button class="btn btn--ghost" data-action="delete-collection" data-id="${c.id}">${icon('trash')}Delete</button>${addBtn(` data-collection="${c.id}"`)}`
-    }) + `<div class="card-grid">${cards.length ? cards.map(cardTile).join('') : `<div class="panel grid-empty">${emptyBlock('cards', 'This collection is empty', 'Add a card here, or move one in from My cards.', addBtn(` data-collection="${c.id}"`))}</div>`}</div>`;
+  function openSort() {
+    const btn = $('#cardSort'), list = $('#sortList');
+    if (!btn || !list || !list.hidden) return;
+    list.hidden = false;
+    btn.setAttribute('aria-expanded', 'true');
+    sortActive(list, list.querySelector('[aria-selected="true"]') || list.firstElementChild);
+    list.focus({ preventScroll: true });
   }
+  function closeSort(refocus) {
+    const btn = $('#cardSort'), list = $('#sortList');
+    if (!btn || !list || list.hidden) return;
+    list.hidden = true;
+    list.removeAttribute('aria-activedescendant');
+    btn.setAttribute('aria-expanded', 'false');
+    if (refocus) btn.focus({ preventScroll: true });
+  }
+  function chooseSort(id) {
+    const to = sortOf(id).id;
+    closeSort(true);
+    if (to === store.get().sort) return;
+    store.update(s => { s.sort = to; });   // saved, and the page is drawn again in the new order
+    const btn = $('#cardSort');
+    if (btn) btn.focus({ preventScroll: true });
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest || !$('#sortList')) return;
+    const opt = e.target.closest('.sort__opt');
+    if (opt) chooseSort(opt.dataset.sortId);
+    else if (e.target.closest('#cardSort')) { if ($('#sortList').hidden) openSort(); else closeSort(true); }
+    else if (!e.target.closest('[data-sort]')) closeSort(false);
+  });
+  document.addEventListener('keydown', e => {
+    const t = e.target;
+    if (t.id === 'cardSort' && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) { e.preventDefault(); openSort(); return; }
+    if (t.id !== 'sortList') return;
+    const opts = [...t.querySelectorAll('.sort__opt')], i = Math.max(0, opts.findIndex(o => o.classList.contains('is-active')));
+    let to = -1;
+    if (e.key === 'ArrowDown') to = Math.min(opts.length - 1, i + 1);
+    else if (e.key === 'ArrowUp') to = Math.max(0, i - 1);
+    else if (e.key === 'Home') to = 0;
+    else if (e.key === 'End') to = opts.length - 1;
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); chooseSort(opts[i].dataset.sortId); }
+    else if (e.key === 'Escape') { e.preventDefault(); closeSort(true); }
+    // Tab: the focus goes back to the button, and from there the key moves it on (Shift+Tab stays on the button)
+    else if (e.key === 'Tab') { closeSort(true); if (e.shiftKey) e.preventDefault(); }
+    else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) to = opts.findIndex(o => o.textContent.trim().toLowerCase().indexOf(e.key.toLowerCase()) === 0);
+    if (to >= 0) { e.preventDefault(); sortActive(t, opts[to]); }
+  });
+  document.addEventListener('focusout', e => {
+    const next = e.relatedTarget;
+    if (e.target.id === 'sortList' && next && !(next.closest && next.closest('[data-sort]'))) closeSort(false);
+  });
 
   /* ---------------------------------------------------------------- library */
   function viewLibrary(s) {
@@ -447,29 +541,34 @@
       </section>
       <section class="panel settings" aria-labelledby="set-data">
         <h2 class="settings__group" id="set-data">Data</h2>
-        <p class="settings__note">Cards stay in this browser. Export them to keep a copy or move them to another computer.</p>
+        <p class="settings__note">Cards are saved to your account. Export them to keep a copy of your own.</p>
         <div class="setting">
-          <div><h3>Export</h3><p>${plural(s.cards.length, 'card')} and ${plural(s.collections.length, 'collection')} as a JSON file.</p></div>
+          <div><h3>Export</h3><p>${plural(s.cards.length, 'card')} as a JSON file.</p></div>
           <button class="btn btn--ghost" data-action="export">${icon('download')}Export</button>
         </div>
         <div class="setting">
-          <div><h3>Import</h3><p>Replace everything here with an exported file.</p></div>
-          <button class="btn btn--ghost" data-action="import">${icon('upload')}Import</button>
-        </div>
-        <div class="setting">
-          <div><h3>Clear all data</h3><p>Delete every card and collection in this browser.</p></div>
+          <div><h3>Clear all data</h3><p>Delete every card in your account.</p></div>
           <button class="btn btn--danger" data-action="clear-data">${icon('trash')}Clear data</button>
+        </div>
+      </section>
+      <section class="panel settings" aria-labelledby="set-account">
+        <h2 class="settings__group" id="set-account">Your account and data</h2>
+        <p class="settings__note">Your sign-in, and the health data kept with it, have a page of their own.</p>
+        <div class="setting">
+          <div><h3>Account and health data</h3><p>Download your data, delete it, or delete the account.</p></div>
+          <a class="btn btn--ghost" href="${APP.account}" data-go="account">${icon('lock')}Open your account and data</a>
         </div>
       </section>`;
   }
 
   /* ---------------------------------------------------------------- environment */
-  function viewEnvironment(s, first) {
+  function viewEnvironment(s, first, toHome) {
     const current = s.env;
     return `<section class="env" aria-labelledby="page-title">
       <header class="env__head">
         <p class="eyebrow">${first ? 'Mission setup' : esc(s.workspace)}</p>
         <h1 class="env__title" id="page-title">${first ? 'Where is your crew?' : 'Change environment'}</h1>
+        ${window.GuardianEnv.user() ? '' : `<p class="sub" id="envNote">Your choice is kept for this visit only. <a href="${APP.signIn}">Sign in</a> and Guardian will remember it.</p>`}
       </header>
       <form class="env__form" data-form="env" data-first="${first}">
         <fieldset class="env__grid">
@@ -482,7 +581,7 @@
         </fieldset>
         <div class="env__actions">
           ${first ? '' : `<a class="btn btn--ghost btn--lg" href="#/dashboard">Cancel</a>`}
-          <button class="btn btn--primary btn--lg" type="submit"${current ? '' : ' disabled'}>${first ? 'Continue to dashboard' : 'Save environment'}${icon('arrowRight')}</button>
+          <button class="btn btn--primary btn--lg" type="submit"${current ? '' : ' disabled'}>${first ? (toHome ? 'Continue' : 'Continue to dashboard') : 'Save environment'}${icon('arrowRight')}</button>
         </div>      </form>
     </section>`;
   }
@@ -492,44 +591,337 @@
       `<section class="panel">${emptyBlock('search', 'Nothing at this address', 'Go back to the dashboard to keep working.', `<a class="btn btn--primary" href="#/dashboard">Back to Dashboard</a>`)}</section>`;
   }
 
+  /* ---------------------------------------------------------------- home page motion */
+  // Everything here is short and plays once. The title's words rise into place and the opening lines
+  // follow; each block eases in as it scrolls into view; a line draws through the three steps as far
+  // as you have read; a hairline in the top bar shows how far down the page you are. Elements drop
+  // the helper classes once they have arrived, so their own hover styles are untouched.
+  let homeWatch = null, homeScroll = null;
+  function leaveHome() {
+    if (homeWatch) { homeWatch.disconnect(); homeWatch = null; }
+    if (homeScroll) { window.removeEventListener('scroll', homeScroll); window.removeEventListener('resize', homeScroll); homeScroll = null; }
+    const old = topbar.querySelector('.scroll-line');
+    if (old) old.remove();
+  }
+  function revealHome() {
+    leaveHome();
+    if (reduceMotion.matches || !('IntersectionObserver' in window)) return;   // shown as it is
+    const arrive = (el, delay) => {
+      el.style.setProperty('--rv-d', delay + 'ms');
+      el.classList.add('is-in', 'is-live');
+      setTimeout(() => { el.classList.remove('rv', 'is-in'); el.style.removeProperty('--rv-d'); }, delay + 750);
+    };
+    // the title, word by word, each rising out of its own mask
+    const title = main.querySelector('.home-title');
+    if (title) {
+      const words = title.textContent.split(' ');
+      title.textContent = '';
+      words.forEach((w, i) => {
+        const mask = document.createElement('span'), word = document.createElement('span');
+        mask.className = 'w';
+        word.textContent = w;
+        word.style.setProperty('--wd', 80 + i * 60 + 'ms');
+        mask.appendChild(word);
+        title.appendChild(mask);
+        if (i < words.length - 1) title.appendChild(document.createTextNode(' '));
+      });
+      title.classList.add('words');
+    }
+    const lead = [...main.querySelectorAll('.home-hero .home-kicker, .home-hero .home-lead, .home-hero .home-ctas')];
+    const blocks = [...main.querySelectorAll('.home-head, .home-env, .hazard, .home-how__text, .steps > li, .home-preview, .home-final, .home-foot')];
+    lead.concat(blocks).forEach(el => el.classList.add('rv'));
+    const start = () => requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (title) title.classList.add('is-in');
+      lead.forEach((el, i) => arrive(el, i === 0 ? 0 : 380 + i * 110));   // the small heading first, the rest once the title is under way
+    }));
+    if (S.introDone) start(); else document.addEventListener('still:intro-done', start, { once: true });
+    homeWatch = new IntersectionObserver(entries => {
+      // things that come into view together (a row of cards) follow one another by 70 ms
+      entries.filter(e => e.isIntersecting).forEach((e, i) => { homeWatch.unobserve(e.target); arrive(e.target, Math.min(i, 5) * 70); });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+    blocks.forEach(el => homeWatch.observe(el));
+
+    // the bars of the example chart grow one after another
+    main.querySelectorAll('.home-preview__bars i').forEach((bar, i) => bar.style.setProperty('--i', i));
+    main.querySelectorAll('.vitals-card__grid > div').forEach((cell, i) => cell.style.setProperty('--i', i));
+
+    // a line through the three steps, drawn as far as you have read; each number lights as it is reached
+    const steps = main.querySelector('.steps');
+    if (steps) {
+      steps.classList.add('steps--live');
+      const rail = document.createElement('span');
+      rail.className = 'steps__rail';
+      rail.setAttribute('aria-hidden', 'true');
+      steps.appendChild(rail);
+    }
+    // how far down the page: a hairline along the bottom of the top bar
+    const line = document.createElement('span');
+    line.className = 'scroll-line';
+    line.setAttribute('aria-hidden', 'true');
+    topbar.appendChild(line);
+
+    let queued = false;
+    const measure = () => {
+      queued = false;
+      const far = document.documentElement.scrollHeight - innerHeight;
+      line.style.setProperty('--p', far > 0 ? Math.min(1, scrollY / far).toFixed(4) : '0');
+      const st = main.querySelector('.steps--live');
+      const rail = st && st.querySelector('.steps__rail');
+      const nums = st ? [...st.querySelectorAll('.steps__n')] : [];
+      if (!rail || nums.length < 2) return;
+      const first = nums[0].getBoundingClientRect(), last = nums[nums.length - 1].getBoundingClientRect(), box = st.getBoundingClientRect();
+      const top = first.top + first.height / 2, len = last.top + last.height / 2 - top;
+      if (len <= 0) return;
+      rail.style.top = (top - box.top) + 'px';
+      rail.style.height = len + 'px';
+      rail.style.left = (first.left + first.width / 2 - box.left - 1) + 'px';
+      const p = Math.max(0, Math.min(1, (innerHeight * 0.62 - top) / len));
+      rail.style.setProperty('--p', p.toFixed(4));
+      nums.forEach(n => { const c = n.getBoundingClientRect(); n.classList.toggle('is-lit', (c.top + c.height / 2 - top) / len <= p + 0.001); });
+    };
+    homeScroll = () => { if (!queued) { queued = true; requestAnimationFrame(measure); } };
+    window.addEventListener('scroll', homeScroll, { passive: true });
+    window.addEventListener('resize', homeScroll);
+    measure();
+  }
+  // a soft light that follows the pointer across the cards
+  main.addEventListener('pointermove', e => {
+    const card = e.target.closest && e.target.closest('.home-env, .hazard, .dash-tile');
+    if (!card) return;
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    // and the cards lean a few degrees toward it
+    card.style.setProperty('--rx', (-((e.clientY - r.top) / r.height - 0.5) * 5).toFixed(2) + 'deg');
+    card.style.setProperty('--ry', (((e.clientX - r.left) / r.width - 0.5) * 6).toFixed(2) + 'deg');
+  }, { passive: true });
+  // a press on the dashboard answers at once: a soft ring spreads from where the tile or the
+  // Log vitals button was pressed. It takes no clicks, and is gone in half a second.
+  main.addEventListener('pointerdown', e => {
+    const t = e.target.closest && e.target.closest('.dash-tile, .dash-check__go');
+    if (!t || reduceMotion.matches) return;
+    const r = t.getBoundingClientRect(), dot = document.createElement('span');
+    dot.className = 'dash-press';
+    dot.setAttribute('aria-hidden', 'true');
+    dot.style.left = (e.clientX - r.left) + 'px';
+    dot.style.top = (e.clientY - r.top) + 'px';
+    t.appendChild(dot);
+    setTimeout(() => dot.remove(), 600);
+  }, { passive: true });
+
+  /* ---------------------------------------------------------------- the closing panel's sky */
+  // Drawn in code, like the backdrop: stars in three depths, a few soft clouds of colour and a spiral
+  // galaxy built from several thousand points around a warm core. The galaxy turns very slowly and
+  // some stars twinkle. Under the pointer the layers shift by different amounts, the galaxy turns
+  // faster and shooting stars cross. It runs only while the panel is on screen and stays still under
+  // reduced motion.
+  let sky = null;
+  function skyStop() { if (sky) { sky.stop(); sky = null; } }
+  function skyStart() {
+    skyStop();
+    const panel = main.querySelector('.home-final');
+    if (!panel) return;
+    const canvas = document.createElement('canvas');
+    canvas.className = 'home-final__sky';
+    canvas.setAttribute('aria-hidden', 'true');
+    panel.insertBefore(canvas, panel.firstChild);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const still = reduceMotion.matches, TAU = Math.PI * 2, PAD = 24;
+    let seed = 20261115;
+    const rnd = () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const gauss = () => (rnd() + rnd() + rnd() + rnd() - 2) / 1.2;   // roughly bell-shaped
+    let W = 0, H = 0, dpr = 1, layers = [], twinklers = [], galaxy = null, G = null;
+    const sprite = (w, h, draw) => {
+      const c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(w * dpr)); c.height = Math.max(1, Math.round(h * dpr));
+      const x = c.getContext('2d'); x.scale(dpr, dpr); draw(x);
+      return c;
+    };
+    const blob = (x, cx, cy, r, colour) => {
+      const g = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+      g.addColorStop(0, colour); g.addColorStop(1, colour.replace(/[\d.]+\)$/, '0)'));
+      x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, TAU); x.fill();
+    };
+
+    function build() {
+      const box = panel.getBoundingClientRect();
+      W = Math.max(1, Math.round(box.width)); H = Math.max(1, Math.round(box.height));
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      seed = 20261115;
+      const count = Math.round(W * H / 620);
+      layers = [0.35, 0.65, 1].map((depth, li) => ({ depth, img: sprite(W + PAD * 2, H + PAD * 2, x => {
+        if (li === 0) {   // clouds of colour, far behind everything
+          x.globalCompositeOperation = 'lighter';
+          blob(x, W * 0.18, H * 0.8, H * 0.9, 'rgba(112,84,214,0.17)');
+          blob(x, W * 0.6, H * 0.15, H * 0.8, 'rgba(52,112,214,0.15)');
+          blob(x, W * 0.95, H * 0.9, H * 0.7, 'rgba(186,84,168,0.11)');
+        }
+        for (let i = 0; i < count / 3; i++) {
+          const big = rnd() < 0.05, size = (big ? 1.1 + rnd() * 0.9 : 0.35 + rnd() * 0.75) * (0.7 + depth * 0.5);
+          const tint = rnd(), col = tint < 0.12 ? '255,226,190' : tint < 0.3 ? '190,212,255' : '236,243,255';
+          const px = rnd() * (W + PAD * 2), py = rnd() * (H + PAD * 2), a = 0.35 + rnd() * 0.6;
+          x.fillStyle = 'rgba(' + col + ',' + a.toFixed(2) + ')';
+          x.beginPath(); x.arc(px, py, size, 0, TAU); x.fill();
+          if (big) blob(x, px, py, size * 5, 'rgba(' + col + ',0.32)');
+        }
+      }) }));
+      twinklers = Array.from({ length: Math.min(70, Math.round(count / 9)) }, () => ({ x: rnd() * W, y: rnd() * H, r: 0.7 + rnd() * 1.1, speed: 0.6 + rnd() * 1.6, phase: rnd() * TAU }));
+      // the galaxy sits to one side, so the words stay over open sky
+      const wide = W > 760, R = Math.min(H * 1.06, W * 0.38);
+      G = { x: W * 0.79, y: H * (wide ? 0.47 : 0.2), R, tilt: -0.42, squash: 0.44 };
+      galaxy = sprite(R * 2.2, R * 2.2, x => {
+        x.translate(R * 1.1, R * 1.1);
+        x.globalCompositeOperation = 'lighter';
+        const halo = x.createRadialGradient(0, 0, 0, 0, 0, R);
+        halo.addColorStop(0, 'rgba(255,236,208,0.5)'); halo.addColorStop(0.12, 'rgba(255,214,170,0.24)');
+        halo.addColorStop(0.4, 'rgba(120,150,230,0.08)'); halo.addColorStop(1, 'rgba(90,120,220,0)');
+        x.fillStyle = halo; x.beginPath(); x.arc(0, 0, R, 0, TAU); x.fill();
+        const points = Math.round(5200 * Math.min(1, R / 300)) + 1800;
+        for (let i = 0; i < points; i++) {
+          const t = Math.pow(rnd(), 0.62), faint = rnd() < 0.3;   // more points toward the middle; a second, fainter pair of arms
+          const ang = (i % 2) * Math.PI + (faint ? Math.PI / 2 : 0) + t * 7.4 + gauss() * (0.16 + t * 0.2);
+          const rad = t * R * 0.96 + gauss() * R * (0.02 + t * 0.05);
+          const core = Math.max(0, 1 - t * 2.4), pink = t > 0.25 && rnd() < 0.035;
+          const col = pink ? '255,150,190'
+            : core > 0 ? '255,' + Math.round(232 - 26 * (1 - core)) + ',' + Math.round(200 - 30 * (1 - core))
+            : Math.round(165 + rnd() * 50) + ',' + Math.round(195 + rnd() * 40) + ',255';
+          const a = (faint ? 0.1 : 0.2) + rnd() * (faint ? 0.18 : 0.42) * (1 - t * 0.45);
+          const s = pink ? 1.3 : 0.45 + rnd() * 0.9;
+          x.fillStyle = 'rgba(' + col + ',' + a.toFixed(2) + ')';
+          x.fillRect(Math.cos(ang) * rad - s / 2, Math.sin(ang) * rad - s / 2, s, s);
+        }
+        const bulge = x.createRadialGradient(0, 0, 0, 0, 0, R * 0.2);
+        bulge.addColorStop(0, 'rgba(255,248,232,0.95)'); bulge.addColorStop(0.35, 'rgba(255,226,186,0.5)'); bulge.addColorStop(1, 'rgba(255,210,160,0)');
+        x.fillStyle = bulge; x.beginPath(); x.arc(0, 0, R * 0.2, 0, TAU); x.fill();
+      });
+    }
+
+    let raf = 0, visible = false, hover = 0, hoverTo = 0, spin = 0, last = 0, mx = 0, my = 0, tx = 0, ty = 0, streak = null;
+    const shoot = () => { streak = { x: W * (0.1 + rnd() * 0.45), y: -8 + rnd() * H * 0.2, vx: 480 + rnd() * 160, vy: 170 + rnd() * 90, life: 0 }; };
+    function draw(t) {
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      layers.forEach(l => ctx.drawImage(l.img, -PAD - mx * 10 * l.depth, -PAD - my * 8 * l.depth, W + PAD * 2, H + PAD * 2));
+      twinklers.forEach(s => {
+        const a = 0.2 + 0.8 * (0.5 + 0.5 * Math.sin(t * s.speed + s.phase));
+        ctx.fillStyle = 'rgba(240,246,255,' + (a * 0.9).toFixed(2) + ')';
+        ctx.beginPath(); ctx.arc(s.x - mx * 9, s.y - my * 7, s.r, 0, TAU); ctx.fill();
+      });
+      ctx.save();
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha = 1;
+      ctx.translate(G.x - mx * 18, G.y - my * 14);
+      ctx.rotate(G.tilt); ctx.scale(1, G.squash); ctx.rotate(spin);
+      const d = G.R * 2.2;
+      ctx.drawImage(galaxy, -d / 2, -d / 2, d, d);
+      ctx.globalAlpha = 0.45 + hover * 0.35;   // a second pass, so it glows
+      ctx.drawImage(galaxy, -d / 2, -d / 2, d, d);
+      ctx.restore();
+      if (streak) {
+        const k = streak.life / 0.95, hx = streak.x + streak.vx * streak.life, hy = streak.y + streak.vy * streak.life;
+        const n = Math.hypot(streak.vx, streak.vy), ux = streak.vx / n, uy = streak.vy / n, len = 130;
+        const tail = ctx.createLinearGradient(hx, hy, hx - ux * len, hy - uy * len);
+        tail.addColorStop(0, 'rgba(255,255,255,' + (0.95 * Math.sin(Math.PI * k)).toFixed(2) + ')'); tail.addColorStop(1, 'rgba(180,210,255,0)');
+        ctx.strokeStyle = tail; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx - ux * len, hy - uy * len); ctx.stroke();
+      }
+    }
+    function frame(now) {
+      raf = 0;
+      const dt = Math.min(0.05, (now - last) / 1000 || 0); last = now;
+      hover += (hoverTo - hover) * Math.min(1, dt * 4);
+      mx += (tx - mx) * Math.min(1, dt * 5); my += (ty - my) * Math.min(1, dt * 5);
+      spin += dt * (0.012 + hover * 0.07);
+      if (streak) { streak.life += dt; if (streak.life > 0.95) streak = null; }
+      else if (hover > 0.5 && rnd() < dt * 0.18) shoot();
+      draw(now / 1000);
+      if (visible) raf = requestAnimationFrame(frame);
+    }
+    const run = () => { if (!raf && visible && !still) { last = performance.now(); raf = requestAnimationFrame(frame); } };
+    const onEnter = () => { hoverTo = 1; if (!streak) shoot(); };
+    const onLeave = () => { hoverTo = 0; tx = 0; ty = 0; };
+    const onMove = e => { const b = panel.getBoundingClientRect(); tx = (e.clientX - b.left) / b.width - 0.5; ty = (e.clientY - b.top) / b.height - 0.5; };
+    let sized = 0;
+    const resize = 'ResizeObserver' in window ? new ResizeObserver(() => { cancelAnimationFrame(sized); sized = requestAnimationFrame(() => { build(); draw(performance.now() / 1000); }); }) : null;
+    const watch = 'IntersectionObserver' in window ? new IntersectionObserver(es => { visible = es[es.length - 1].isIntersecting; run(); }) : null;
+
+    build();
+    draw(0);
+    if (resize) resize.observe(panel);
+    if (!still) {
+      if (watch) watch.observe(panel); else { visible = true; run(); }
+      panel.addEventListener('pointerenter', onEnter);
+      panel.addEventListener('pointerleave', onLeave);
+      panel.addEventListener('pointermove', onMove, { passive: true });
+    }
+    sky = { stop() {
+      visible = false;
+      cancelAnimationFrame(raf); cancelAnimationFrame(sized);
+      if (resize) resize.disconnect();
+      if (watch) watch.disconnect();
+      panel.removeEventListener('pointerenter', onEnter);
+      panel.removeEventListener('pointerleave', onLeave);
+      panel.removeEventListener('pointermove', onMove);
+      canvas.remove();
+    } };
+  }
+
   /* ---------------------------------------------------------------- router */
-  let currentKey = '';
+  let currentKey = '', dashHtml = '';
+  const currentPath = () => (location.hash.replace(/^#/, '') || '/').replace(/\/+$/, '') || '/';
   function resolve(s) {
-    const path = (location.hash.replace(/^#/, '') || '/').replace(/\/+$/, '') || '/';
-    let m;
-    // the public home page is open to everyone
+    const path = currentPath();
+    // no location yet this visit: every address asks first, the home page included
+    if (!s.env) return { key: 'environment', title: 'Choose your environment', html: viewEnvironment(s, true, path === '/') };
     if (path === '/') return { key: 'home', title: 'Watching over the crew', html: viewHome(s) };
-    // no environment yet: every app address shows the picker, never the dashboard
-    if (!s.env) return { key: 'environment', title: 'Choose your environment', html: viewEnvironment(s, true) };
     if (path === '/environment') return { key: 'environment', title: 'Change environment', html: viewEnvironment(s, false) };
     if (path === '/dashboard') return { key: 'dashboard', title: 'Dashboard', html: viewDashboard(s) };
     if (path === '/cards') return { key: 'cards', title: 'My cards', html: viewCards(s) };
-    if (path === '/collections') return { key: 'collections', title: 'Collections', html: viewCollections(s) };
-    if ((m = path.match(/^\/collections\/([\w-]+)$/))) {
-      const c = findCol(m[1]);
-      return { key: 'collections', title: c ? c.name : 'Not found', html: viewCollection(s, m[1]) };
-    }
     if (path === '/library') return { key: 'library', title: 'Card library', html: viewLibrary(s) };
     if (path === '/settings') return { key: 'settings', title: 'Settings', html: viewSettings(s) };
     return { key: '', title: 'Not found', html: notFound() };
   }
 
+  // The account button at the end of the bar (js/sitenav.js) shows the email, which the location rule
+  // (js/env.js) does not keep. It comes from the Supabase session (js/auth.js), asked for once someone
+  // is known to be signed in.
+  let emailAsked = false;
+  function accountButton() {
+    if (!signedIn()) { if (whoKnown) window.GuardianNav.account(null); return; }
+    if (emailAsked) return;
+    emailAsked = true;
+    const show = user => window.GuardianNav.account(user || { email: '' });
+    GuardianAuth.user().then(show, () => show(null));
+  }
+
+  // the home page's green button: the way in to the dashboard, or to the sign-in page for a visitor
+  function launchLabel() {
+    const launch = $('#landLaunch'), inside = signedIn();
+    if (!launch) return;
+    launch.querySelector('.lg').textContent = inside ? 'Open dashboard' : 'Sign in or sign up';
+    launch.querySelector('.sm').textContent = inside ? 'Open' : 'Sign in';
+    launch.setAttribute('aria-label', inside ? 'Open dashboard' : 'Sign in or sign up');
+  }
+
   function render() {
     const s = store.get();
+    // signed out, only the home page and the picker on the way in to it can be seen
+    if (whoKnown && !signedIn() && currentPath() !== '/') { toSignIn(); return; }
     const r = resolve(s);
     const active = document.activeElement;
     const keepSearch = active && active.id === 'cardSearch';
-    main.innerHTML = r.html;
+    const cameFrom = currentKey;
+    // a dashboard that has not changed is left as it is, so its arrival is never cut short
+    const same = r.key === 'dashboard' && cameFrom === 'dashboard' && r.html === dashHtml && !!main.querySelector('.dash');
+    if (!same) main.innerHTML = r.html;
+    dashHtml = r.key === 'dashboard' ? r.html : '';
     currentKey = r.key;
     document.title = r.title + ' · Guardian';
     document.documentElement.classList.toggle('is-landing', r.key === 'home');
-    document.documentElement.classList.toggle('env-gate', !s.env && r.key !== 'home');
-    const launch = $('#landLaunch'), envNow = envOf(s.env);
-    if (launch) {
-      launch.querySelector('.lg').textContent = envNow ? 'Open dashboard' : 'Launch assistant';
-      launch.querySelector('.sm').textContent = envNow ? 'Open' : 'Launch';
-      launch.setAttribute('aria-label', envNow ? 'Open dashboard' : 'Launch assistant');
-    }
+    document.documentElement.classList.toggle('env-gate', !s.env);
+    launchLabel();
     const env = envOf(s.env), pill = $('#envPill');
     if (pill && env) {
       pill.innerHTML = `<img src="${env.img}" alt="" width="26" height="26"><span>${env.short}</span>`;
@@ -537,6 +929,10 @@
       if (r.key === 'environment') pill.setAttribute('aria-current', 'page'); else pill.removeAttribute('aria-current');
     }
     window.GuardianNav.mark(r.key);
+    accountButton();
+    if (r.key === 'home' && cameFrom !== 'home') revealHome(); else if (r.key !== 'home') leaveHome();
+    if (r.key === 'home') skyStart(); else skyStop();
+    if (r.key === 'dashboard') { fillToday(); fillCheck(); if (cameFrom !== 'dashboard') revealDash(); }
     if (keepSearch) { const i = $('#cardSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
   }
 
@@ -550,11 +946,11 @@
     land.id = 'landNav';
     land.innerHTML =
       `<nav class="land-nav__links" aria-label="Home page">
-         <button class="land-nav__link" data-action="scroll-to" data-target="challenge" style="--d:160ms">The challenge</button>
-         <button class="land-nav__link" data-action="scroll-to" data-target="environments" style="--d:205ms">Environments</button>
-         <button class="land-nav__link" data-action="scroll-to" data-target="how" style="--d:250ms">How it works</button>
+         <button class="land-nav__link" data-action="scroll-to" data-target="environments" style="--d:160ms">Environments</button>
+         <button class="land-nav__link" data-action="scroll-to" data-target="challenge" style="--d:205ms">The Challenge</button>
+         <button class="land-nav__link" data-action="scroll-to" data-target="how" style="--d:250ms">How It Works</button>
        </nav>
-       <button class="btn btn--primary land-nav__cta" id="landLaunch" data-action="launch" style="--d:300ms"><span class="lg">Launch assistant</span><span class="sm" aria-hidden="true">Launch</span>${icon('arrowRight')}</button>`;
+       <button class="btn btn--primary land-nav__cta" id="landLaunch" data-action="launch" style="--d:300ms"><span class="lg">Sign in or sign up</span><span class="sm" aria-hidden="true">Sign in</span>${icon('arrowRight')}</button>`;
     topbar.appendChild(land);
   }
 
@@ -579,7 +975,7 @@
       <section class="home-hero" aria-labelledby="page-title">
         <p class="home-kicker">${icon('satellite')}NASA Space Apps Challenge 2026</p>
         <h1 class="home-title" id="page-title">Watching over the crew, wherever they&nbsp;are.</h1>
-        <p class="home-lead">Guardian is a health assistant for astronauts on the space station, the Moon, Mars and in deep space. It keeps every observation about the crew in one calm place, set up for where they live.</p>
+        <p class="home-lead">Guardian is a health assistant for astronauts, wherever the mission takes them: aboard a spacecraft, on the Moon, or even on Mars. It watches over every crew member and helps them stay healthy, stay safe and make it home.</p>
         <div class="home-ctas">
           <button class="btn btn--primary btn--lg" data-action="launch">${env ? `Open the ${env.short} dashboard` : 'Launch assistant'}${icon('arrowRight')}</button>
           <button class="btn btn--ghost btn--lg" data-action="scroll-to" data-target="how">How it works</button>
@@ -623,19 +1019,30 @@
           <ol class="steps">
             <li><span class="steps__n">1</span><div><h3>Pick the environment</h3><p>The station, the Moon, Mars or a spacecraft in transit. Guardian sets itself up for it.</p></div></li>
             <li><span class="steps__n">2</span><div><h3>Log what you notice</h3><p>Heart rate after a spacewalk, a bad night’s sleep, a dataset to check. Crew health templates make it quick.</p></div></li>
-            <li><span class="steps__n">3</span><div><h3>Review it together</h3><p>The dashboard shows the week’s activity, collections keep related cards side by side, and search finds anything.</p></div></li>
+            <li><span class="steps__n">3</span><div><h3>Review it together</h3><p>The dashboard gets you to the next job in one click, the binder keeps every card, and search finds anything.</p></div></li>
           </ol>
           <button class="btn btn--primary btn--lg" data-action="launch">${env ? 'Open dashboard' : 'Start with an environment'}${icon('arrowRight')}</button>
         </div>
         <div class="home-preview" aria-label="Example of a card in Guardian">
           <p class="home-preview__label">Example card</p>
-          <article class="panel card home-preview__card">
-            ${typeTag('observation')}
-            <h3 class="card__title">Crew health: heart rate after EVA</h3>
-            <p class="card__notes">Crew member: Mission specialist
-Reading: resting heart rate higher than usual the morning after the spacewalk
-Possible cause: short sleep before the EVA</p>
-            <p class="card__meta">${icon('folder')}<span>Crew vitals</span><span class="sep">·</span><span>Mars</span></p>
+          <article class="panel vitals-card home-preview__card">
+            <span class="vitals-card__rings" aria-hidden="true"></span>
+            <header class="vitals-card__head">
+              <div><p class="vitals-card__who">Mission specialist<span class="sep">·</span><time>${new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}</time></p><h3 class="card__title">Morning vitals check</h3></div>
+              <span class="vitals-card__tab">Vitals</span>
+            </header>
+            <dl class="vitals-card__grid">
+              <div><dt>Heart rate</dt><dd>64 <small>bpm</small></dd></div>
+              <div><dt>Blood pressure</dt><dd>118/76 <small>mmHg</small></dd></div>
+              <div><dt>Standing pressure</dt><dd>114/78 <small>mmHg</small></dd></div>
+              <div><dt>Blood sugar</dt><dd>92 <small>mg/dL</small></dd></div>
+              <div><dt>Temperature</dt><dd>36.8 <small>°C</small></dd></div>
+              <div><dt>Blood oxygen</dt><dd>98 <small>%</small></dd></div>
+              <div><dt>Breathing</dt><dd>14 <small>per min</small></dd></div>
+              <div><dt>Sleep</dt><dd>7.2 <small>hours</small></dd></div>
+              <div><dt>Mood</dt><dd>Rested</dd></div>
+            </dl>
+            <p class="card__meta">${icon('folder')}<span>Kept in the crew binder</span><span class="sep">·</span><span>Mars</span></p>
           </article>
           <div class="panel home-preview__mini">
             ${chipIcon('pulse')}<div><p class="home-preview__k">This week</p><p class="home-preview__v">Cards by day</p></div>
@@ -651,8 +1058,8 @@ Possible cause: short sleep before the EVA</p>
       </section>
 
       <footer class="home-foot">
-        <span><strong>Guardian Space Agency</strong> · Built for the NASA Space Apps Challenge 2026</span>
-        <span>Not affiliated with NASA.</span>
+        <span><strong>Guardian</strong> · Built for the NASA Space Apps Challenge 2026</span>
+        <span>A prototype.</span>
       </footer>
     </div>`;
   }
@@ -726,7 +1133,7 @@ Possible cause: short sleep before the EVA</p>
   function field(o) {
     const id = 'f-' + o.name;
     const ctl = o.type === 'textarea'
-      ? `<textarea class="input" id="${id}" name="${o.name}" rows="${o.rows || 5}" placeholder="${esc(o.placeholder || '')}">${esc(o.value || '')}</textarea>`
+      ? `<textarea class="input" id="${id}" name="${o.name}" rows="${o.rows || 5}" maxlength="${o.max || 4000}" placeholder="${esc(o.placeholder || '')}">${esc(o.value || '')}</textarea>`
       : o.type === 'select'
         ? `<select class="input select" id="${id}" name="${o.name}">${o.options}</select>`
         : `<input class="input" id="${id}" name="${o.name}" value="${esc(o.value || '')}" placeholder="${esc(o.placeholder || '')}" maxlength="${o.max || 120}"${o.required ? ' required aria-required="true"' : ''} autocomplete="off">`;
@@ -740,86 +1147,81 @@ Possible cause: short sleep before the EVA</p>
     else { input.removeAttribute('aria-invalid'); input.removeAttribute('aria-describedby'); }
   }
 
+
+  const CARD_VITALS = [
+    { key: 'bloodPressure', label: 'Blood pressure', unit: 'mm/Hg', hint: '120/80', equipment: 'SunTech Tango upper-arm cuff',
+      steps: ['Choose a cuff that fits and place it on bare upper-arm skin.', 'Use the manufacturer’s artery marker and cuff-placement guide. Keep the arm relaxed.', 'Follow the device instructions and record both numbers: systolic / diastolic.'],
+      note: 'The Tango M2 manual is a later model reference, not the original ISS flight checklist.', source: 'https://suntechmed.com/support/document-library/send/96-archive-tango-m2-instructions-manuals/1201-tango-m2-user-manual-english-rev-b' },
+    { key: 'heartRate', label: 'Heart rate', unit: 'Beats Per Minute', hint: '72', equipment: 'Fingertip pulse oximeter',
+      steps: ['Use a clean finger; remove dark nail polish if it blocks the light.', 'Clip the sensor onto the fingertip and keep the hand still.', 'Wait for the reading to settle. Record the pulse rate, not the oxygen percentage.'], source: 'https://medlineplus.gov/lab-tests/pulse-oximetry/' },
+    { key: 'temperature', label: 'Temperature', unit: 'Celsius', hint: '36.6', equipment: 'CSA Bio-Monitor smart shirt',
+      steps: ['Put on the fitted shirt and headband with the shirt sensors touching skin.', 'View the skin-temperature measurement in the tablet application.', 'Record the value in Celsius and note that it is skin temperature.'],
+      note: 'Skin temperature is different from core or oral body temperature.', source: 'https://www.csa-asc.gc.ca/eng/sciences/bio-monitor.asp' },
+    { key: 'sleep', label: 'Sleep', unit: 'Minutes', hint: '480', equipment: 'Sleep log / recorded sleep session',
+      steps: ['Check your recorded sleep session or note when you fell asleep and woke.', 'Subtract time spent awake and convert hours to minutes (8 hours = 480 minutes).', 'Enter the total minutes slept.'],
+      note: 'The supplied guide does not specify a sleep-measurement procedure. This field is a personal sleep log.' },
+    { key: 'mood', label: 'Mood', unit: '', hint: 'How are you feeling?', equipment: 'Personal check-in',
+      steps: ['Pause and think about how you feel right now.', 'Describe it in your own words, such as calm, tired or stressed.', 'Record your description; no measuring device is needed.'],
+      note: 'Mood is self-reported; the supplied equipment guide does not provide a mood instrument.' },
+    { key: 'respirationRate', label: 'Respiration rate', unit: 'Respirations per Minute', hint: '16', equipment: 'CSA Bio-Monitor smart shirt',
+      steps: ['Wear the fitted shirt with its sensors touching skin.', 'Use the tablet application to view breathing rate during the session.', 'Record the breathing-rate value in respirations per minute.'], source: 'https://www.csa-asc.gc.ca/eng/sciences/bio-monitor.asp' },
+    { key: 'oxygenSaturation', label: 'Oxygen saturation', unit: 'percentage', hint: '98', equipment: 'Fingertip pulse oximeter',
+      steps: ['Use a clean finger and remove dark nail polish if needed.', 'Clip the sensor onto the fingertip and keep the hand still.', 'Wait for a stable reading and record the SpO₂ percentage, not the pulse rate.'], source: 'https://medlineplus.gov/lab-tests/pulse-oximetry/' },
+  ];
+
   function cardForm(o) {
     o = o || {};
-    const s = store.get();
-    const c = o.card || {};
-    const colId = c.collectionId || o.collectionId || '';
-    const colOptions = `<option value="">No collection</option>` +
-      s.collections.map(x => `<option value="${x.id}"${x.id === colId ? ' selected' : ''}>${esc(x.name)}</option>`).join('') +
-      `<option value="__new">New collection…</option>`;
-    const type = c.type || o.type || 'idea';
+    const c = o.card || {}, values = c.vitals || {};
     openModal({
-      title: o.card ? 'Edit card' : 'Add card',
+      title: o.card ? 'Edit card' : 'Add card', size: 'vitals',
       body: `<form id="cardForm" novalidate>
-        ${field({ name: 'title', label: 'Title', value: c.title || o.title || '', placeholder: 'What did you notice or think of?', required: true })}
-        ${field({ name: 'notes', label: 'Notes', type: 'textarea', value: c.notes || o.notes || '', placeholder: 'Details, links, numbers', optional: true })}
-        <div class="field-row">
-          ${field({ name: 'type', label: 'Type', type: 'select', options: TYPES.map(t => `<option value="${t.id}"${t.id === type ? ' selected' : ''}>${t.label}</option>`).join('') })}
-          ${field({ name: 'collection', label: 'Collection', type: 'select', options: colOptions })}
-        </div>
-        ${field({ name: 'newCollection', label: 'New collection name', placeholder: 'e.g. Sleep data', hidden: true, max: 60 })}
+        <p class="vital-intro">A moment to check in. Add the readings you have; leave the others blank.</p>
+        ${field({ name: 'title', label: 'Title', value: c.title || o.title || '', placeholder: 'What do you want it to be called', required: true })}
+        <div class="vital-fields">${CARD_VITALS.map(v => `<div class="vital-field">
+          <div class="vital-label"><label for="v-${v.key}">${v.label}</label><button type="button" class="vital-info" data-help="${v.key}" aria-label="How to record ${v.label.toLowerCase()}" aria-expanded="false" aria-controls="help-${v.key}">i</button></div>
+          <div class="vital-input"><input id="v-${v.key}" name="${v.key}" ${v.key !== 'bloodPressure' && v.key !== 'mood' ? 'type="number" step="any" min="0"' : 'type="text"'} maxlength="120" placeholder="${v.hint}" value="${esc(values[v.key] == null ? '' : String(values[v.key].value))}" aria-describedby="unit-${v.key}"><span id="unit-${v.key}" class="vital-unit">${v.unit}</span></div>
+          <div class="vital-help" id="help-${v.key}" hidden><strong>${v.equipment}</strong><ol>${v.steps.map(t => `<li>${t}</li>`).join('')}</ol>${v.note ? `<p>${v.note}</p>` : ''}${v.source ? `<a href="${v.source}" target="_blank" rel="noreferrer">Read the source ↗</a>` : ''}</div>
+        </div>`).join('')}</div>
+        ${(c.legacyNotes || (c.notes && !c.vitals)) ? `<details class="vital-legacy"><summary>Previous notes</summary><p>${esc(c.legacyNotes || c.notes)}</p></details>` : ''}
+        <p class="vital-footnote">Educational reference. Follow approved equipment and crew instructions. <a href="/#/citations">Sources & citations</a></p>
+        <p class="field__error" id="vital-error" role="alert"></p>
       </form>`,
-      footer: `<button class="btn btn--ghost" type="button" data-close>Cancel</button><button class="btn btn--primary" type="submit" form="cardForm">${o.card ? 'Save changes' : `${icon('plus')}Add card`}</button>`,
+      footer: `<span class="vital-save-note">Saved with your account</span><button class="btn btn--ghost" type="button" data-close>Cancel</button><button class="btn btn--primary" type="submit" form="cardForm">Done</button>`,
       mount(panel, close) {
-        const form = panel.querySelector('form');
-        const sel = form.elements.collection, newField = form.querySelector('[data-field="newCollection"]');
-        sel.addEventListener('change', () => {
-          const on = sel.value === '__new';
-          newField.classList.toggle('is-hidden', !on);
-          if (on) form.elements.newCollection.focus();
-        });
-        const titleInput = form.elements.title;
-        if (!o.card && o.title) requestAnimationFrame(() => { titleInput.focus(); titleInput.setSelectionRange(titleInput.value.length, titleInput.value.length); });
-        form.addEventListener('submit', e => {
+        const form = panel.querySelector('form'), titleInput = form.elements.title;
+        panel.querySelectorAll('[data-help]').forEach(button => button.addEventListener('click', () => {
+          const help = panel.querySelector('#help-' + button.dataset.help);
+          help.hidden = !help.hidden; button.setAttribute('aria-expanded', String(!help.hidden));
+        }));
+        let pendingId = c.id || uid();
+        form.addEventListener('submit', async e => {
           e.preventDefault();
-          const title = titleInput.value.trim();
-          let ok = true;
-          setError(form, 'title', title ? '' : 'Give the card a title.');
-          if (!title) ok = false;
-          let collectionId = sel.value;
-          const newName = form.elements.newCollection.value.trim();
-          if (collectionId === '__new') {
-            setError(form, 'newCollection', newName ? '' : 'Name the new collection.');
-            if (!newName) ok = false;
-          }
-          if (!ok) { form.querySelector('[aria-invalid="true"]').focus(); return; }
-          store.update(st => {
-            if (collectionId === '__new') {
-              const col = { id: uid(), name: newName, description: '', createdAt: Date.now() };
-              st.collections.push(col);
-              collectionId = col.id;
+          const error = panel.querySelector('#vital-error');
+          setError(form, 'title', titleInput.value.trim() ? '' : 'Give the card a title.');
+          if (!titleInput.value.trim()) { titleInput.focus(); return; }
+          const vitals = {};
+          for (const v of CARD_VITALS) {
+            const input = form.elements[v.key], raw = input.value.trim();
+            if (input.validity.badInput || (raw && v.key !== 'bloodPressure' && v.key !== 'mood' && (!Number.isFinite(Number(raw)) || Number(raw) < 0))) {
+              error.textContent = 'Enter a valid, non-negative number for ' + v.label.toLowerCase() + '.'; input.focus(); return;
             }
-            const data = { title, notes: form.elements.notes.value.trim(), type: form.elements.type.value, collectionId: collectionId || '' };
-            if (o.card) Object.assign(st.cards.find(x => x.id === o.card.id), data);
-            else st.cards.push(Object.assign({ id: uid(), createdAt: Date.now(), env: st.env || '' }, data));
-          });
-          close();
-          toast(o.card ? 'Card saved' : 'Card added');
-        });
-      }
-    });
-  }
-
-  function collectionForm() {
-    openModal({
-      title: 'New collection',
-      body: `<form id="colForm" novalidate>
-        ${field({ name: 'name', label: 'Name', placeholder: 'e.g. Sleep and recovery', required: true, max: 60 })}
-        ${field({ name: 'description', label: 'Description', placeholder: 'What belongs here', optional: true, max: 140 })}
-      </form>`,
-      footer: `<button class="btn btn--ghost" type="button" data-close>Cancel</button><button class="btn btn--primary" type="submit" form="colForm">${icon('plus')}Create collection</button>`,
-      mount(panel, close) {
-        const form = panel.querySelector('form');
-        form.addEventListener('submit', e => {
-          e.preventDefault();
-          const name = form.elements.name.value.trim();
-          setError(form, 'name', name ? '' : 'Name the collection.');
-          if (!name) { form.elements.name.focus(); return; }
-          const col = { id: uid(), name, description: form.elements.description.value.trim(), createdAt: Date.now() };
-          store.update(st => { st.collections.push(col); });
-          close();
-          toast('Collection created');
+            if (!raw) continue;
+            if (v.key === 'bloodPressure' && !/^\d{2,3}\s*\/\s*\d{2,3}$/.test(raw)) {
+              error.textContent = 'Enter blood pressure as two numbers, such as 120/80.'; input.focus(); return;
+            }
+            vitals[v.key] = { value: v.key === 'mood' || v.key === 'bloodPressure' ? raw : Number(raw), unit: v.unit };
+          }
+          if (!window.GuardianEnv.user()) { error.textContent = 'Sign in to save this card to your account.'; return; }
+          const button = panel.querySelector('[type="submit"]'); button.disabled = true; button.textContent = 'Saving…'; error.textContent = '';
+          try {
+            const notes = CARD_VITALS.filter(v => vitals[v.key]).map(v => v.label + ': ' + vitals[v.key].value + (v.unit ? ' ' + v.unit : '')).join('\n');
+            const data = Object.assign({}, c, { id: pendingId, title: titleInput.value.trim(), legacyNotes: c.legacyNotes || (!c.vitals ? c.notes || '' : ''), vitals, notes: notes || c.notes || '', type: c.type || 'observation', template: 'crew-health', createdAt: c.createdAt || Date.now(), env: c.env || store.get().env || '' });
+            const body = Object.assign({}, data); delete body.id;
+            await window.GuardianAuth.cards.save([{ id: data.id, body }]);
+            store.update(st => { const old = st.cards.find(x => x.id === data.id); if (old) Object.assign(old, data); else st.cards.push(data); });
+            close(); toast('Card saved to your account');
+          } catch (err) { error.textContent = 'Could not save your card. Your entries are still here; try Done again.'; }
+          finally { button.disabled = false; button.textContent = 'Done'; }
         });
       }
     });
@@ -828,11 +1230,10 @@ Possible cause: short sleep before the EVA</p>
   function openCard(id) {
     const c = findCard(id);
     if (!c) return;
-    const col = colName(c.collectionId);
     openModal({
       title: esc(c.title),
       size: 'card',
-      body: `<p class="card-view__meta">${typeTag(c.type)}${envOf(c.env) ? `<span class="tag">${icon('satellite')}${envOf(c.env).short}</span>` : ''}${col ?`<a class="tag tag--link" href="#/collections/${c.collectionId}" data-close>${icon('folder')}${esc(col)}</a>` : ''}<span class="muted">Added ${fmtDate(c.createdAt)}</span></p>
+      body: `<p class="card-view__meta">${typeTag(c.type)}${envOf(c.env) ? `<span class="tag">${icon('satellite')}${envOf(c.env).short}</span>` : ''}<span class="muted">Added ${fmtDate(c.createdAt)}</span></p>
         <div class="card-view__notes">${c.notes ? esc(c.notes) : '<span class="muted">No notes yet.</span>'}</div>`,
       footer: `<button class="btn btn--danger-ghost" data-action="delete-card" data-id="${c.id}">${icon('trash')}Delete</button><span class="spacer"></span>
         <button class="btn btn--ghost" type="button" data-close>Close</button><button class="btn btn--primary" data-action="edit-card" data-id="${c.id}">${icon('edit')}Edit</button>`
@@ -849,25 +1250,74 @@ Possible cause: short sleep before the EVA</p>
   }
 
   function openGuide() {
+    if (window.GuardianTour) { window.GuardianTour.start(); return; }
     openModal({
       title: 'Quick guide',
       body: `<ol class="guide">
-        <li><span class="guide__n">1</span><div><h3>Add a card</h3><p>One idea, observation, question or dataset per card. Templates in the Card library give you a head start.</p></div></li>
-        <li><span class="guide__n">2</span><div><h3>Group cards into collections</h3><p>Keep cards about the same sensor, question or part of the build together.</p></div></li>
-        <li><span class="guide__n">3</span><div><h3>Watch the dashboard</h3><p>Totals, this week's pace and recent items update as you work. Press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.</p></div></li>
+        <li><span class="guide__n">1</span><div><h3>Add a card</h3><p>One idea, observation, question or dataset per card.</p></div></li>
+        <li><span class="guide__n">2</span><div><h3>Start from the dashboard</h3><p>One click to log vitals, check a crew member, open the binder or see the hazards. Press <kbd>Ctrl</kbd> <kbd>K</kbd> to search.</p></div></li>
       </ol>`,
       footer: `<button class="btn btn--ghost" type="button" data-close>Close</button><button class="btn btn--primary" data-action="add-card">${icon('plus')}Add your first card</button>`
     });
   }
 
+  // Customize view: a small live picture of the dashboard, and one switch per panel. Flipping a
+  // switch saves at once and the matching block in the picture slides in or out, so the result is
+  // seen before Done is pressed. The switches are buttons with role="switch": Space and Enter both work.
   function openCustomize() {
-    const labels = { hero: 'Welcome panel', glance: 'At a glance', activity: 'Activity overview', collections: 'Your collections', recent: 'Recent items' };
-    const v = store.get().view;
+    const s = store.get(), env = envOf(s.env);
+    const block = (key, inner) => `<div class="cz-block${s.view[key] ? '' : ' is-off'}" data-block="${key}"><div class="cz-clip"><div class="cz-in">${inner}</div></div></div>`;
+    const row = p => `<li class="cz-row${s.view[p.key] ? '' : ' is-off'}" data-key="${p.key}">
+        ${chipIcon(p.icon)}
+        <span class="cz-row__text"><span class="cz-row__name" id="cz-name-${p.key}">${p.name}</span><span class="cz-row__line" id="cz-line-${p.key}">${p.text}</span></span>
+        <button type="button" class="sw" role="switch" aria-checked="${!!s.view[p.key]}" aria-labelledby="cz-name-${p.key}" aria-describedby="cz-line-${p.key}" data-key="${p.key}"><span class="sw__thumb" aria-hidden="true"></span></button>
+      </li>`;
     openModal({
-      title: 'Customize view', size: 'small',
-      body: `<p class="settings__note">Choose the panels on your dashboard.</p><ul class="toggle-list">${Object.keys(labels).map(k => `<li><span id="tl-${k}">${labels[k]}</span>
-        <label class="switch"><input type="checkbox" data-change="view" data-key="${k}"${v[k] ? ' checked' : ''} aria-labelledby="tl-${k}"><span class="switch__track" aria-hidden="true"></span></label></li>`).join('')}</ul>`,
-      footer: `<button class="btn btn--primary" type="button" data-close>Done</button>`
+      title: 'Customize view', size: 'customize',
+      body: `<div class="cz${PANELS.some(p => s.view[p.key]) ? '' : ' is-empty'}">
+        <p class="cz__intro">Choose what shows on your dashboard. The picture changes as you choose.</p>
+        <div class="cz-screen" aria-hidden="true">
+          <div class="cz-greet"><span class="cz-lines"><i class="cz-bar cz-bar--title"></i><i class="cz-bar cz-bar--sub"></i></span><i class="cz-pill"></i></div>
+          ${block('actions', '<div class="cz-tiles"><i></i><i></i><i></i><i></i></div>')}
+          <div class="cz-pair">
+            ${block('where', `<div class="cz-where"><i class="cz-photo"${env ? ` style="background-image:url('${env.img}')"` : ''}></i><span class="cz-lines"><i class="cz-bar cz-bar--name"></i><i class="cz-bar cz-bar--line"></i><span class="cz-seg">${ENVS.map(e => `<i${e.id === s.env ? ' class="is-on"' : ''}></i>`).join('')}</span></span></div>`)}
+            ${block('check', '<div class="cz-check"><i class="cz-ring"></i><span class="cz-lines"><i class="cz-bar cz-bar--name"></i><i class="cz-bar cz-bar--line"></i></span></div>')}
+          </div>
+          ${block('today', '<div class="cz-today"><i class="cz-dot"></i><i class="cz-bar cz-bar--line"></i><i class="cz-bar cz-bar--short"></i></div>')}
+          <div class="cz-none"><i class="cz-bar cz-bar--line"></i></div>
+        </div>
+        <ul class="cz-rows">${PANELS.map(row).join('')}</ul>
+        <p class="cz__note">The greeting always shows.</p>
+      </div>`,
+      footer: `<button class="btn btn--primary" type="button" data-close>Done</button>`,
+      mount(panel) {
+        const root = panel.querySelector('.cz');
+        // the picture keeps the height it has with every block showing, so the switches below it never move under the pointer
+        const screen = root.querySelector('.cz-screen'), hidden = [...root.querySelectorAll('.cz-block.is-off')];
+        root.classList.add('is-measuring');
+        hidden.forEach(b => b.classList.remove('is-off'));
+        screen.style.minHeight = screen.offsetHeight + 'px';
+        hidden.forEach(b => b.classList.add('is-off'));
+        void screen.offsetHeight;
+        root.classList.remove('is-measuring');
+        // a click anywhere on a row flips its switch; the switch itself takes Space and Enter
+        root.addEventListener('click', e => {
+          const rowEl = e.target.closest('.cz-row');
+          if (!rowEl) return;
+          const key = rowEl.dataset.key, on = !store.get().view[key];
+          store.update(st => { st.view[key] = on; });
+          rowEl.classList.toggle('is-off', !on);
+          rowEl.querySelector('.sw').setAttribute('aria-checked', String(on));
+          root.querySelector(`.cz-block[data-block="${key}"]`).classList.toggle('is-off', !on);
+          root.classList.toggle('is-empty', !PANELS.some(p => store.get().view[p.key]));
+        });
+        // the row under the pointer, or holding the focus, lights its block in the picture
+        const hot = e => { const rowEl = e.target.closest && e.target.closest('.cz-row'); if (rowEl) root.dataset.hot = rowEl.dataset.key; else delete root.dataset.hot; };
+        root.addEventListener('pointerover', hot);
+        root.addEventListener('pointerleave', () => { delete root.dataset.hot; });
+        root.addEventListener('focusin', hot);
+        root.addEventListener('focusout', () => { delete root.dataset.hot; });
+      }
     });
   }
 
@@ -875,8 +1325,8 @@ Possible cause: short sleep before the EVA</p>
     openModal({
       title: 'Search', size: 'palette', hideTitle: true,
       body: `<div class="palette">
-        <label class="search-field search-field--lg">${icon('search')}<span class="sr-only">Search cards, collections and pages</span>
-          <input type="search" id="paletteInput" placeholder="Search cards, collections and pages" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="paletteResults"></label>
+        <label class="search-field search-field--lg">${icon('search')}<span class="sr-only">Search cards and pages</span>
+          <input type="search" id="paletteInput" placeholder="Search cards and pages" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="paletteResults"></label>
         <ul class="palette__list" id="paletteResults" role="listbox" aria-label="Results"></ul>
         <p class="palette__hint"><kbd>↑</kbd><kbd>↓</kbd> to move · <kbd>Enter</kbd> to open · <kbd>Esc</kbd> to close</p>
       </div>`,
@@ -887,9 +1337,8 @@ Possible cause: short sleep before the EVA</p>
           const s = store.get(); q = q.trim().toLowerCase();
           const hit = t => !q || t.toLowerCase().includes(q);
           const pages = NAV.filter(n => hit(n.label)).map(n => ({ kind: 'Page', label: n.label, icon: n.icon, go: () => { if (n.href[0] === '#') location.hash = n.href; else location.href = n.href; } }));
-          const cols = s.collections.filter(c => hit(c.name + ' ' + (c.description || ''))).map(c => ({ kind: 'Collection', label: c.name, icon: 'layers', go: () => { location.hash = '#/collections/' + c.id; } }));
           const cards = newest(s.cards).filter(c => hit(c.title + ' ' + (c.notes || ''))).map(c => ({ kind: typeOf(c.type).label, label: c.title, icon: typeOf(c.type).icon, go: () => openCard(c.id) }));
-          return (q ? cards.concat(cols, pages) : pages.concat(cards.slice(0, 5))).slice(0, 12);
+          return (q ? cards.concat(pages) : pages.concat(cards.slice(0, 5))).slice(0, 12);
         }
         function paint() {
           items = results(input.value);
@@ -915,7 +1364,7 @@ Possible cause: short sleep before the EVA</p>
   /* ---------------------------------------------------------------- data */
   function exportData() {
     const s = store.get();
-    const blob = new Blob([JSON.stringify({ app: 'Guardian', version: 1, exportedAt: new Date().toISOString(), workspace: s.workspace, cards: s.cards, collections: s.collections }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ app: 'Guardian', version: 1, exportedAt: new Date().toISOString(), workspace: s.workspace, cards: s.cards }, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'guardian-export-' + new Date().toISOString().slice(0, 10) + '.json';
@@ -923,36 +1372,16 @@ Possible cause: short sleep before the EVA</p>
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     toast('Export downloaded');
   }
-  $('#importFile').addEventListener('change', e => {
-    const file = e.target.files && e.target.files[0];
-    e.target.value = '';
-    if (!file) return;
-    file.text().then(text => {
-      const data = JSON.parse(text);
-      if (!data || !Array.isArray(data.cards) || !Array.isArray(data.collections)) throw new Error('shape');
-      confirmBox({
-        title: 'Replace your data?', confirm: 'Replace',
-        text: `This replaces everything here with ${plural(data.cards.length, 'card')} and ${plural(data.collections.length, 'collection')} from <strong>${esc(file.name)}</strong>.`,
-        onConfirm() {
-          const s = store.get();
-          store.replace(Object.assign({}, s, { cards: data.cards, collections: data.collections, workspace: data.workspace || s.workspace }));
-          toast('Data imported');
-        }
-      });
-    }).catch(() => toast('That file is not a Guardian export'));
-  });
-
   /* ---------------------------------------------------------------- events */
   document.addEventListener('click', e => {
     const el = e.target.closest('[data-action]');
     if (!el || el.closest('[inert]')) return;
     const id = el.dataset.id;
     switch (el.dataset.action) {
-      case 'add-card': e.preventDefault(); cardForm({ collectionId: el.dataset.collection }); break;
+      case 'add-card': e.preventDefault(); cardForm({}); break;
       case 'guide': openGuide(); break;
       case 'customize': openCustomize(); break;
       case 'search': openSearch(); break;
-      case 'create-collection': collectionForm(); break;
       case 'open-card': openCard(id); break;
       case 'edit-card': cardForm({ card: findCard(id) }); break;
       case 'delete-card': {
@@ -960,45 +1389,31 @@ Possible cause: short sleep before the EVA</p>
         confirmBox({ title: 'Delete this card?', confirm: 'Delete card', text: `“${esc(c.title)}” will be deleted. This cannot be undone.`, onConfirm() { store.update(s => { s.cards = s.cards.filter(x => x.id !== id); }); toast('Card deleted'); } });
         break;
       }
-      case 'delete-collection': {
-        const c = findCol(id); if (!c) break;
-        const n = store.get().cards.filter(x => x.collectionId === id).length;
-        confirmBox({
-          title: 'Delete this collection?', confirm: 'Delete collection',
-          text: `“${esc(c.name)}” will be deleted.${n ? ` Its ${plural(n, 'card')} stay in My cards.` : ''}`,
-          onConfirm() {
-            store.update(s => { s.collections = s.collections.filter(x => x.id !== id); s.cards.forEach(x => { if (x.collectionId === id) x.collectionId = ''; }); });
-            location.hash = '#/collections';
-            toast('Collection deleted');
-          }
-        });
-        break;
-      }
-      case 'filter-type': filters.type = el.dataset.type; refreshGrid(); break;
-      case 'clear-filters': filters.q = ''; filters.type = 'all'; filters.col = 'all'; render(); break;
+      case 'clear-filters': filters.q = ''; render(); break;
       case 'use-template': {
         const t = TEMPLATES.find(x => x.id === id);
-        if (t) cardForm({ type: t.type, title: t.title, notes: t.notes });
+        if (t) cardForm({ type: t.type, title: t.title, notes: t.notes, template: t.id });
         break;
       }
       case 'export': exportData(); break;
-      case 'import': $('#importFile').click(); break;
       case 'clear-data':
-        confirmBox({ title: 'Clear all data?', confirm: 'Clear everything', text: 'Every card and collection in this browser will be deleted. Export first if you want a copy.', onConfirm() { store.update(s => { s.cards = []; s.collections = []; }); toast('All data cleared'); } });
+        confirmBox({ title: 'Clear all data?', confirm: 'Clear everything', text: 'Every card in your account will be deleted. Export first if you want a copy.', onConfirm() { store.update(s => { s.cards = []; delete s.collections; }); toast('All data cleared'); } });
         break;
       case 'launch':
-        // no environment yet: the dashboard address shows the picker first
-        location.hash = '#/dashboard';
+        // signed out: the sign-in page, which leads on to the dashboard. No environment yet: the dashboard address shows the picker first
+        if (signedIn()) location.hash = '#/dashboard'; else toSignIn();
         break;
       case 'launch-env': {
         const env = envOf(el.dataset.env);
         if (!env) break;
         const changed = store.get().env !== env.id;
         store.update(s => { s.env = env.id; });
+        if (!signedIn()) { toSignIn(); break; }   // the choice is kept for this visit, and saved once they sign in
         location.hash = '#/dashboard';
         toast(changed ? `${env.name} selected` : `Opening ${env.name}`);
         break;
       }
+      case 'set-env': setEnvHere(el.dataset.env); break;
       case 'scroll-to': {
         const t = document.getElementById(el.dataset.target);
         if (t) t.scrollIntoView({ behavior: reduceMotion.matches ? 'auto' : 'smooth', block: 'start' });
@@ -1029,10 +1444,7 @@ Possible cause: short sleep before the EVA</p>
     const el = e.target.closest('[data-change]');
     if (!el) return;
     switch (el.dataset.change) {
-      case 'range': store.update(s => { s.range = +el.value; }); break;
-      case 'col': filters.col = el.value; refreshGrid(); break;
       case 'intro': store.update(s => { s.intro = el.checked; }); toast(el.checked ? 'Opening animation on' : 'Opening animation off'); break;
-      case 'view': store.update(s => { s.view[el.dataset.key] = el.checked; }); break;
     }
   });
 
@@ -1048,13 +1460,16 @@ Possible cause: short sleep before the EVA</p>
       const env = envOf(envForm.elements.env.value);
       if (!env) return;
       const first = gated();
+      const onHome = currentPath() === '/';
       const changed = store.get().env !== env.id;
       store.update(s => { s.env = env.id; });   // lifts the gate and re-renders
       if (first) {
         topbar.classList.add('chrome-in');
         setTimeout(() => topbar.classList.remove('chrome-in'), 900);
       }
-      if (location.hash !== '#/dashboard') location.hash = '#/dashboard';
+      // asked on the way in to the home page: carry on to the home page, not the dashboard
+      if (first && onHome) { window.scrollTo(0, 0); main.focus({ preventScroll: true }); }
+      else if (location.hash !== '#/dashboard') location.hash = '#/dashboard';
       else { window.scrollTo(0, 0); main.focus({ preventScroll: true }); }
       main.classList.remove('page-enter'); void main.offsetWidth; main.classList.add('page-enter');
       toast(first ? `${env.name} selected` : changed ? `Environment set to ${env.name}` : `Still on ${env.name}`);
@@ -1100,24 +1515,34 @@ Possible cause: short sleep before the EVA</p>
     buildTopbar();
     const mark = (S.mark = S.createMark());
     $('#brandSlot').appendChild(mark.el);
+    // A saved location comes back only for a signed-in user (js/env.js). When this visit has no
+    // location yet, the page stays hidden until we know who is here, so the picker never flashes
+    // ahead of a restored dashboard. store.account gives up after 1.5 s.
+    // At any address but the home page it also stays hidden until we know whether anyone is signed in:
+    // a signed-out visitor is sent to the sign-in page (see render) without the page ever showing.
+    const waiting = gated() || currentPath() !== '/';
+    const who = waiting ? store.account : Promise.resolve();
+    if (waiting) document.documentElement.classList.add('env-wait');
+    who.then(() => { if (signedIn() || currentPath() === '/') document.documentElement.classList.remove('env-wait'); });
     render();
     // the crew health app skips its own opening once this one has played in the session
     document.addEventListener('still:intro-done', () => { try { sessionStorage.setItem('guardian.introSeen', '1'); } catch (e) { /* storage blocked */ } }, { once: true });
     const intro = S.intro.start(mark);
-    const fonts = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 2500))]) : Promise.resolve();
-    const loaded = document.readyState === 'complete' ? Promise.resolve() : new Promise(r => { window.addEventListener('load', r, { once: true }); setTimeout(r, 4000); });
+    const fonts = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 700))]) : Promise.resolve();
+    const loaded = document.readyState === 'complete' ? Promise.resolve() : new Promise(r => { window.addEventListener('load', r, { once: true }); setTimeout(r, 1500); });
     // the picker's photos (or the chosen one, for the header pill) are decoded before the reveal
     const wanted = (gated() ? ENVS : [envOf(store.get().env)]).map(e => e.img)
       .concat(['assets/brand/guardian-mark-white.png', 'assets/brand/guardian-mark-navy.png']);
     const photos = Promise.all(wanted.map(src => { const img = new Image(); img.src = src; return img.decode ? img.decode().catch(() => {}) : Promise.resolve(); }));
-    const ready = Promise.all([S.scenery.render($('#scenery')), fonts, loaded, photos]);
+    const ready = Promise.all([S.scenery.render($('#scenery')), fonts, loaded, photos, who]);
     intro.finish(ready);
     // the health app's header has the same search, guide and add-card buttons; they are carried out here
     const asked = window.GuardianNav.takeRequest();
-    if (asked && !gated()) {
+    if (asked) who.then(() => {
+      if (gated()) return;
       const run = () => { if (asked === 'search') openSearch(); else if (asked === 'guide') openGuide(); else if (asked === 'add-card') cardForm({}); };
       if (S.introDone) run(); else document.addEventListener('still:intro-done', run, { once: true });
-    }
+    });
   }
   boot();
 })();

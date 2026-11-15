@@ -19,6 +19,24 @@ export function useAsync<T>(fn: () => Promise<T>, deps: unknown[]) {
   return { ...state, reload }
 }
 
+/** Vitals is one link in the top bar and three pages; this row of links moves between them. */
+const VITALS_TABS = [
+  { route: 'dashboard', label: 'Over time' },
+  { route: 'baseline', label: 'Lab baseline' },
+  { route: 'correlation', label: 'Compare with NASA data' },
+] as const
+export function VitalsTabs({ current }: { current: (typeof VITALS_TABS)[number]['route'] }) {
+  return (
+    <nav className="section-tabs" aria-label="Vitals">
+      {VITALS_TABS.map((t) => (
+        <a key={t.route} href={`#/${t.route}`} aria-current={t.route === current ? 'page' : undefined}>
+          {t.label}
+        </a>
+      ))}
+    </nav>
+  )
+}
+
 /** Every chart and number says where it came from. Simulated data is impossible to miss. */
 export function SourceBadge({ source, simulated }: { source: ProviderId; simulated: boolean }) {
   return (
@@ -83,12 +101,9 @@ export function ErrorNote({ error, retry }: { error: Error; retry?: () => void }
 
 export function Loading({ what }: { what: string }) {
   return (
-    <div className="loading-screen" aria-busy="true" role="status">
-      <div className="orbit-loader" aria-hidden>
-        <div className="orbit-ring" />
-        <div className="orbit-core" />
-      </div>
-      <div className="loading-text">Synchronizing {what} telemetry…</div>
+    <div className="simple-loading" aria-busy="true" role="status">
+      <span className="simple-loading-dot" aria-hidden="true" />
+      <span>Loading {what}…</span>
     </div>
   )
 }
@@ -97,7 +112,7 @@ export function Disclaimer() {
   return (
     <footer className="disclaimer">
       <strong>Not a medical device.</strong> {MEDICAL_DISCLAIMER} NASA data are public scientific data products; space-weather and Earth events are shown for
-      context and are not measurements of the wearer.
+      context and are not measurements of any person.
     </footer>
   )
 }

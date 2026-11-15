@@ -1,7 +1,7 @@
 import { MEDICAL_DISCLAIMER } from '@astrovitals/shared'
 import { useState, type FormEvent } from 'react'
 import { Brand } from '../App'
-import { api } from '../lib/api'
+import { auth, MIN_PASSWORD } from '../lib/auth'
 
 export function AuthPage({ onSignedIn }: { onSignedIn: () => void }) {
   const [mode, setMode] = useState<'login' | 'register'>('register')
@@ -13,10 +13,16 @@ export function AuthPage({ onSignedIn }: { onSignedIn: () => void }) {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    setBusy(true)
     setError(undefined)
+    // a new password is checked here, before anything is sent (Supabase would refuse it as well)
+    const problem = mode === 'register' ? auth.passwordProblem(password) : null
+    if (problem) {
+      setError(problem)
+      return
+    }
+    setBusy(true)
     try {
-      await (mode === 'login' ? api.login(email, password) : api.register(email, password))
+      await (mode === 'login' ? auth.signIn(email, password) : auth.signUp(email, password))
       onSignedIn()
     } catch (err) {
       setError((err as Error).message)
@@ -37,14 +43,14 @@ export function AuthPage({ onSignedIn }: { onSignedIn: () => void }) {
           <input type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
         <label>
-          Password {mode === 'register' ? '(at least 12 characters)' : ''}
-          <input type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required minLength={mode === 'register' ? 12 : 1} value={password} onChange={(e) => setPassword(e.target.value)} />
+          Password {mode === 'register' ? `(at least ${MIN_PASSWORD} characters)` : ''}
+          <input type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} required value={password} onChange={(e) => setPassword(e.target.value)} />
         </label>
         {mode === 'register' ? (
           <label style={{ display: 'flex', gap: 8, alignItems: 'flex-start', color: 'var(--text-primary)' }}>
             <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: 4 }} />
             <span style={{ fontSize: '0.85rem' }}>
-              I understand this is a prototype, not a medical device. Health data I connect is stored only to show it to me, kept for a limited time, never sold or used
+              I understand this is a prototype, not a medical device. Health data I add is stored only to show it to me, kept for a limited time, never sold or used
               for ads, and I can export or delete it at any time.
             </span>
           </label>
@@ -54,6 +60,8 @@ export function AuthPage({ onSignedIn }: { onSignedIn: () => void }) {
           {mode === 'login' ? 'Sign in' : 'Create account'}
         </button>
       </form>
+      <p className="muted" style={{ fontSize: '0.85rem', marginTop: 12 }}>Anything you enter in Guardian is saved to your account.</p>
+      <p className="muted" style={{ fontSize: '0.85rem', marginTop: 4 }}>Your email is only used to sign you in and keep your data with your account. It is not used for anything else.</p>
       <p style={{ marginTop: 12 }}>
         {mode === 'login' ? 'New here? ' : 'Have an account? '}
         <button type="button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')} style={{ padding: '0.1rem 0.5rem' }}>
