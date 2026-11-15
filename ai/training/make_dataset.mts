@@ -9,8 +9,11 @@
  * the computed facts.
  *
  * Writes ai/training/data/: train.jsonl and valid.jsonl (chat format), heldout.jsonl (the
- * hand-written test set with its expectations, never trained on) and response_schema.json.
+ * hand-written test set with its expectations, never trained on), test500.jsonl (500 more random
+ * cases in the valid.jsonl format, none sharing its readings with a training, validation or
+ * held-out case) and response_schema.json.
  */
+import { createHash } from 'node:crypto'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -244,17 +247,28 @@ const heldOutRequests = HELD_OUT.map((c) => ({ c, raw: requestFor(c) }))
 const heldOutKeys = new Set(heldOutRequests.map(({ raw }) => readingsKey(raw.vitals as Record<string, unknown>)))
 
 const seen = new Set<string>()
+/** The readings of every training and validation case, so the 500-case test can keep clear of them. */
+const trainedReadings = new Set<string>()
 let dropped = 0
-function generate(count: number, seed: number) {
+let testDropped = 0
+/**
+ * `test` marks the 500-case test: it also drops any case whose readings match a training or
+ * validation case. It has its own seed and is generated last, so it cannot change the other files.
+ */
+function generate(count: number, seed: number, test = false) {
   const r = seeded(seed)
   const rows: ReturnType<typeof example>[] = []
   while (rows.length < count) {
     const raw = randomRequest(r)
-    // never train on a case whose readings match the held-out set, and never repeat a request across the two files
-    if (heldOutKeys.has(readingsKey(raw.vitals as Record<string, unknown>))) { dropped++; continue }
+    const key = readingsKey(raw.vitals as Record<string, unknown>)
+    // never train on a case whose readings match the held-out set, and never repeat a request across the files
+    if (heldOutKeys.has(key)) { if (test) testDropped++; else dropped++; continue }
+    // a test case that shares its readings with a training case would measure memory, not skill
+    if (test && trainedReadings.has(key)) { testDropped++; continue }
     const row = example(raw)
     if (seen.has(row.user)) continue
     seen.add(row.user)
+    if (!test) trainedReadings.add(key)
     rows.push(row)
   }
   return rows
@@ -262,12 +276,17 @@ function generate(count: number, seed: number) {
 
 const train = generate(trainCount, 20261115)
 const valid = generate(validCount, 771)
+const TEST_COUNT = 500
+const test500 = generate(TEST_COUNT, 5002026, true)
 
 const out = join(here, 'data')
 mkdirSync(out, { recursive: true })
 const lines = (rows: unknown[]) => rows.map((row) => JSON.stringify(row)).join('\n') + '\n'
 writeFileSync(join(out, 'train.jsonl'), lines(train.map((row) => ({ messages: row.messages }))))
 writeFileSync(join(out, 'valid.jsonl'), lines(valid.map((row) => ({ messages: row.messages }))))
+// The 500-case test (evaluate.py --test-file data/test500.jsonl): same record format as valid.jsonl.
+const test500Text = lines(test500.map((row) => ({ messages: row.messages })))
+writeFileSync(join(out, 'test500.jsonl'), test500Text)
 writeFileSync(
   join(out, 'heldout.jsonl'),
   lines(
@@ -287,6 +306,33 @@ const share = (rows: ReturnType<typeof example>[]) => {
 console.log('train', share(train))
 console.log('valid', share(valid))
 console.log(`dropped ${dropped} generated case(s) whose readings matched the held-out set`)
+
+// The make-up of the 500-case test. Random cases contain few of the rare escalation rules, so a
+// score on this file says little about a rule that appears in a handful of cases or in none.
+/** The escalation rules that fired, from the last entry of the checklist: "escalate: yes (a; b)". */
+const reasonsOf = (row: ReturnType<typeof example>) => /escalate: yes \((.*)\)$/.exec(row.answer.baseline_comparison)?.[1]?.split('; ') ?? []
+const tally = (rows: ReturnType<typeof example>[]) => {
+  const all = new Map<string, number>()
+  const alone = new Map<string, number>()
+  for (const row of rows) {
+    const reasons = reasonsOf(row)
+    for (const reason of reasons) all.set(reason, (all.get(reason) ?? 0) + 1)
+    if (reasons.length === 1) alone.set(reasons[0]!, (alone.get(reasons[0]!) ?? 0) + 1)
+  }
+  return { all, alone }
+}
+const inTest = tally(test500)
+const inTrain = tally(train)
+const reasonNames = [...new Set([...inTrain.all.keys(), ...inTest.all.keys()])].sort(
+  (a, b) => (inTest.all.get(b) ?? 0) - (inTest.all.get(a) ?? 0) || (a < b ? -1 : a > b ? 1 : 0),
+)
+const heldBack = test500.filter((row) => row.answer.baseline_comparison.endsWith('escalate: no (sensor not verified)')).length
+const escalated = test500.filter((row) => row.answer.contact_ground_support).length
+console.log(`test500 ${share(test500)} (dropped ${testDropped} generated case(s) whose readings matched a training, validation or held-out case)`)
+console.log(`test500 sha256 starts ${createHash('sha256').update(test500Text).digest('hex').slice(0, 16).toUpperCase()} (must be the same on every machine)`)
+console.log(`test500 escalated cases by reason: ${escalated} escalate; a case with two reasons counts under both, "alone" is where it is the only reason`)
+for (const name of reasonNames) console.log(`  ${name}: ${inTest.all.get(name) ?? 0}, alone ${inTest.alone.get(name) ?? 0} (train has ${inTrain.all.get(name) ?? 0})`)
+console.log(`test500 not escalated: ${TEST_COUNT - escalated}, of which ${heldBack} have an escalation rule held back because the sensor is not verified`)
 
 // The rule engine against the hand-written expectations: a disagreement is a finding about the rules.
 const misses = heldOutRequests

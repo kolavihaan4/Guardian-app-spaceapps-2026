@@ -43,6 +43,13 @@ uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python mlx-lm h
 .venv/bin/python evaluate.py mlx --adapter adapters/v2 --name tuned
 ```
 
+**The 500-case test.** `make_dataset.mts` also writes `data/test500.jsonl`: 500 more random cases labelled by the rule engine, none sharing its readings with a training, validation or held-out case. It prints the file's hash (the same on every machine) and how many cases exercise each escalation rule; random cases contain few of the rare rules, so read the score beside that table. From `ai/training`:
+
+```bash
+.venv/bin/python evaluate.py mlx --adapter adapters/v2 --name tuned-test500 --test-file data/test500.jsonl                    # Mac
+.venv\Scripts\python evaluate.py ollama --model astrovitals-triage-ft-v2 --name ft-v2-test500 --test-file data/test500.jsonl  # PC
+```
+
 The data, the downloaded base model, the adapters and the run logs are not committed. If the rules in `apps/server/src/routes/ai.ts` change, regenerate the data and train again.
 
 ---
