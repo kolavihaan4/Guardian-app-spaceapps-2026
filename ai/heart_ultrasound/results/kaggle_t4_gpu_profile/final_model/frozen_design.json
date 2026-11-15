@@ -1,0 +1,52 @@
+{
+  "selected": {
+    "family": "svr_rbf",
+    "params": {
+      "gamma": 0.01,
+      "epsilon": 1,
+      "C": 100
+    }
+  },
+  "selected_inner_mae": 5.405506679870559,
+  "inner_mode": "strict",
+  "unet_fit": "acc94f82c39f2f21",
+  "efnet_fit": "f50a8ff955466f3d",
+  "features": [
+    "area_2CH_ED",
+    "area_2CH_ES",
+    "area_4CH_ED",
+    "area_4CH_ES",
+    "length_2CH_ED",
+    "length_2CH_ES",
+    "length_4CH_ED",
+    "length_4CH_ES",
+    "area_ratio_2CH",
+    "area_ratio_4CH",
+    "length_ratio_2CH",
+    "length_ratio_4CH",
+    "edv_ml",
+    "esv_ml",
+    "geom_ef"
+  ],
+  "units": {
+    "area_2CH_ED": "mm2",
+    "area_2CH_ES": "mm2",
+    "area_4CH_ED": "mm2",
+    "area_4CH_ES": "mm2",
+    "length_2CH_ED": "mm",
+    "length_2CH_ES": "mm",
+    "length_4CH_ED": "mm",
+    "length_4CH_ES": "mm",
+    "area_ratio_2CH": "ES/ED ratio",
+    "area_ratio_4CH": "ES/ED ratio",
+    "length_ratio_2CH": "ES/ED ratio",
+    "length_ratio_4CH": "ES/ED ratio",
+    "edv_ml": "mL",
+    "esv_ml": "mL",
+    "geom_ef": "percent"
+  },
+  "preprocessing": "grayscale, per-image 1st/99th percentile clip to [0,1], bilinear resize to 192x192; masks mapped back to original spacing before measuring",
+  "required_input": "four frames: 2CH_ED, 2CH_ES, 4CH_ED, 4CH_ES with pixel spacing; no automatic view/phase selection",
+  "output_rule": "EF from regressor on predicted-mask measurements; rejected with a recorded status when geometry is invalid",
+  "frozen_at": "2026-11-15 14:23:31"
+}

@@ -1,0 +1,48 @@
+{
+  "profile": "gpu",
+  "folds": {
+    "scheme": "nested",
+    "outer": 5,
+    "groups": 4,
+    "inner": "strict"
+  },
+  "unet": {
+    "model": "unet16-32-64-gn",
+    "size": 192,
+    "epochs": 25,
+    "batch": 12,
+    "lr": 0.0003,
+    "opt": "adam",
+    "loss": "ce+softdice",
+    "stop_frac": 0.1,
+    "aug": {
+      "rot_deg": 10,
+      "scale": 0.1,
+      "shift": 0.05
+    },
+    "seed": 42,
+    "min_steps": 3375
+  },
+  "efnet": {
+    "model": "efnet",
+    "epochs": 40,
+    "batch": 16,
+    "lr": 0.0003,
+    "opt": "adamw",
+    "loss": "mse(ef/100)",
+    "stop_frac": 0.1,
+    "seed": 42
+  },
+  "seed": 42,
+  "tie_tolerance": 0.1,
+  "simplicity_order": [
+    "geometry_only",
+    "median",
+    "linear_calibration",
+    "ridge",
+    "random_forest",
+    "gradient_boosting",
+    "svr_rbf"
+  ],
+  "selection_score": "patient EF mean absolute error (percentage points)"
+}
