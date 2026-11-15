@@ -394,9 +394,7 @@
         <div class="env__actions">
           ${first ? '' : `<a class="btn btn--ghost btn--lg" href="#/">Cancel</a>`}
           <button class="btn btn--primary btn--lg" type="submit"${current ? '' : ' disabled'}>${first ? 'Continue to dashboard' : 'Save environment'}${icon('arrowRight')}</button>
-        </div>
-        <p class="env__credit">Photos: NASA, NASA/JPL-Caltech/MSSS. Public domain.</p>
-      </form>
+        </div>      </form>
     </section>`;
   }
 
