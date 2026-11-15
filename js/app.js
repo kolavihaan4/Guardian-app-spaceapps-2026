@@ -388,11 +388,7 @@
           ${ENVS.map(e => `<label class="env-card${e.id === current ? ' is-selected' : ''}" data-env="${e.id}">
             <input class="sr-only" type="radio" name="env" value="${e.id}"${e.id === current ? ' checked' : ''}>
             <span class="env-card__media"><img src="${e.img}" alt="${esc(e.alt)}" width="${e.w}" height="${e.h}" decoding="async"></span>
-            <span class="env-card__body">
-              <span class="env-card__top"><span class="env-card__name">${e.name}</span><span class="env-card__check" aria-hidden="true">${icon('check')}</span></span>
-              <span class="env-card__text">${e.text}</span>
-              <span class="env-card__facts">${e.facts.map(f => `<span>${f}</span>`).join('')}</span>
-            </span>
+            <span class="env-card__body"><span class="env-card__name">${e.name}</span></span>
           </label>`).join('')}
         </fieldset>
         <div class="env__actions">

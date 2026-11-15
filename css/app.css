@@ -449,7 +449,9 @@ textarea.input { padding: 10px 12px; resize: vertical; line-height: 1.55; min-he
 .env-card:hover .env-card__media img { transform: scale(1.04); }
 .env-card[data-env='moon'] .env-card__media img { object-position: 50% 28%; }
 .env-card[data-env='mars'] .env-card__media img { object-position: 30% 50%; }
-.env-card__body { display: flex; flex-direction: column; gap: 8px; padding: 16px 8px 0; }
+.env-card__body { display: block; padding: 14px 8px 2px; }
+.env-card { padding-bottom: 12px; }
+.env-card.is-selected .env-card__name { color: var(--teal-600); }
 .env-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .env-card__name { font: 500 22px/1.2 var(--serif); letter-spacing: -0.015em; color: #1f3045; }
 .env-card__check {

@@ -111,7 +111,8 @@ try {
   await shot('01-loading');
   const m1 = await rect('.mark-flip');
   const cover = await ev(`(() => { const l = document.getElementById('loader'); const r = l.getBoundingClientRect(); return { op: getComputedStyle(l).opacity, w: r.width, h: r.height, iw: innerWidth, ih: innerHeight, cw: document.documentElement.clientWidth }; })()`);
-  check('Loader covers the screen', cover.op === '1' && cover.w >= cover.iw && cover.h >= cover.ih, JSON.stringify(cover));
+  check('Loader says the assistant is getting ready', await ev(`document.querySelector('.loader__caption').textContent.trim() === 'Your assistant is getting ready'`));
+  check('Loader covers the screen',cover.op === '1' && cover.w >= cover.iw && cover.h >= cover.ih, JSON.stringify(cover));
   check('Planet and ship sit in the exact centre', near(m1.cx, 720, 1.5) && near(m1.cy, 450, 1.5), `centre ${m1.cx.toFixed(1)}, ${m1.cy.toFixed(1)}`);
   const th1 = await ev('Still.mark.theta');
   await sleep(700);
@@ -167,8 +168,9 @@ try {
   await click('.env-card[data-env=mars]');
   await sleep(350);
   await sleep(250);
-  const sel = await ev(`(() => { const s = [...document.querySelectorAll('.env-card.is-selected')]; return { n: s.length, env: s[0] && s[0].dataset.env, checked: !!(s[0] && s[0].querySelector('input').checked), tick: s[0] ? getComputedStyle(s[0].querySelector('.env-card__check .i')).opacity : null }; })()`);
-  check('Whole card selects, with a clear mark', sel.n === 1 && sel.env === 'mars' && sel.checked && sel.tick === '1', JSON.stringify(sel));
+  const sel = await ev(`(() => { const s = [...document.querySelectorAll('.env-card.is-selected')]; return { n: s.length, env: s[0] && s[0].dataset.env, checked: !!(s[0] && s[0].querySelector('input').checked), halo: s[0] ? getComputedStyle(s[0]).boxShadow.split('rgba').length > 3 : false }; })()`);
+  check('Whole card selects, with a glowing halo', sel.n === 1 && sel.env === 'mars' && sel.checked && sel.halo, JSON.stringify(sel));
+  check('Cards show only the photo and the title', await ev(`[...document.querySelectorAll('.env-card__body')].every(b => b.children.length === 1 && b.firstElementChild.classList.contains('env-card__name'))`));
   check('Continue enabled after a choice', await ev(`!document.querySelector('.env__actions [type=submit]').disabled`));
   await shot('06b-picker-selected');
   await click('.env__actions [type=submit]');
