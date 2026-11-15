@@ -17,12 +17,12 @@ Open `index.html` in Chrome, Edge or Firefox. No install and no build step. Card
 
 ## Choosing an environment
 
-- Straight after the opening, a first visit shows **Where is your crew?**: the International Space Station, Mars and the Moon, each a card with a photo above its name, a short description and a few facts. The whole card is the button; the chosen card gets a teal ring and a check.
+- Straight after the opening, a first visit shows **Where is your crew?**: the International Space Station, Mars, the Moon and a Spacecraft in transit, each a card with a photo above its name, a short description and a few facts. The whole card is the button; the chosen card gets a teal ring and a check.
 - Nothing else (dashboard, nav, search) is reachable until one is chosen. **Continue to dashboard** saves it in the browser.
 - On the next visit the saved environment loads straight away and the picker is skipped.
 - Change it any time from the environment pill in the header, the name in the welcome panel, or **Settings → Mission environment**. New cards are stamped with the environment they were made in.
 
-Photos (public domain, via Wikimedia Commons): ISS after STS-132 undocking (NASA), *Getting to Know Mount Sharp*, PIA16099 (NASA/JPL-Caltech/MSSS), Buzz Aldrin on Apollo 11 (NASA). Stored in `assets/env/`.
+Photos (public domain, via Wikimedia Commons): ISS after STS-132 undocking (NASA), *Getting to Know Mount Sharp*, PIA16099 (NASA/JPL-Caltech/MSSS), Buzz Aldrin on Apollo 11 (NASA), Orion with the Moon and Earth on Artemis I, art001e000673 (NASA). Stored in `assets/env/`.
 
 ## Files
 

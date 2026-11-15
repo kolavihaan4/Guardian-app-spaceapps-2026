@@ -9,9 +9,9 @@
     view: { hero: true, glance: true, activity: true, collections: true, recent: true },
     range: 7,
     intro: true,
-    env: null            // 'iss' | 'mars' | 'moon' once chosen; null shows the picker
+    env: null            // 'iss' | 'mars' | 'moon' | 'spacecraft' once chosen; null shows the picker
   });
-  const ENV_IDS = ['iss', 'mars', 'moon'];
+  const ENV_IDS = ['iss', 'mars', 'moon', 'spacecraft'];
 
   function load() {
     try {

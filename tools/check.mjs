@@ -53,6 +53,9 @@ on('Runtime.exceptionThrown', p => errors.push(p.exceptionDetails.exception?.des
 on('Runtime.consoleAPICalled', p => { if (p.type === 'error') errors.push(p.args.map(a => a.value ?? a.description).join(' ')); });
 await send('Page.enable');
 await send('Runtime.enable');
+// keep the tab "visible" so the browser never throttles timers or pauses animation frames
+await send('Emulation.setFocusEmulationEnabled', { enabled: true });
+await send('Page.bringToFront');
 
 async function ev(expression) {
   const r = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
@@ -69,6 +72,7 @@ async function viewport(width, height, mobile = false) {
 }
 async function load(url) {
   const loaded = new Promise(r => { const f = () => r(); on('Page.loadEventFired', f); });
+  await send('Page.bringToFront');
   await send('Page.navigate', { url });
   await Promise.race([loaded, sleep(8000)]);
 }
@@ -143,15 +147,15 @@ try {
 
   /* ---------------- environment picker comes straight after the loader */
   check('Picker shown, not the dashboard', await ev(`document.querySelector('h1').textContent === 'Where is your crew?' && !document.querySelector('.hero, .glance, .recent')`));
-  check('Three environments in order: ISS, Mars, Moon', await ev(`[...document.querySelectorAll('.env-card')].map(c => c.dataset.env).join() === 'iss,mars,moon'`));
+  check('Four environments in order: ISS, Mars, Moon, Spacecraft', await ev(`[...document.querySelectorAll('.env-card')].map(c => c.dataset.env).join() === 'iss,mars,moon,spacecraft'`));
   check('Every photo loaded', await ev(`[...document.querySelectorAll('.env-card img')].every(i => i.complete && i.naturalWidth >= 1200)`));
   check('Each photo sits above its name and text', await ev(`[...document.querySelectorAll('.env-card')].every(c => c.querySelector('.env-card__media').getBoundingClientRect().bottom <= c.querySelector('.env-card__name').getBoundingClientRect().top)`));
   check('Photos share one rounded radius', await ev(`new Set([...document.querySelectorAll('.env-card__media')].map(m => getComputedStyle(m).borderRadius)).size === 1 && parseFloat(getComputedStyle(document.querySelector('.env-card__media')).borderRadius) >= 10`));
   await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 5, y: 890 }); // off the cards, so no hover lift
   await sleep(400);
   const tops = await ev(`[...document.querySelectorAll('.env-card')].map(c => Math.round(c.getBoundingClientRect().top))`);
-  const gaps = await ev(`(() => { const r = [...document.querySelectorAll('.env-card')].map(c => c.getBoundingClientRect()); return [Math.round(r[1].left - r[0].right), Math.round(r[2].left - r[1].right)]; })()`);
-  check('Cards evenly spaced in one row', new Set(tops).size === 1 && gaps[0] === gaps[1], `gaps ${gaps}`);
+  const gaps = await ev(`(() => { const r = [...document.querySelectorAll('.env-card')].map(c => c.getBoundingClientRect()); return r.slice(1).map((x, i) => Math.round(x.left - r[i].right)); })()`);
+  check('Cards evenly spaced in one row', new Set(tops).size === 1 && new Set(gaps).size === 1, `gaps ${gaps}`);
   check('Continue is disabled until a choice', await ev(`document.querySelector('.env__actions [type=submit]').disabled`));
   await ev(`location.hash = '#/cards'`);
   await sleep(200);
@@ -162,7 +166,9 @@ try {
   await shot('06-picker');
   await click('.env-card[data-env=mars]');
   await sleep(350);
-  check('Whole card selects, with a clear mark', await ev(`(() => { const s = [...document.querySelectorAll('.env-card.is-selected')]; return s.length === 1 && s[0].dataset.env === 'mars' && s[0].querySelector('input').checked && getComputedStyle(s[0].querySelector('.env-card__check .i')).opacity === '1'; })()`));
+  await sleep(250);
+  const sel = await ev(`(() => { const s = [...document.querySelectorAll('.env-card.is-selected')]; return { n: s.length, env: s[0] && s[0].dataset.env, checked: !!(s[0] && s[0].querySelector('input').checked), tick: s[0] ? getComputedStyle(s[0].querySelector('.env-card__check .i')).opacity : null }; })()`);
+  check('Whole card selects, with a clear mark', sel.n === 1 && sel.env === 'mars' && sel.checked && sel.tick === '1', JSON.stringify(sel));
   check('Continue enabled after a choice', await ev(`!document.querySelector('.env__actions [type=submit]').disabled`));
   await shot('06b-picker-selected');
   await click('.env__actions [type=submit]');
@@ -278,7 +284,8 @@ try {
       await ev(`(() => { const s = JSON.parse(localStorage.getItem('still.v1')); s.env = null; s.intro = false; localStorage.setItem('still.v1', JSON.stringify(s)); })()`);
       await load(pageUrl + '#/');
       await sleep(400);
-      check(`${name}: picker stacks one card per row`, await ev(`(() => { const r = [...document.querySelectorAll('.env-card')].map(c => c.getBoundingClientRect()); return r[0].bottom <= r[1].top && r[1].bottom <= r[2].top; })()`));
+      const perRow = name === 'phone' ? 1 : 2;
+      check(`${name}: picker shows ${perRow} card${perRow > 1 ? 's' : ''} per row`, await ev(`(() => { const r = [...document.querySelectorAll('.env-card')].map(c => Math.round(c.getBoundingClientRect().top)); return new Set(r).size === ${4 / perRow}; })()`));
       check(`${name}: picker has no sideways scroll`, await ev(`document.documentElement.scrollWidth <= innerWidth`));
       await shot(`12-${name}-picker`);
       await click('.env-card[data-env=iss]');
@@ -319,6 +326,8 @@ try {
   check('No script errors', errors.length === 0, errors.slice(0, 3).join(' | '));
 } catch (e) {
   check('Run finished', false, e.message);
+  if (errors.length) console.log('page errors:', errors.slice(0, 5).join(' | '));
+  try { console.log('state:', JSON.stringify(await ev(`({ href: location.href, done: !!Still.introDone, timing: Still.introTiming && { start: Math.round(Still.introTiming.start), ready: Math.round(Still.introTiming.ready || 0) }, loader: !!document.getElementById('loader'), h1: document.querySelector('h1') && document.querySelector('h1').textContent })`))); } catch (err) { console.log('state unavailable:', err.message); }
 }
 
 const failed = results.filter(r => !r.ok).length;

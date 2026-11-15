@@ -43,7 +43,11 @@
     { id: 'moon', name: 'Moon', short: 'Moon', img: 'assets/env/moon.jpg', w: 1280, h: 1288,
       alt: 'Buzz Aldrin standing on the lunar surface during Apollo 11',
       text: 'Three days from Earth. Fine grey dust, low gravity and nights that last two weeks.',
-      facts: ['0.17 g', '29.5-day day', '1.3 s signal delay'] }
+      facts: ['0.17 g', '29.5-day day', '1.3 s signal delay'] },
+    { id: 'spacecraft', name: 'Spacecraft', short: 'Spacecraft', img: 'assets/env/spacecraft.jpg', w: 1280, h: 960,
+      alt: 'The Orion spacecraft in deep space with the Moon and Earth behind it, photographed on Artemis I',
+      text: 'Deep space between worlds. A cabin the size of a small van, days in transit and no gravity.',
+      facts: ['Microgravity', '~9 m³ cabin', 'Deep-space radiation'] }
   ];
   const envOf = id => ENVS.find(e => e.id === id) || null;
   const gated = () => !store.get().env;
