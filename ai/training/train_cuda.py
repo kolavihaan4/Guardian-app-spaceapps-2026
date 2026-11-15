@@ -70,10 +70,9 @@ def load(path, tokenizer, max_tokens, limit):
     return rows, too_long
 
 
-def main():
-    ap = argparse.ArgumentParser()
+def training_arguments(ap):
+    """The settings of one training run. cross_validate.py takes the same ones."""
     ap.add_argument("--model", default="Qwen/Qwen3-8B", help="Hugging Face name or a local folder")
-    ap.add_argument("--out", default="adapters/pc-v1")
     ap.add_argument("--device", default="cuda", choices=["cuda", "mps", "cpu"])
     ap.add_argument("--epochs", type=int, default=1)
     ap.add_argument("--lr", type=float, default=4e-5)
@@ -87,21 +86,17 @@ def main():
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--limit", type=int, help="only the first N training examples (smoke test)")
     ap.add_argument("--grad-checkpoint", action="store_true", help="slower, but needs much less GPU memory")
-    args = ap.parse_args()
+    return ap
 
-    device = pick_device(args.device)
-    cuda = device.type == "cuda"
-    random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    if cuda:
-        print(f"GPU: {torch.cuda.get_device_name(0)}, {torch.cuda.get_device_properties(0).total_memory / 2**30:.0f} GB")
 
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
-    train, long_train = load(HERE / "data/train.jsonl", tokenizer, args.max_tokens, args.limit)
-    valid, _ = load(HERE / "data/valid.jsonl", tokenizer, args.max_tokens, args.val_cases)
-    print(f"train: {len(train)} examples ({long_train} over {args.max_tokens} tokens left out), validation: {len(valid)}")
+def seed_everything(seed):
+    random.seed(seed)
+    torch.manual_seed(seed)
 
-    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16 if cuda else torch.float32, device_map={"": device})
+
+def adapted_model(args, device):
+    """The base model with a new, untrained adapter on its last blocks."""
+    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16 if device.type == "cuda" else torch.float32, device_map={"": device})
     model.config.use_cache = False
     if args.grad_checkpoint:
         model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
@@ -110,10 +105,14 @@ def main():
         r=args.rank, lora_alpha=args.scale * args.rank, lora_dropout=0.0, target_modules=LINEAR_LAYERS,
         layers_to_transform=list(range(blocks - args.layers, blocks)), task_type="CAUSAL_LM",
     ))
-    params = [p for p in model.parameters() if p.requires_grad]
-    print(f"adapter: {sum(p.numel() for p in params):,} trainable values on the last {args.layers} of {blocks} blocks")
-    optimizer = torch.optim.Adam(params, lr=args.lr)
+    print(f"adapter: {sum(p.numel() for p in model.parameters() if p.requires_grad):,} trainable values on the last {args.layers} of {blocks} blocks")
+    return model
 
+
+def fit(model, train, valid, args, device):
+    """Trains the adapter on `train`, printing the loss on `valid` as it goes. Returns the minutes it took."""
+    cuda = device.type == "cuda"
+    optimizer = torch.optim.Adam([p for p in model.parameters() if p.requires_grad], lr=args.lr)
     lm = model.get_base_model()  # the adapted model without PEFT's wrapper
     decoder, output_layer = lm.base_model, lm.get_output_embeddings()
 
@@ -151,10 +150,29 @@ def main():
                 recent = []
             if step % args.eval_every == 0 or step == steps:
                 print(f"step {step}/{steps}  validation loss {validation_loss():.3f}", flush=True)
+    return (time.time() - start) / 60
 
+
+def main():
+    ap = training_arguments(argparse.ArgumentParser())
+    ap.add_argument("--out", default="adapters/pc-v1")
+    args = ap.parse_args()
+
+    device = pick_device(args.device)
+    seed_everything(args.seed)
+    if device.type == "cuda":
+        print(f"GPU: {torch.cuda.get_device_name(0)}, {torch.cuda.get_device_properties(0).total_memory / 2**30:.0f} GB")
+
+    tokenizer = AutoTokenizer.from_pretrained(args.model)
+    train, long_train = load(HERE / "data/train.jsonl", tokenizer, args.max_tokens, args.limit)
+    valid, _ = load(HERE / "data/valid.jsonl", tokenizer, args.max_tokens, args.val_cases)
+    print(f"train: {len(train)} examples ({long_train} over {args.max_tokens} tokens left out), validation: {len(valid)}")
+
+    model = adapted_model(args, device)
+    minutes = fit(model, train, valid, args, device)
     model.save_pretrained(HERE / args.out)
-    print(f"saved the adapter to {HERE / args.out} after {(time.time() - start) / 60:.1f} min")
-    if cuda:
+    print(f"saved the adapter to {HERE / args.out} after {minutes:.1f} min")
+    if device.type == "cuda":
         print(f"peak GPU memory: {torch.cuda.max_memory_allocated() / 2**30:.1f} GB")
 
 

@@ -29,6 +29,9 @@ A LoRA fine-tune of Qwen3-8B that runs on Apple silicon with [MLX](https://githu
 | `evaluate.py` | Scores a model on the held-out and validation sets |
 | `README-PC.md` | The same fine-tune on a PC with an NVIDIA GPU, through to an Ollama model: start there on the RTX 5090 |
 | `train_cuda.py`, `merge_adapter.py`, `requirements-pc.txt` | The PC route's training script, merge step and Python packages |
+| `check_leakage.py` | Fails if a test case repeats a training case or a prompt carries its own answer. Run it before training or scoring |
+| `classical_baselines.py`, `requirements-classical.txt` | Random forest, support vector machine and gradient boosting on the same cases, with nested cross-validation and tuned settings |
+| `cross_validate.py` | Cross-validates the fine-tune on the PC: five trainings, each scored on the fifth of the training cases it did not see |
 
 ```bash
 # from the repository root: write ai/training/data/ (also checks the rules against the held-out set)
@@ -49,6 +52,47 @@ uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python mlx-lm h
 .venv/bin/python evaluate.py mlx --adapter adapters/v2 --name tuned-test500 --test-file data/test500.jsonl                    # Mac
 .venv\Scripts\python evaluate.py ollama --model astrovitals-triage-ft-v2 --name ft-v2-test500 --test-file data/test500.jsonl  # PC
 ```
+
+**Leakage check.** `check_leakage.py` compares the four data files and exits with an error if it finds the same request twice, the same readings in two files, or an answer inside a prompt. On the data of 15 November 2026 it finds none; on a copy with three planted leaks it reported each one. From `ai/training`:
+
+```bash
+python check_leakage.py
+```
+
+Two things it cannot check, both true here:
+
+- The hand-written held-out set was looked at once, to diagnose round 1, before round 2 was designed. Round 2's held-out score is therefore not a first look. `test500.jsonl` has not been used to make any choice.
+- Every prompt carries `computed_facts.minimum_status`, which the server's code works out and sends with every real request. Copying it gets 76 of the 106 held-out cases right and never escalates, which is exactly the score of the model the app uses today. It is an input and not a leak, but it sets the floor: 72% takes no skill.
+
+**Classical models, cross-validation and tuning.** `classical_baselines.py` trains a random forest, a support vector machine and gradient boosting on `train.jsonl` to predict the status (alert is exactly the cases that escalate). Settings are tuned by grid search inside each of 5 cross-validation folds (nested), every step that learns from data is fitted on the training part of a fold only, and the test files are scored after the model is picked. About 4 minutes on an M-series laptop, no GPU:
+
+```bash
+uv pip install --python .venv/bin/python -r requirements-classical.txt
+.venv/bin/python classical_baselines.py | tee runs/classical.report.txt
+```
+
+Statuses right, on the data of 15 November 2026 (scikit-learn 1.9.1, seed 7; a second run gave the same numbers):
+
+| Model | Cross-validated on train | valid (150) | test500 (500) | held-out (106) | Held-out escalations caught (of 16) | Held-out escalated wrongly (of 90) |
+|---|---|---|---|---|---|---|
+| Copies `minimum_status` | | 108 | 313 | 76 | 0 | 0 |
+| Support vector machine | 74.5% ± 1.7 | 112 | 404 | 52 | 5 | 0 |
+| Random forest | 97.0% ± 0.4 | 144 | 490 | 96 | 11 | 1 |
+| Gradient boosting | 98.5% ± 0.9 | 148 | 497 | 98 | 11 | 0 |
+| Gradient boosting, given the computed flags as well | 99.5% ± 0.3 | 149 | 499 | 100 | 11 | 0 |
+| Fine-tuned Qwen3-8B, round 2 (Mac) | | 60 of the first 60 | not scored on the Mac | 97 | 15 | 3 |
+| Rule engine | | 150 | 500 | 106 | 16 | 0 |
+
+What the table shows:
+
+- Gradient boosting learns the single thresholds from 2,000 cases almost completely and never escalated wrongly, but it misses 5 of the 16 hand-written escalations. All 5 are combined rules (high heart rate with low oxygen, low oxygen with fast or slow breathing, high heart rate with high blood pressure), which have between 1 and 16 examples each in the training data.
+- The fine-tuned language model caught 15 of those 16, escalated wrongly 3 times, and takes about 10 seconds an answer.
+- Neither matches the rule engine, which is why the server takes the status and the escalation from the rules and uses the model for the explanation only.
+- Every figure here is agreement with the project's own rules. None of them measures medical accuracy.
+
+The ranges of settings were widened once, after the first run chose the lowest values on offer; that decision used the cross-validated choices, not the test scores (gradient boosting scored 97 of 106 on held-out in that first run). For gradient boosting, 10 of the 36 settings tried score within half a point of the best, so further tuning would not move the result. `runs/classical.json` holds every setting tried and every wrong case.
+
+**Cross-validating the fine-tune.** `cross_validate.py` does for the fine-tune what the table's second column does for the classical models: it trains the PC recipe (`train_cuda.py`) five times, each time on four fifths of `train.jsonl`, and scores each model on the fifth it did not see. Each model writes its rule checklist and status, and the script reads the answer up to the status, so the figure is the same "status right". It needs the NVIDIA GPU and has not been run on it yet, so the fine-tune's cell in that column is still empty; `README-PC.md`, step 9, has the command. It measures the full-precision model, not the 4-bit one Ollama serves. Until it is run, the fine-tune's choices rest on `valid.jsonl`, with `test500.jsonl` and the held-out set kept as tests.
 
 The data, the downloaded base model, the adapters and the run logs are not committed. If the rules in `apps/server/src/routes/ai.ts` change, regenerate the data and train again.
 

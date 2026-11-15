@@ -4,3 +4,4 @@ adapters/
 runs/
 export/
 tools/
+__pycache__/

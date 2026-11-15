@@ -15,6 +15,7 @@ The PC run uses round 2's recipe, so the target is about 97. It differs from the
 ## How far this has been tested
 
 - **Tested on the Mac, with the small Qwen3-0.6B model:** `train_cuda.py` (loss falls, adapter saved, low-memory option included), `merge_adapter.py`, the Modelfile it writes, and `evaluate.py` through Ollama 0.40.16.
+- **Also tested on the Mac with the small model:** `cross_validate.py` (step 9) end to end on two folds, resuming after a stop, and its scoring: a stand-in model that writes the known answers scores 2,000 of 2,000, and altering 10 answers gives exactly 10 wrong.
 - **Not tested:** anything on the 5090 itself, and the llama.cpp conversion in step 5. Those commands are written from llama.cpp's own documentation and release files (build `b12415`).
 
 If something fails, it is most likely the GPU setup in step 4 or the conversion in step 5. The table at the end covers the failures I could foresee.
@@ -73,6 +74,14 @@ uv pip install --python .venv\Scripts\python.exe -r requirements-pc.txt
 ```
 
 The last command must print `2.15.0+cu132 True` and the card's name. If it prints `False`, see the table at the end before training.
+
+Check the data for leakage before training on it:
+
+```powershell
+.venv\Scripts\python check_leakage.py
+```
+
+It must end with `== no leak found`. It compares the four data files and exits with an error if a test case repeats a training case, or if a prompt carries its own answer.
 
 Close games and other programs that use the GPU, then train:
 
@@ -144,6 +153,39 @@ It answers 166 cases and prints nothing until the end. The lines that matter:
 - `export\pc-v1\merged` and `export\pc-v1\model-f16.gguf` (33 GB together) can be deleted once the score is in.
 
 This guide stops at the score. Pointing the app at the new model is a separate decision.
+
+## 8. Optional: the classical models
+
+Random forest, support vector machine and gradient boosting on the same cases, with nested cross-validation and tuned settings. It needs no GPU:
+
+```powershell
+uv pip install --python .venv\Scripts\python.exe -r requirements-classical.txt
+.venv\Scripts\python classical_baselines.py | Tee-Object runs\classical.report.txt
+```
+
+It runs the leakage check first, then prints one model at a time; about 4 minutes on the Mac. The Mac's numbers are in `ai\README.md`. This step has not been run on Windows.
+
+## 9. Optional: cross-validate the fine-tune
+
+This trains the fine-tune five times, each time on four fifths of `data\train.jsonl`, and scores each model on the fifth it did not see. The result is a cross-validated accuracy for the training recipe, the same figure step 8 prints for the classical models. Close games and other GPU programs first, as for step 4:
+
+```powershell
+.venv\Scripts\python cross_validate.py | Tee-Object runs\cv.report.txt
+```
+
+- **How long:** five trainings of 1,600 cases plus 2,000 short answers. It has not been timed on a 5090; after the first fold it prints an estimate for the rest.
+- **If it stops:** run the same command again. Finished folds are read from `runs\cv\` and it carries on from the next one.
+- **If scoring runs out of GPU memory:** add `--score-batch 2`. If training does, add `--grad-checkpoint`, as in step 4.
+- **A shorter run:** `--folds 3` trains three times on two thirds of the cases.
+
+The lines to send back are the ones under `== result`. The two that matter have this layout:
+
+```
+   all folds: status right ____/2000 (__._%); escalations caught ___/552; escalated when it should not ___/1448; no status written ___
+   per fold __._ __._ __._ __._ __._; mean __._, spread (standard deviation) _._
+```
+
+This step measures the full-precision model writing its checklist and status; it does not measure the 4-bit Ollama model from step 5, which step 6 scores.
 
 ## If something goes wrong
 
