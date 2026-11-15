@@ -336,6 +336,27 @@ describe('Overarching AI triage engine & Qwen3-8B schema', () => {
     expect(run({ hr_bpm: 102, spo2_pct: 89, respiratory_rate: 24, sensor_verified: false }).contact_ground_support).toBe(false)
   })
 
+  it('escalates verified red-flag readings on their own, and flags a heart rate well below the personal median', () => {
+    const base = { crew_id: 'C1', environment: 'iss_leo' as const, available_tools: ['Pulse Oximeter', 'Thermometer'] }
+    const run = (vitals: Record<string, unknown>) =>
+      buildDeterministicFallback(TriageRequestSchema.parse({ ...base, vitals: { hr_bpm: 64, preflight_hr_median: 60, spo2_pct: 98, sensor_verified: true, ...vitals } }))
+    // Below 85% is where the BTS guideline starts high-flow oxygen.
+    expect(run({ spo2_pct: 84 }).contact_ground_support).toBe(true)
+    expect(run({ spo2_pct: 84 }).ground_support_reason).toContain('SpO2 84%')
+    expect(run({ spo2_pct: 85 }).contact_ground_support).toBe(false)
+    expect(run({ spo2_pct: 84, sensor_verified: false }).contact_ground_support).toBe(false)
+    // 35 °C or below is the hypothermia line.
+    expect(run({ temp_c: 35 }).contact_ground_support).toBe(true)
+    expect(run({ temp_c: 34.9 }).ground_support_reason).toContain('hypothermia line')
+    expect(run({ temp_c: 35.1 }).contact_ground_support).toBe(false)
+    expect(run({ temp_c: 34.9, sensor_verified: false }).contact_ground_support).toBe(false)
+    // 15 bpm or more below the personal median raises a caution and asks for a recheck; 14 does not.
+    expect(run({ hr_bpm: 45 }).overall_status).toBe('caution')
+    expect(run({ hr_bpm: 45 }).available_tool_action_plan[0]).toContain('Pulse Oximeter')
+    expect(run({ hr_bpm: 45 }).contact_ground_support).toBe(false)
+    expect(run({ hr_bpm: 46 }).overall_status).toBe('nominal')
+  })
+
   it('describes the readings from the rules even when the model answers, and stays consistent at caution', () => {
     const req = TriageRequestSchema.parse({ crew_id: 'C1', environment: 'mars_surface', vitals: { hr_bpm: 62, preflight_hr_median: 60, spo2_pct: 86, sensor_verified: false }, available_tools: ['Pulse Oximeter'] })
     const rules = buildDeterministicFallback(req)

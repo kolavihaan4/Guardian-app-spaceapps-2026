@@ -14,7 +14,38 @@ ollama pull qwen3:8b
 ollama create astrovitals-triage -f ai/Modelfile
 
 # 2. The Express server automatically calls astrovitals-triage (or qwen3:8b) on POST /api/ai/triage
-```---
+```
+
+## Fine-tuning on a Mac (`ai/training/`)
+
+A LoRA fine-tune of Qwen3-8B that runs on Apple silicon with [MLX](https://github.com/ml-explore/mlx-lm). The model is taught the rule engine's own answers, so it learns to reproduce the rules; it cannot become more accurate than they are.
+
+| File | What it is |
+|---|---|
+| `make_dataset.mts` | Generates the training and validation cases and labels them with the rule engine |
+| `heldout_cases.mts` | The held-out test set: boundary cases written by hand from the cited thresholds, never trained on |
+| `system_prompt.txt` | The prompt the fine-tuned model is trained and served with |
+| `lora_config.yaml` | Training settings |
+| `evaluate.py` | Scores a model on the held-out and validation sets |
+| `README-PC.md` | The same fine-tune on a PC with an NVIDIA GPU, through to an Ollama model: start there on the RTX 5090 |
+| `train_cuda.py`, `merge_adapter.py`, `requirements-pc.txt` | The PC route's training script, merge step and Python packages |
+
+```bash
+# from the repository root: write ai/training/data/ (also checks the rules against the held-out set)
+npx tsx ai/training/make_dataset.mts
+
+# from ai/training: one-time setup, then train (about 75 minutes on an M-series laptop with 24 GB)
+uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python mlx-lm huggingface_hub
+.venv/bin/python -c "from huggingface_hub import snapshot_download; snapshot_download('mlx-community/Qwen3-8B-4bit', local_dir='base/Qwen3-8B-4bit')"
+.venv/bin/python -m mlx_lm lora -c lora_config.yaml
+
+# score it
+.venv/bin/python evaluate.py mlx --adapter adapters/v2 --name tuned
+```
+
+The data, the downloaded base model, the adapters and the run logs are not committed. If the rules in `apps/server/src/routes/ai.ts` change, regenerate the data and train again.
+
+---
 # AstroVitals — Overarching AI Triage & Crew Telemetry Layer (`ai/`)
 
 **Live Interactive Prototype:** https://teal-salmiakki-2ec212.netlify.app  
