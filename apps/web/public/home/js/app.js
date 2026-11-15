@@ -133,6 +133,7 @@
       eyebrow: s.workspace, title: 'Dashboard', sub: 'Your project cards and collections in one place.',
       action: `<button class="btn btn--ghost" data-action="customize">${icon('sliders')}Customize view</button>`
     }) +
+      summary(s) +
       (v.hero ? hero(s) : '') +
       crewHealth() +
       (v.glance ? glance(s) : '') +
@@ -166,6 +167,82 @@
       <p class="metric__value">${o.value == null ? '<span class="metric__dash" aria-label="No data"></span>' : o.value}</p>
       <div class="metric__foot"><span class="metric__note"><span class="dot${o.value == null ? '' : ' dot--live'}"></span>${o.note}</span>${spark(o.series)}</div>
     </article>`;
+  }
+
+  /* ------------------------------------------------------------ dashboard summary */
+  // the crew's latest readings, read from the health assistant's API on this same origin
+  const health = { state: 'idle', data: null };
+  function loadHealth() {
+    if (health.state === 'loading') return;
+    health.state = 'loading';
+    const get = url => fetch(url, { headers: { accept: 'application/json' }, credentials: 'same-origin' });
+    Promise.all([get('/api/vitals'), get('/api/nasa/radiation')]).then(async ([vitals, radiation]) => {
+      if (vitals.status === 401) { health.state = 'signedout'; return; }
+      if (!vitals.ok) { health.state = 'error'; return; }
+      const v = await vitals.json();
+      const r = radiation.ok ? (await radiation.json()).data : null;
+      const latest = type => {
+        let best = null;
+        (v.metrics || []).forEach(m => { if (m.metricType === type && (!best || m.timestamp > best.timestamp)) best = m; });
+        return best;
+      };
+      const sleep = (v.sleep || []).reduce((a, b) => (!a || b.end > a.end ? b : a), null);
+      health.data = {
+        heart: latest('heart_rate') || latest('resting_heart_rate'),
+        oxygen: latest('spo2'),
+        breathing: latest('respiratory_rate'),
+        sleepHours: sleep ? sleep.minutesAsleep / 60 : null,
+        simulated: (v.sources || []).some(x => x.simulated),
+        radiation: r
+      };
+      health.state = 'ready';
+    }).catch(() => { health.state = 'error'; }).then(() => {
+      const el = document.getElementById('summaryBody');
+      if (el) el.innerHTML = summaryBody(store.get());
+    });
+  }
+
+  function summaryBody(s) {
+    const d = health.data;
+    const stat = (label, value, note) => `<div class="summary__stat"><p class="summary__label">${label}</p><p class="summary__value">${value}</p><p class="summary__note">${note}</p></div>`;
+    const reading = (m, digits) => (m ? `${Number(m.value).toFixed(digits)}<span class="summary__unit">${esc(m.unit === 'percent' ? '%' : m.unit)}</span>` : '<span class="metric__dash" aria-label="No data"></span>');
+    const total = s.cards.length;
+    const cards = stat('Cards', total || '<span class="metric__dash" aria-label="No data"></span>', total ? `${plural(s.collections.length, 'collection')}` : 'None yet');
+    if (health.state === 'signedout') {
+      return `<div class="summary__grid">${cards}</div>
+        <p class="summary__msg">Sign in to the health assistant to see the crew’s vital signs and space weather here. <a href="${APP.triage}">Sign in</a></p>`;
+    }
+    if (health.state === 'error') {
+      return `<div class="summary__grid">${cards}</div><p class="summary__msg">The health assistant could not be reached, so vital signs are not shown.</p>`;
+    }
+    if (!d) return `<div class="summary__grid">${cards}</div><p class="summary__msg" role="status">Loading the crew’s latest readings…</p>`;
+    const storm = d.radiation ? (d.radiation.sScale > 0 ? `S${d.radiation.sScale}` : 'Quiet') : '<span class="metric__dash" aria-label="No data"></span>';
+    return `<div class="summary__grid">
+      ${stat('Heart rate', reading(d.heart, 0), 'Latest reading')}
+      ${stat('Blood oxygen', reading(d.oxygen, 1), 'Latest reading')}
+      ${stat('Breathing rate', reading(d.breathing, 1), 'Latest reading')}
+      ${stat('Sleep', d.sleepHours == null ? '<span class="metric__dash" aria-label="No data"></span>' : `${d.sleepHours.toFixed(1)}<span class="summary__unit">h</span>`, 'Last night')}
+      ${stat('Radiation', storm, d.radiation ? (d.radiation.sScale > 0 ? 'Solar radiation storm' : 'No radiation storm (NOAA)') : 'Not available')}
+      ${cards}
+    </div>
+    <div class="summary__foot">
+      ${d.simulated ? '<span class="tag">Simulated wearable data</span>' : '<span class="tag">Connected wearable data</span>'}
+      <span class="summary__links"><a class="btn btn--link" href="${APP.triage}">Run a triage check${icon('arrowRight')}</a><a class="btn btn--link" href="${APP.vitals}">Open Vitals${icon('arrowRight')}</a></span>
+    </div>`;
+  }
+
+  // "Dashboard": the environment option and a summary of where the crew stands
+  function summary(s) {
+    const env = envOf(s.env);
+    if (health.state === 'idle') loadHealth();
+    return `<div class="section-label"><h2>Dashboard</h2><span>${env ? `Summary for ${esc(env.name)}` : 'Summary'}</span></div>
+    <section class="panel summary" aria-label="Dashboard summary">
+      <div class="summary__env" role="group" aria-label="Mission environment">
+        <span class="summary__label">Environment</span>
+        <div class="chips">${ENVS.map(e => `<button class="chip" data-action="launch-env" data-env="${e.id}" aria-pressed="${e.id === s.env}">${e.short}</button>`).join('')}</div>
+      </div>
+      <div id="summaryBody">${summaryBody(s)}</div>
+    </section>`;
   }
 
   // the way into the crew health app: triage, vital signs and the hazards reference
