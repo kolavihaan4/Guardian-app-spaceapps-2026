@@ -1,6 +1,6 @@
-# Mission Baseline — dashboard UI template
+# AstroVitals Space Apps 2026
 
-A runnable, blank dashboard template for the Mission Baseline project. The Still visual design combines misty blue mountains, natural evergreen silhouettes, sage controls, a small lavender accent, and translucent glass cards.
+A runnable, blank frontend dashboard template for the AstroVitals Space Apps 2026 project. The Still visual design combines misty blue mountains, natural evergreen silhouettes, sage controls, a small lavender accent, and translucent glass cards.
 
 ![Dashboard preview](docs/preview.jpg)
 
@@ -11,7 +11,8 @@ Open `index.html` directly in a modern browser. All scripts, icons, styling, and
 For the optional static preview, use Node.js 18 or later:
 
 ```sh
-cd templates/dashboard
+git clone https://github.com/kolavihaan4/astrovitals-spaceapps-2026.git
+cd astrovitals-spaceapps-2026/templates/dashboard
 npm start
 ```
 
