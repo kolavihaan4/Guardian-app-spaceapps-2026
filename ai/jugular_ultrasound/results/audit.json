@@ -1,0 +1,760 @@
+{
+ "source": "https://huggingface.co/datasets/MedOtter/SegThy/resolve/318d0e04578419d2976a093f9873f14b782f253d/",
+ "license": "CC BY 4.0; cite Kroenke et al., PLOS ONE 2022; MedOtter mirror is a third-party redistribution",
+ "volumes": 32,
+ "usable_volumes": 31,
+ "subjects": 16,
+ "usable_subjects": 16,
+ "median_vessel_elongation_by_axis": {
+  "0": 4.025874580150887,
+  "1": 2.530187504885059,
+  "2": 1.3306308009206398
+ },
+ "roundest_axis": 2,
+ "header_head_foot_axis": [
+  2
+ ],
+ "transverse_axis_confirmed": true,
+ "problems": {
+  "vein_not_annotated_excluded": [
+   "028_P3_1_left"
+  ]
+ },
+ "per_volume": [
+  {
+   "case": "001_P1_1_left",
+   "subject": "001",
+   "side": "left",
+   "shape": [
+    486,
+    453,
+    370
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "001_P1_1_right",
+   "subject": "001",
+   "side": "right",
+   "shape": [
+    496,
+    404,
+    396
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "002_P2_2_left",
+   "subject": "002",
+   "side": "left",
+   "shape": [
+    527,
+    507,
+    597
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "002_P2_2_right",
+   "subject": "002",
+   "side": "right",
+   "shape": [
+    501,
+    516,
+    625
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "003_P3_1_left",
+   "subject": "003",
+   "side": "left",
+   "shape": [
+    493,
+    444,
+    415
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "003_P3_1_right",
+   "subject": "003",
+   "side": "right",
+   "shape": [
+    568,
+    526,
+    359
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "005_P1_1_left",
+   "subject": "005",
+   "side": "left",
+   "shape": [
+    462,
+    408,
+    431
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "005_P1_1_right",
+   "subject": "005",
+   "side": "right",
+   "shape": [
+    503,
+    420,
+    505
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "006_P2_1_left",
+   "subject": "006",
+   "side": "left",
+   "shape": [
+    480,
+    389,
+    395
+   ],
+   "spacing_mm": [
+    0.10999999940395355,
+    0.10999999940395355,
+    0.10999999940395355
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "006_P2_1_right",
+   "subject": "006",
+   "side": "right",
+   "shape": [
+    552,
+    486,
+    631
+   ],
+   "spacing_mm": [
+    0.10999999940395355,
+    0.10999999940395355,
+    0.10999999940395355
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "007_P3_1_left",
+   "subject": "007",
+   "side": "left",
+   "shape": [
+    524,
+    431,
+    555
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "007_P3_1_right",
+   "subject": "007",
+   "side": "right",
+   "shape": [
+    617,
+    427,
+    458
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "008_P1_1_left",
+   "subject": "008",
+   "side": "left",
+   "shape": [
+    471,
+    431,
+    445
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "008_P1_1_right",
+   "subject": "008",
+   "side": "right",
+   "shape": [
+    531,
+    425,
+    454
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "011_P2_3_left",
+   "subject": "011",
+   "side": "left",
+   "shape": [
+    487,
+    399,
+    530
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "011_P2_3_right",
+   "subject": "011",
+   "side": "right",
+   "shape": [
+    472,
+    427,
+    489
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "014_P3_1_left",
+   "subject": "014",
+   "side": "left",
+   "shape": [
+    500,
+    442,
+    479
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "014_P3_1_right",
+   "subject": "014",
+   "side": "right",
+   "shape": [
+    555,
+    423,
+    375
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "015_P1_1_left",
+   "subject": "015",
+   "side": "left",
+   "shape": [
+    492,
+    493,
+    470
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "015_P1_1_right",
+   "subject": "015",
+   "side": "right",
+   "shape": [
+    509,
+    419,
+    470
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "020_P2_1_left",
+   "subject": "020",
+   "side": "left",
+   "shape": [
+    590,
+    482,
+    563
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "020_P2_1_right",
+   "subject": "020",
+   "side": "right",
+   "shape": [
+    457,
+    503,
+    530
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "021_P3_1_left",
+   "subject": "021",
+   "side": "left",
+   "shape": [
+    463,
+    438,
+    379
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "021_P3_1_right",
+   "subject": "021",
+   "side": "right",
+   "shape": [
+    533,
+    464,
+    440
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "024_P3_1_left",
+   "subject": "024",
+   "side": "left",
+   "shape": [
+    507,
+    480,
+    567
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "024_P3_1_right",
+   "subject": "024",
+   "side": "right",
+   "shape": [
+    488,
+    503,
+    544
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "026_P2_2_left",
+   "subject": "026",
+   "side": "left",
+   "shape": [
+    552,
+    363,
+    459
+   ],
+   "spacing_mm": [
+    0.10999999940395355,
+    0.10999999940395355,
+    0.10999999940395355
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "026_P2_2_right",
+   "subject": "026",
+   "side": "right",
+   "shape": [
+    604,
+    482,
+    546
+   ],
+   "spacing_mm": [
+    0.10999999940395355,
+    0.10999999940395355,
+    0.10999999940395355
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "028_P3_1_left",
+   "subject": "028",
+   "side": "left",
+   "shape": [
+    559,
+    444,
+    611
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2
+   ],
+   "usable": false
+  },
+  {
+   "case": "028_P3_1_right",
+   "subject": "028",
+   "side": "right",
+   "shape": [
+    588,
+    514,
+    696
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  },
+  {
+   "case": "029_P2_1_left",
+   "subject": "029",
+   "side": "left",
+   "shape": [
+    536,
+    521,
+    584
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "usable": true
+  },
+  {
+   "case": "029_P2_1_right",
+   "subject": "029",
+   "side": "right",
+   "shape": [
+    512,
+    430,
+    452
+   ],
+   "spacing_mm": [
+    0.11999999731779099,
+    0.11999999731779099,
+    0.11999999731779099
+   ],
+   "axcodes": "LPS",
+   "labels": [
+    0,
+    1,
+    4,
+    5
+   ],
+   "usable": true
+  }
+ ]
+}
