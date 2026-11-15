@@ -1,0 +1,14 @@
+{
+  "_provenance": "SYNTHETIC — shaped after DataPoint.exercise (Exercise, MetricsSummary) in the v4 discovery document (2026-10-05). Not real data.",
+  "dataPoints": [
+    {
+      "dataSource": { "platform": "FITBIT" },
+      "exercise": {
+        "interval": { "startTime": "2026-10-03T22:00:00Z", "endTime": "2026-10-03T22:42:00Z", "startUtcOffset": "-18000s", "endUtcOffset": "-18000s" },
+        "exerciseType": "RUNNING",
+        "displayName": "Run",
+        "metricsSummary": { "caloriesKcal": 412.5, "averageHeartRateBeatsPerMinute": "151", "distanceMillimeters": 6400000, "steps": "6900" }
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+"access_token": "VTkc5JilK0dd8w_s0FJGabMqSFyjSX....lUgFJyIr2YZxhey-KMzDzBCI2LJc6yC5NGbC",
+"token_type": "bearer",
+"refresh_token": "xUEA805jTCcGd4b7rs-SkOJP",
+"expires_in": 86400,
+"scope": "PARTNER_WRITE PARTNER_READ CONNECT_READ CONNECT_WRITE",
+"jti": "f9eb2316-9b9d-495a-8732-e16c4b5bcafd",
+"refresh_token_expires_in": 7775998
+ }

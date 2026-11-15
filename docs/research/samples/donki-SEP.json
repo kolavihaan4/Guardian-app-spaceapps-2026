@@ -1,0 +1,87 @@
+[
+  {
+    "sepID": "2026-08-20T20:23:00-SEP-001",
+    "eventTime": "2026-08-20T20:23Z",
+    "instruments": [
+      {
+        "displayName": "STEREO A: IMPACT 13-100 MeV"
+      }
+    ],
+    "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/48176/-1",
+    "linkedEvents": [
+      {
+        "activityID": "2026-08-20T18:48:00-CME-001"
+      }
+    ],
+    "sentNotifications": [
+      {
+        "messageID": "20260820-AL-004",
+        "messageIssueTime": "2026-08-20T20:39Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48177/1"
+      },
+      {
+        "messageID": "20260820-AL-005",
+        "messageIssueTime": "2026-08-20T20:50Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48179/1"
+      }
+    ],
+    "submissionTime": "2026-08-20T20:39Z",
+    "versionId": 1
+  },
+  {
+    "sepID": "2026-08-21T17:33:00-SEP-001",
+    "eventTime": "2026-08-21T17:33Z",
+    "instruments": [
+      {
+        "displayName": "STEREO A: IMPACT 13-100 MeV"
+      }
+    ],
+    "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/48198/-1",
+    "linkedEvents": [
+      {
+        "activityID": "2026-08-21T09:09:00-FLR-001"
+      },
+      {
+        "activityID": "2026-08-21T09:36:00-CME-001"
+      }
+    ],
+    "sentNotifications": [
+      {
+        "messageID": "20260821-AL-005",
+        "messageIssueTime": "2026-08-21T20:54Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48199/1"
+      },
+      {
+        "messageID": "20260824-AL-001",
+        "messageIssueTime": "2026-08-24T11:33Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48220/1"
+      }
+    ],
+    "submissionTime": "2026-08-21T21:06Z",
+    "versionId": 2
+  },
+  {
+    "sepID": "2026-08-22T22:28:00-SEP-001",
+    "eventTime": "2026-08-22T22:28Z",
+    "instruments": [
+      {
+        "displayName": "STEREO A: IMPACT 13-100 MeV"
+      }
+    ],
+    "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/SEP/48231/-1",
+    "linkedEvents": [
+      {
+        "activityID": "2026-08-21T09:09:00-FLR-001"
+      },
+      {
+        "activityID": "2026-08-21T09:36:00-CME-001"
+      },
+      {
+        "activityID": "2026-08-22T23:15:00-IPS-001"
+      }
+    ],
+    "sentNotifications": null,
+    "submissionTime": "2026-08-24T15:59Z",
+    "versionId": 2
+  }
+]

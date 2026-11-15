@@ -1,0 +1,191 @@
+[
+  {
+    "id": "1",
+    "name": "APOD",
+    "summary": "Astronomy Picture of the Day",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "html_template": "<h1 id=\"astronomyPicture\">APOD</h1><p>One of the most popular websites at NASA is the <a href=\"http://apod.nasa.gov/apod/astropix.html\">Astronomy Picture of the Day</a>. In fact, this website is one of the <a href=\"https://analytics.usa.gov\">most popular websites</a> across all federal agencies. It has the popular appeal of a Justin Bieber video. This endpoint structures the APOD imagery and associated metadata so that it can be repurposed for other applications.</p><p>As of September 10, 2026 this API has been migrated to use the new WordPress API<br>The full documentation for the legacy API can be found in the <a href=\"https://github.com/nasa/apod-api\">APOD API Github repository</a><br>The documentation for the new API can be found here: <a target=\"_blank\" href=\"assets/files/apod/APOD-APIs-and-RSS-info.pdf\">APOD WordPress</a><br>The legacy APOD API will be taken offline December 1, 2026. You will need to migrate by then.</p><p><strong>Example image:</strong></p><p><img src=\"assets/img/general/apod.jpg\"/></p><h3 id=\"http-request\">HTTP Request</h3><p><code class=\"prettyprint\"> GET https://science.nasa.gov/wp-json/wp/v2/apod-basic </code></p><p><b>concept_tags, hd, and thumbs are now disabled in this service.</b></p><h3 id=\"query-parameters\">Query Parameters</h3><table> <thead> <tr> <th>Parameter</th> <th>Type</th> <th>Default</th> <th>Description</th> </tr> </thead> <tbody> <tr> <td>date</td> <td>YYYY-MM-DD</td> <td><em>today</em></td> <td>The date of the APOD image to retrieve</td> </tr> <tr> <td>start_date</td> <td>YYYY-MM-DD</td> <td>none</td> <td>The start of a date range, when requesting date for a range of dates. Cannot be used with <code class=\"prettyprint\">date</code>.</td> </tr> <tr> <td>end_date</td> <td>YYYY-MM-DD</td> <td><em>today</em></td> <td>The end of the date range, when used with <code class=\"prettyprint\">start_date</code>.</td> </tr> <tr> <td>count</td> <td>int</td> <td>none</td> <td>If this is specified then <code class=\"prettyprint\">count</code> randomly chosen images will be returned. Cannot be used with <code class=\"prettyprint\">date</code> or <code class=\"prettyprint\">start_date</code> and <code class=\"prettyprint\">end_date</code>. Cannot exceed 25.</td> </tr> <!-- <tr> <td><del>concept_tags</del></td><td>bool</td><td>False</td><td>Return an ordered dictionary of concepts from the APOD explanation</td></tr>--><!-- <tr><td>hd</td><td>bool</td><td>False</td><td>Retrieve the URL for the high resolution image</td></tr> --> <tr> <td>api_key</td> <td>string</td> <td>DEMO_KEY</td> <td>api.nasa.gov key for expanded usage</td> </tr> </tbody> </table><h3 id=\"example-query\">Example query</h3><p><a href=\"https://science.nasa.gov/wp-json/wp/v2/apod-basic/?api_key=DEMO_KEY\"> <code class=\"prettyprint\">https://science.nasa.gov/wp-json/wp/v2/apod-basic/?api_key=DEMO_KEY</code></a></p><h3>Example response</h3><p>{<br>\"date\": \"2026-09-11\",<br>\"post_id\": 1308668,<br>\"title\": \"M83: The Southern Pinwheel\",<br>\"permalink\": \"https://science.nasa.gov/image-article/apod-2026-september-11-m83-the-southern-pinwheel/\",<br>\"media_type\": \"image\",<br>\"explanation\": \"Detailed Explanation\",<br>\"credit\": \"Aldo Zanetti\",<br>\"copyright\": \"Aldo Zanetti\",<br>\"alt\": \"A spiral galaxy is shown in front of a dark field of stars.\",<br>\"url\": \"https://science.nasa.gov/image-article/apod-2026-september-11-m83-the-southern-pinwheel/\",<br>\"hdurl\": \"https://assets.science.nasa.gov/dynamicimage/assets/science/cds/apod/apod/2026/september/M83_Final2_1x.jpg?w=3828&h=3798&fit=clip&crop=faces%2Cfocalpoint\",<br>\"basic_html\": \"HTML of the page\",<br>\"basic_html_url\": \"https://science.nasa.gov/wp-json/wp/v2/apod-basic/260911/html\"<br>}</p>",
+    "configurations": {
+      "overview": {
+        "poc_name": "",
+        "poc_email": "",
+        "api_name": "",
+        "backend_protocol": "",
+        "server": "",
+        "frontend_host": "",
+        "backend_host": "",
+        "matching_url_prefixes": [
+          {
+            "frontend_prefix": "",
+            "backend_prefix": ""
+          }
+        ]
+      },
+      "global_request_settings": {
+        "append_query_string_parameters": "",
+        "set_request_headers": "",
+        "http_basic_authentication": "",
+        "https_requirements": "",
+        "api_key_checks": "",
+        "api_key_verification_requirements": "",
+        "required_roles": "",
+        "rate_limit": "",
+        "default_response_headers": "",
+        "override_response_headers": ""
+      },
+      "sub_url_request_settings": [
+        {
+          "http_method": "",
+          "regex": "",
+          "https_requirements": "",
+          "api_key_checks": "",
+          "api_key_verification_requirements": "",
+          "required_roles": "",
+          "override_required_roles_from_global_request_settings": "",
+          "rate_limit": "",
+          "default_response_headers": "",
+          "override_response_headers": ""
+        }
+      ],
+      "advanced_requests_rewriting": [
+        {
+          "matcher_type": "",
+          "http_method": "",
+          "frontend_matcher": "",
+          "backend_replacement": ""
+        }
+      ],
+      "advanced_settings": {
+        "balance_algorithm": "",
+        "json_template": "",
+        "xml_template": "",
+        "csv_template": "",
+        "common_all_errors": "",
+        "api_key_missing": "",
+        "api_key_invalid": "",
+        "api_key_disabled": "",
+        "api_key_unauthorized": "",
+        "over_rate_limit": "",
+        "https_required": ""
+      }
+    },
+    "swagger_data": {
+      "swagger": "2.0",
+      "info": {
+        "description": "This endpoint structures the APOD imagery and associated metadata so that it can be repurposed for other applications. In addition, if the concept_tags parameter is set to True, then keywords derived from the image explanation are returned. These keywords could be used as auto-generated hashtags for twitter or instagram feeds; but generally help with discoverability of relevant imagery",
+        "version": "1.0.0",
+        "title": "APOD",
+        "termsOfService": "",
+        "contact": {
+          "email": "evan.t.yates@nasa.gov"
+        },
+        "license": {
+          "name": "Apache 2.0",
+          "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        }
+      },
+      "host": "api.nasa.gov",
+      "basePath": "/planetary",
+      "tags": [
+        {
+          "name": "request tag",
+          "description": "An example tag",
+          "externalDocs": {
+            "description": "Here's a link",
+            "url": "https://example.com"
+          }
+        }
+      ],
+      "schemes": [
+        "https",
+        "http"
+      ],
+      "paths": {
+        "/apod": {
+          "get": {
+            "tags": [
+              "request tag"
+            ],
+            "summary": "Returns images",
+            "descriptions": "Returns the picture of the day",
+            "produces": [
+              "application/json"
+            ],
+            "security": [
+              {
+                "api_key": []
+              }
+            ],
+            "parameters": [
+              {
+                "name": "date",
+                "in": "query",
+                "description": "The date of the APOD image to retrieve",
+                "required": false,
+                "type": "string",
+                "schema": "date"
+              },
+              {
+                "name": "hd",
+                "in": "query",
+                "description": "Retrieve the URL for the high resolution image",
+                "required": false,
+                "type": "boolean"
+              }
+            ],
+            "responses": {
+              "200": {
+                "description": "successful operation",
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "thing": "ok"
+                  }
+                }
+              },
+              "400": {
+                "description": "Date must be between Jun 16, 1995 and Mar 28, 2019."
+              }
+            }
+          }
+        }
+      },
+      "securityDefinitions": {
+        "api_key": {
+          "type": "apiKey",
+          "name": "api_key",
+          "in": "query"
+        }
+      }
+    }
+  },
+  {
+    "id": "1",
+    "name": "Asteroids NeoWs",
+    "summary": "Near Earth Object Web Service",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "html_template": "<h1 id=\"NeoWS\">Asteroids - NeoWs</h1><p> NeoWs (Near Earth Object Web Service) is a RESTful web service for near earth Asteroid information. With NeoWs a user can: search for Asteroids based on their closest approach date to Earth, lookup a specific Asteroid with its NASA JPL small body id, as well as browse the overall data-set.</p><p> Data-set: All the data is from the NASA JPL Asteroid team (http://neo.jpl.nasa.gov/).</p><p> This API is maintained by <a href=\"https://github.com/SpaceRocks/\">SpaceRocks Team: David Greenfield, Arezu Sarvestani, Jason English and Peter Baunach</a>.</p><h2 id=\"neows-feed\">Neo - Feed</h2><p> Retrieve a list of Asteroids based on their closest approach date to Earth. <code class=\"prettyprint\"> GET https://api.nasa.gov/neo/rest/v1/feed?start_date=START_DATE&end_date=END_DATE&api_key=API_KEY </code></p><h3 id=\"query-parameters\">Query Parameters</h3><table> <thead> <tr> <th>Parameter</th> <th>Type</th> <th>Default</th> <th>Description</th> </tr></thead> <tbody> <tr> <td>start_date</td><td>YYYY-MM-DD</td><td>none</td><td>Starting date for asteroid search</td></tr><tr> <td>end_date</td><td>YYYY-MM-DD</td><td>7 days after start_date</td><td>Ending date for asteroid search</td></tr><tr> <td>api_key</td><td>string</td><td>DEMO_KEY</td><td>api.nasa.gov key for expanded usage</td></tr></tbody></table><h3 id=\"example-query\">Example query</h3><p> <a href=\"https://api.nasa.gov/neo/rest/v1/feed?start_date=2015-09-07&amp;end_date=2015-09-08&amp;api_key=DEMO_KEY\"> <code class=\"prettyprint\"> https://api.nasa.gov/neo/rest/v1/feed?start_date=2015-09-07&amp;end_date=2015-09-08&amp;api_key=DEMO_KEY </code> </a></p><h2 id=\"neows-lookup\">Neo - Lookup</h2><p> Lookup a specific Asteroid based on its <a href=\"http://ssd.jpl.nasa.gov/sbdb_query.cgi\">NASA JPL small body (SPK-ID) ID</a> <code class=\"prettyprint\"> GET https://api.nasa.gov/neo/rest/v1/neo/ <Asteroid_ID> </code></p><h3 id=\"query-parameters\">Path Parameters</h3><table> <thead> <tr> <th>Parameter</th> <th>Type</th> <th>Default</th> <th>Description</th> </tr></thead> <tbody> <tr> <th>asteroid_id</th> <th>int</th> <th>none</th> <th>Asteroid SPK-ID correlates to the NASA JPL small body</th> </tr><tr> <td>api_key</td><td>string</td><td>DEMO_KEY</td><td>api.nasa.gov key for expanded usage</td></tr></tbody></table><h3 id=\"example-query\">Example query</h3><p> <a href=\"https://api.nasa.gov/neo/rest/v1/neo/3542519?api_key=DEMO_KEY\"> <code class=\"prettyprint\"> https://api.nasa.gov/neo/rest/v1/neo/3542519?api_key=DEMO_KEY </code> </a></p><h2 id=\"neows-browse\">Neo - Browse</h2><p> Browse the overall Asteroid data-set <code class=\"prettyprint\"> GET https://api.nasa.gov/neo/rest/v1/neo/browse/ </code></p><h3 id=\"example-query\">Example query</h3><p> <a href=\"https://api.nasa.gov/neo/rest/v1/neo/browse?api_key=DEMO_KEY\"> <code class=\"prettyprint\"> https://api.nasa.gov/neo/rest/v1/neo/browse?api_key=DEMO_KEY </code> </a></p><!--<h2 id=\"neows-swagger\">Neo - Live Documents</h2><iframe class=\"\" id=\"\" src=\"https://api.nasa.gov/neo/?api_key=DEMO_KEY\" style=\"border: 1px solid rgb(170, 170, 170); width: 100%; min-height: 725px; max-height: 725px; height: 30px;\"></iframe>-->"
+  },
+  {
+    "id": "1",
+    "name": "DONKI",
+    "summary": "Space Weather Database Of Notifications, Knowledge, Information",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "html_template": " <h1 id=\"DONKI\" style=\"margin-top: 0px;\">DONKI</h1> <p>The <a href=\"https://ccmc.gsfc.nasa.gov/tools/DONKI/\">Space Weather Database Of Notifications, Knowledge, Information (DONKI)</a> is a comprehensive on-line tool for space weather forecasters, scientists, and the general space science community. DONKI chronicles the daily interpretations of space weather observations, analysis, models, forecasts, and notifications provided by the Space Weather Research Center (SWRC), comprehensive knowledge-base search functionality to support anomaly resolution and space science research, intelligent linkages, relationships, cause-and-effects between space weather activities and comprehensive webservice API access to information stored in DONKI. </p><p>This API consists of the following component services:</p><table> <thead> <tr> <th style=\"text-align: left\">API</th> <th style=\"text-align: left\">Example</th> </tr></thead> <tbody> <tr valign=\"top\"> <td style=\"text-align: left\"><a href=\"#donkiCME\">Coronal Mass Ejection (CME)</a></td><td style=\"text-align: left\"><a href=\"https://api.nasa.gov/DONKI/CME?startDate=2017-01-03&endDate=2017-01-03&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/CME?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY</a> </td></tr><tr valign=\"top\"> <td style=\"text-align: left\"><a href=\"#donkiCMEAnalysis\">Coronal Mass Ejection (CME) Analysis</a></td><td style=\"text-align: left\"><a href=\"https://api.nasa.gov/DONKI/CMEAnalysis?startDate=2016-09-01&endDate=2016-09-30&mostAccurateOnly=true&speed=500&halfAngle=30&catalog=ALL&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/CMEAnalysis?startDate=2016-09-01&endDate=2016-09-30&mostAccurateOnly=true&speed=500&halfAngle=30&catalog=ALL&api_key=DEMO_KEY</a> </td></tr><tr valign=\"top\"> <td style=\"text-align: left\"><a href=\"#donkiGST\">Geomagnetic Storm (GST)</a></td><td style=\"text-align: left\"><a href=\"https://api.nasa.gov/DONKI/GST?startDate=2016-01-01&endDate=2016-01-30&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/GST?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY</a> </td></tr><tr valign=\"top\"> <td style=\"text-align: left\"><a href=\"#donkiIPS\">Interplanetary Shock (IPS)</a></td><td style=\"text-align: left\"><a href=\"https://api.nasa.gov/DONKI/IPS?startDate=2016-01-01&endDate=2016-01-30&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/IPS?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&location=LOCATION&catalog=CATALOG&api_key=DEMO_KEY</a> </td></tr><tr valign=\"top\"> <td style=\"text-align: left\"><a href=\"#donkiFLR\">Solar Flare (FLR)</a></td><td style=\"text-align: left\"><a href=\"https://api.nasa.gov/DONKI/FLR?startDate=2016-01-01&endDate=2016-01-30&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/FLR?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY</a> </td></tr><tr valign=\"top\"> <td style=\"text-align: left\"><a href=\"#donkiSEP\">Solar Energetic Particle (SEP)</a></td><td style=\"text-align: left\"><a href=\"https://api.nasa.gov/DONKI/SEP?startDate=2016-01-01&endDate=2016-01-30&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/SEP?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY</a> </td></tr><tr valign=\"top\"> <td style=\"text-align: left\"><a href=\"#donkiMPC\">Magnetopause Crossing (MPC)</a></td><td style=\"text-align: left\"><a href=\"https://api.nasa.gov/DONKI/MPC?startDate=2016-01-01&endDate=2016-03-31&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/MPC?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY</a> </td></tr><tr valign=\"top\"> <td style=\"text-align: left\"><a href=\"#donkiRBE\">Radiation Belt Enhancement (RBE)</a></td><td style=\"text-align: left\"><a href=\"https://api.nasa.gov/DONKI/RBE?startDate=2016-01-01&endDate=2016-01-31&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/RBE?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY</a> </td></tr><tr valign=\"top\"> <td style=\"text-align: left\"><a href=\"#donkiHSS\">Hight Speed Stream (HSS)</a></td><td style=\"text-align: left\"><a href=\"https://api.nasa.gov/DONKI/HSS?startDate=2016-01-01&endDate=2016-01-31&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/HSS?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY</a> </td></tr><tr valign=\"top\"> <td style=\"text-align: left\"><a href=\"#donkiWSA\">WSA+EnlilSimulation</a></td><td style=\"text-align: left\"><a href=\"https://api.nasa.gov/DONKI/WSAEnlilSimulations?startDate=2011-09-19&endDate=2011-09-20&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/WSAEnlilSimulations?startDate=2016-01-06&endDate=2016-01-06&api_key=DEMO_KEY</a> </td></tr><tr valign=\"top\"> <td style=\"text-align: left\"><a href=\"#donkiNotifications\">Notifications</a></td><td style=\"text-align: left\"><a href=\"https://api.nasa.gov/DONKI/notifications?startDate=2014-05-01&endDate=2014-05-08&type=all&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/notifications?startDate=2014-05-01&endDate=2014-05-08&type=all&api_key=DEMO_KEY</a> </td></tr></tbody> </table> <h2 id=\"donkiCME\">Coronal Mass Ejection (CME)</h2> <p> <b>startDate:</b> default to 30 days prior to current UTC date<br/> <b>endDate:</b> default to current UTC date<br/> <br/><b>Example:</b><br/> <a href=\"https://api.nasa.gov/DONKI/CME?startDate=2017-01-03&endDate=2017-01-03&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/CME?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY</a> </p><h2 id=\"donkiCMEAnalysis\">Coronal Mass Ejection (CME) Analysis </h2> <p> <b>startDate:</b> default 30 days prior to current UTC time<br/> <b>endDate:</b> default to current UTC time<br/> <b>mostAccurateOnly:</b> default is set to true<br/> <b>completeEntryOnly:</b> default is set to true<br/> <b>speed (lower limit):</b> default is set to 0<br/> <b>halfAngle (lower limit):</b> default is set to 0<br/> <b>catalog:</b> default is set to ALL (choices: ALL, SWRC_CATALOG, JANG_ET_AL_CATALOG)<br/> <b>keyword:</b> default is set to NONE (example choices: swpc_annex)<br/> <br/><b>Example:</b><br/> <a href=\"https://api.nasa.gov/DONKI/CMEAnalysis?startDate=2016-09-01&endDate=2016-09-30&mostAccurateOnly=true&speed=500&halfAngle=30&catalog=ALL&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/CMEAnalysis?startDate=2016-09-01&endDate=2016-09-30&mostAccurateOnly=true&speed=500&halfAngle=30&catalog=ALL&api_key=DEMO_KEY</a> </p><h2 id=\"donkiGST\">Geomagnetic Storm (GST) </h2> <p> <b>startDate:</b> default to 30 days prior to current UTC date<br/> <b>endDate:</b> default to current UTC date<br/> <br/><b>Example:</b><br/> <a href=\"https://api.nasa.gov/DONKI/GST?startDate=2016-01-01&endDate=2016-01-30&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/GST?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY</a> </p><h2 id=\"donkiIPS\">Interplanetary Shock (IPS) </h2> <p> <b>startDate:</b> default to 30 days prior to current UTC date<br/> <b>endDate:</b> default to current UTC date<br/> <b>location:</b> default to ALL (choices: Earth, MESSENGER, STEREO A, STEREO B)<br/> <b>catalog:</b> default to ALL (choices: SWRC_CATALOG, WINSLOW_MESSENGER_ICME_CATALOG)<br/> <br/><b>Example:</b><br/> <a href=\"https://api.nasa.gov/DONKI/IPS?startDate=2016-01-01&endDate=2016-01-30&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/IPS?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&location=LOCATION&catalog=CATALOG&api_key=DEMO_KEY</a> </p><h2 id=\"donkiFLR\">Solar Flare (FLR) </h2> <p> <b>startDate:</b> default to 30 days prior to current UTC date<br/> <b>endDate:</b> default to current UTC date<br/> <br/><b>Example:</b><br/> <a href=\"https://api.nasa.gov/DONKI/FLR?startDate=2016-01-01&endDate=2016-01-30&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/FLR?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY </a> </p><h2 id=\"donkiSEP\">Solar Energetic Particle (SEP) </h2> <p> <b>startDate:</b> default to 30 days prior to current UTC date<br/> <b>endDate:</b> default to current UTC date<br/> <br/><b>Example:</b><br/> <a href=\"https://api.nasa.gov/DONKI/SEP?startDate=2016-01-01&endDate=2016-01-30&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/SEP?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY</a> </p><h2 id=\"donkiMPC\">Magnetopause Crossing (MPC) </h2> <p> <b>startDate:</b> default to 30 days prior to current UTC date<br/> <b>endDate:</b> default to current UTC date<br/> <br/><b>Example:</b><br/> <a href=\"https://api.nasa.gov/DONKI/MPC?startDate=2016-01-01&endDate=2016-03-31&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/MPC?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY</a> </p><h2 id=\"donkiRBE\">Radiation Belt Enhancement (RBE) </h2> <p> <b>startDate:</b> default to 30 days prior to current UTC date<br/> <b>endDate:</b> default to current UTC date<br/> <br/><b>Example:</b><br/> <a href=\"https://api.nasa.gov/DONKI/RBE?startDate=2016-01-01&endDate=2016-01-31&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/RBE?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY</a> </p><h2 id=\"donkiHSS\">Hight Speed Stream (HSS)</h2> <p> <b>startDate:</b> default to 30 days prior to current UTC date<br/> <b>endDate:</b> default to current UTC date<br/> <br/><b>Example:</b><br/> <a href=\"https://api.nasa.gov/DONKI/HSS?startDate=2016-01-01&endDate=2016-01-31&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/HSS?startDate=yyyy-MM-dd&endDate=yyyy-MM-dd&api_key=DEMO_KEY</a> </p><h2 id=\"donkiWSA\">WSA+EnlilSimulation </h2> <p> <b>startDate:</b> default to 7 days prior to current UTC date<br/> <b>endDate:</b> default to current UTC date<br/> <br/><b>Example:</b><br/> <a href=\"https://api.nasa.gov/DONKI/WSAEnlilSimulations?startDate=2016-01-06&endDate=2016-01-06&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/WSAEnlilSimulations?startDate=2011-09-19&endDate=2011-09-20&api_key=DEMO_KEY</a> </p><h2 id=\"donkiNotifications\">Notifications</h2> <p> <b>parameters:</b><br/> 'startDate' and 'endDate' are in format 'yyyy-MM-dd' UT<br/> 'type' could be: all, FLR, SEP, CME, IPS, MPC, GST, RBE, report<br/> <br/><b>Note:</b><br/> 'startDate' if left out would default to 7 days prior to the current UT date<br/> 'endDate' if left out would default to current UT date<br/> 'type' if left out would default to 'all'<br/> The request date range is limit to 30 days. If the request range is greater than 30 days, it would limit your request range to (endDate-30) to endDate.<br/> <br/><b>Example:</b><br/> <a href=\"https://api.nasa.gov/DONKI/notifications?startDate=2014-05-01&endDate=2014-05-08&type=all&api_key=DEMO_KEY\"> https://api.nasa.gov/DONKI/notifications?startDate=2014-05-01&endDate=2014-05-08&type=all&api_key=DEMO_KEY</a> </p>"
+  }
+]

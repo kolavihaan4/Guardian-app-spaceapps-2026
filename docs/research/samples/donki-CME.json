@@ -1,0 +1,125 @@
+[
+  {
+    "activityID": "2026-08-06T00:53:00-CME-001",
+    "catalog": "M2M_CATALOG",
+    "startTime": "2026-08-06T00:53Z",
+    "instruments": [
+      {
+        "displayName": "STEREO A: SECCHI/COR2"
+      },
+      {
+        "displayName": "GOES: CCOR-1"
+      }
+    ],
+    "sourceLocation": "",
+    "activeRegionNum": null,
+    "note": "Faint CME first seen to the N in STEREO A COR2 starting around 2026-08-06T00:53Z. It is also partially seen to the NNE in GOES CCOR-1 around the pylon but is covered by a real time data gap in SOHO LASCO C2/C3. The source may be related to some minor field line movement seen beyond the NE limb in SDO AIA 171 beginning around 2026-08-06T00:00Z.",
+    "cmeAnalyses": [
+      {
+        "isMostAccurate": true,
+        "levelOfData": 0,
+        "time21_5": "2026-08-06T09:20Z",
+        "latitude": 65,
+        "longitude": -105,
+        "halfAngle": 21,
+        "speed": 375,
+        "type": "S",
+        "featureCode": "LE",
+        "imageType": "running difference",
+        "measurementTechnique": "SWPC_CAT",
+        "note": "Measurement based on best fit between STEREO A COR2 and GOES CCOR-1.",
+        "minorHalfWidth": null,
+        "speedMeasuredAtHeight": null,
+        "tilt": null,
+        "submissionTime": "2026-08-06T12:11Z",
+        "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CMEAnalysis/47981/-1",
+        "enlilList": []
+      }
+    ],
+    "linkedEvents": null,
+    "sentNotifications": null,
+    "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/47980/-1",
+    "submissionTime": "2026-08-06T12:10Z",
+    "versionId": 1
+  },
+  {
+    "activityID": "2026-08-06T03:00:00-CME-001",
+    "catalog": "M2M_CATALOG",
+    "startTime": "2026-08-06T03:00Z",
+    "instruments": [
+      {
+        "displayName": "GOES: CCOR-1"
+      }
+    ],
+    "sourceLocation": "",
+    "activeRegionNum": null,
+    "note": "Faint CME first seen to the ENE in GOES CCOR-1 beginning as early as 2026-08-06T03:00Z. The start time is somewhat subjective because the early rise off the solar disk is very slow. This feature is only seen in GOES CCOR-1. The source may be related to some faint field line movement near the E limb best seen in SDO AIA 171 beginning as early as 2026-08-05T23:00Z.",
+    "cmeAnalyses": [
+      {
+        "isMostAccurate": true,
+        "levelOfData": 0,
+        "time21_5": "2026-08-06T12:54Z",
+        "latitude": 22,
+        "longitude": null,
+        "halfAngle": 22,
+        "speed": 357,
+        "type": "S",
+        "featureCode": "LE",
+        "imageType": "running difference",
+        "measurementTechnique": "Plane-of-sky",
+        "note": "Speculative plane-of-sky measurement based only on later frames of GOES CCOR-1. The early propagation of the CME is obscured by Earth-shine.",
+        "minorHalfWidth": null,
+        "speedMeasuredAtHeight": null,
+        "tilt": null,
+        "submissionTime": "2026-08-06T12:39Z",
+        "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CMEAnalysis/47983/-1",
+        "enlilList": []
+      }
+    ],
+    "linkedEvents": null,
+    "sentNotifications": null,
+    "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/47982/-1",
+    "submissionTime": "2026-08-06T12:38Z",
+    "versionId": 1
+  },
+  {
+    "activityID": "2026-08-06T08:45:00-CME-001",
+    "catalog": "M2M_CATALOG",
+    "startTime": "2026-08-06T08:45Z",
+    "instruments": [
+      {
+        "displayName": "GOES: CCOR-1"
+      }
+    ],
+    "sourceLocation": "",
+    "activeRegionNum": null,
+    "note": "Very faint, narrow CME first seen to the NE is GOES CCOR-1. The feature is only seen in GOES CCOR-1 in real time. The source may be related to a very small piece of ejecta seen on the E limb in SDO AIA 304 beginning around 2026-08-06T08:00Z.",
+    "cmeAnalyses": [
+      {
+        "isMostAccurate": true,
+        "levelOfData": 0,
+        "time21_5": "2026-08-06T17:25Z",
+        "latitude": 46,
+        "longitude": null,
+        "halfAngle": 13,
+        "speed": 333,
+        "type": "S",
+        "featureCode": "LE",
+        "imageType": "running difference",
+        "measurementTechnique": "Plane-of-sky",
+        "note": "Plane-of-sky measurement chosen due to single coronagraph view and on-limb source.",
+        "minorHalfWidth": null,
+        "speedMeasuredAtHeight": null,
+        "tilt": null,
+        "submissionTime": "2026-08-06T14:41Z",
+        "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CMEAnalysis/47986/-1",
+        "enlilList": []
+      }
+    ],
+    "linkedEvents": null,
+    "sentNotifications": null,
+    "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/CME/47985/-1",
+    "submissionTime": "2026-08-06T14:39Z",
+    "versionId": 1
+  }
+]

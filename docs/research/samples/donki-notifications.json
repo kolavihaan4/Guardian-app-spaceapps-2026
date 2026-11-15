@@ -1,0 +1,37 @@
+[
+  {
+    "messageType": "CME",
+    "messageID": "20260807-AL-001",
+    "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/47990/1",
+    "messageIssueTime": "2026-08-07T00:41Z",
+    "messageBody": "## "
+  },
+  {
+    "messageType": "CME",
+    "messageID": "20260807-AL-002",
+    "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/47995/1",
+    "messageIssueTime": "2026-08-07T13:52Z",
+    "messageBody": "## "
+  },
+  {
+    "messageType": "IPS",
+    "messageID": "20260808-AL-001",
+    "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48006/1",
+    "messageIssueTime": "2026-08-08T12:33Z",
+    "messageBody": "## "
+  },
+  {
+    "messageType": "CME",
+    "messageID": "20260808-AL-002",
+    "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48010/1",
+    "messageIssueTime": "2026-08-08T16:30Z",
+    "messageBody": "## "
+  },
+  {
+    "messageType": "CME",
+    "messageID": "20260808-AL-003",
+    "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48017/1",
+    "messageIssueTime": "2026-08-08T17:50Z",
+    "messageBody": "## "
+  }
+]

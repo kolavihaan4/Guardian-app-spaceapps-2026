@@ -1,0 +1,679 @@
+{
+  "hits": 1,
+  "input": "1",
+  "study": {
+    "OSD-1": {
+      "comments": [],
+      "ontologySourceReferences": [
+        {
+          "comments": [],
+          "description": "National Center for Biotechnology Information (NCBI) Organismal Classification",
+          "file": "http://data.bioontology.org/ontologies/NCBITAXON",
+          "name": "NCBITAXON",
+          "version": "2"
+        },
+        {
+          "comments": [],
+          "description": "Medical Subject Headings",
+          "file": "http://data.bioontology.org/ontologies/MESH",
+          "name": "MESH",
+          "version": "13"
+        }
+      ],
+      "people": [],
+      "publications": [],
+      "studies": [
+        {
+          "assays": [
+            {
+              "characteristicCategories": [
+                {
+                  "@id": "ia0wHFkCFtrMQOZjgCOifLtJUtQqExSzlDshIElK",
+                  "characteristicType": {
+                    "@id": "SMMcU2ehdlkpWH7YT9AfD8xAB8WtpG79Bc4RFclV",
+                    "annotationValue": "Label",
+                    "comments": [],
+                    "termAccession": "",
+                    "termSource": ""
+                  }
+                }
+              ],
+              "comments": [],
+              "dataFiles": [
+                {
+                  "@id": "#data/derivedarraydatafile-139758270445696",
+                  "comments": [],
+                  "name": "GLDS-1_microarray_E-GEOD-53196.processed.1.zip",
+                  "type": "Derived Array Data File"
+                },
+                {
+                  "@id": "#data/arraydatafile-139758270443584",
+                  "comments": [],
+                  "name": "GLDS-1_microarray_GSM1287094_01_USC.CEL.gz",
+                  "type": "Array Data File"
+                }
+              ],
+              "filename": "a_OSD-1_transcription-profiling_dna-microarray_Affymetrix.txt",
+              "materials": {
+                "otherMaterials": [
+                  {
+                    "@id": "#material/labledextract-139758263984384",
+                    "characteristics": [
+                      {
+                        "category": {
+                          "@id": "ia0wHFkCFtrMQOZjgCOifLtJUtQqExSzlDshIElK"
+                        },
+                        "value": {
+                          "@id": "C528x5BhkgqosSUWcatlClHpWQk8lCV7HlxUEoUG",
+                          "annotationValue": "biotin",
+                          "comments": [],
+                          "termAccession": "",
+                          "termSource": ""
+                        }
+                      }
+                    ],
+                    "name": "GSM1287094 LE 1",
+                    "type": "Labeled Extract Name"
+                  },
+                  {
+                    "@id": "#material/extract-139758995389360",
+                    "characteristics": [],
+                    "name": "GSM1287094 extract 1",
+                    "type": "Extract Name"
+                  }
+                ],
+                "samples": [
+                  {
+                    "@id": "#sample/139758996092480",
+                    "characteristics": [
+                      {
+                        "category": {
+                          "@id": "399SzhBQzExSjIr4pjc31bssabQKEbyJxfwbrlYi"
+                        },
+                        "value": {
+                          "@id": "zqKk5bdXuNyksKKxoyi9xqOA4ULpewhpat406I7I",
+                          "annotationValue": "Drosophila melanogaster",
+                          "comments": [],
+                          "termAccession": "http://purl.bioontology.org/ontology/NCBITAXON/7227",
+                          "termSource": "NCBITAXON"
+                        }
+                      },
+                      {
+                        "category": {
+                          "@id": "Kwlyhq1hxTRMRFSZy5BBxNmJhl7mgqIheehyZYt3"
+                        },
+                        "value": {
+                          "@id": "cBPfDB8c2R7shyrR1TWpHQdKA9oMSUtODZrTtjy1",
+                          "annotationValue": "Oregon-R",
+                          "comments": [],
+                          "termAccession": "https://osdr.nasa.gov/",
+                          "termSource": ""
+                        }
+                      }
+                    ],
+                    "derivesFrom": [],
+                    "factorValues": [
+                      {
+                        "@id": "",
+                        "category": {
+                          "@id": "rrAHixexWAdqOKNaj15Ezk66kWZSMcprcBRZfg1k"
+                        },
+                        "value": {
+                          "@id": "XJ2x9G5FYOhyGGbYDO0xkevuzcPxPnzdf1nFa9fv",
+                          "annotationValue": "Space Flight",
+                          "comments": [],
+                          "termAccession": "http://purl.bioontology.org/ontology/MESH/D013026",
+                          "termSource": "MESH"
+                        }
+                      },
+                      {
+                        "@id": "",
+                        "category": {
+                          "@id": "I1C0xbAXyp9LjGosAB6PE57XmnGeiruyb1njFr7I"
+                        },
+                        "value": {
+                          "@id": "sie0RP1nL2FOB0aFySXbdrmGafRMfzUPTYEZR32N",
+                          "annotationValue": "infected with Beauveria bassiana",
+                          "comments": [],
+                          "termAccession": "",
+                          "termSource": ""
+                        }
+                      }
+                    ],
+                    "name": "Dmel_OR_wo_FLT_infdw-Bbas_Rep1"
+                  },
+                  {
+                    "@id": "#sample/139758996094928",
+                    "characteristics": [
+                      {
+                        "category": {
+                          "@id": "399SzhBQzExSjIr4pjc31bssabQKEbyJxfwbrlYi"
+                        },
+                        "value": {
+                          "@id": "zqKk5bdXuNyksKKxoyi9xqOA4ULpewhpat406I7I",
+                          "annotationValue": "Drosophila melanogaster",
+                          "comments": [],
+                          "termAccession": "http://purl.bioontology.org/ontology/NCBITAXON/7227",
+                          "termSource": "NCBITAXON"
+                        }
+                      },
+                      {
+                        "category": {
+                          "@id": "Kwlyhq1hxTRMRFSZy5BBxNmJhl7mgqIheehyZYt3"
+                        },
+                        "value": {
+                          "@id": "cBPfDB8c2R7shyrR1TWpHQdKA9oMSUtODZrTtjy1",
+                          "annotationValue": "Oregon-R",
+                          "comments": [],
+                          "termAccession": "https://osdr.nasa.gov/",
+                          "termSource": ""
+                        }
+                      }
+                    ],
+                    "derivesFrom": [],
+                    "factorValues": [
+                      {
+                        "@id": "",
+                        "category": {
+                          "@id": "rrAHixexWAdqOKNaj15Ezk66kWZSMcprcBRZfg1k"
+                        },
+                        "value": {
+                          "@id": "XJ2x9G5FYOhyGGbYDO0xkevuzcPxPnzdf1nFa9fv",
+                          "annotationValue": "Space Flight",
+                          "comments": [],
+                          "termAccession": "http://purl.bioontology.org/ontology/MESH/D013026",
+                          "termSource": "MESH"
+                        }
+                      },
+                      {
+                        "@id": "",
+                        "category": {
+                          "@id": "I1C0xbAXyp9LjGosAB6PE57XmnGeiruyb1njFr7I"
+                        },
+                        "value": {
+                          "@id": "sie0RP1nL2FOB0aFySXbdrmGafRMfzUPTYEZR32N",
+                          "annotationValue": "infected with Beauveria bassiana",
+                          "comments": [],
+                          "termAccession": "",
+                          "termSource": ""
+                        }
+                      }
+                    ],
+                    "name": "Dmel_OR_wo_FLT_infdw-Bbas_Rep2"
+                  }
+                ],
+                "sources": []
+              },
+              "measurementType": {
+                "@id": "g6S1hAjGR0NNCILfY0DQ6X6xgXl8evYNaueFOrx3",
+                "annotationValue": "transcription profiling",
+                "comments": [],
+                "termAccession": "http://purl.obolibrary.org/obo/OBI_0000424",
+                "termSource": "OBI"
+              },
+              "processSequence": [
+                {
+                  "@id": "#process/139758291344976",
+                  "comments": [],
+                  "date": "",
+                  "executesProtocol": {
+                    "@id": "#139758267399616"
+                  },
+                  "inputs": [
+                    {
+                      "@id": "#sample/139758996091136"
+                    }
+                  ],
+                  "nextProcess": {
+                    "@id": "#process/139758270446512"
+                  },
+                  "outputs": [],
+                  "parameterValues": [],
+                  "performer": ""
+                },
+                {
+                  "@id": "#process/139758263987936",
+                  "comments": [],
+                  "date": "",
+                  "executesProtocol": {
+                    "@id": "#139758267399616"
+                  },
+                  "inputs": [
+                    {
+                      "@id": "#sample/139758996092384"
+                    }
+                  ],
+                  "nextProcess": {
+                    "@id": "#process/139758292645632"
+                  },
+                  "outputs": [],
+                  "parameterValues": [],
+                  "performer": ""
+                }
+              ],
+              "technologyPlatform": "Affymetrix",
+              "technologyType": {
+                "@id": "6cUZRXhqs0sv6zGHSX5CHdgNEvEbkHRo6OszkRMf",
+                "annotationValue": "DNA microarray",
+                "comments": [],
+                "termAccession": "http://purl.obolibrary.org/obo/OBI_0400148",
+                "termSource": "OBI"
+              },
+              "unitCategories": []
+            }
+          ],
+          "characteristicCategories": [
+            {
+              "@id": "ZoOImCf1F8ldVpDngT8wj6hw90YHIzncVZb5xF0C",
+              "characteristicType": {
+                "@id": "5fEZjNCVdk3W3EaDBSHQ6Q4YFw1w5dwEIyFw91HG",
+                "annotationValue": "Experiment End Date (DD/MM/YYYY)",
+                "comments": [],
+                "termAccession": "",
+                "termSource": ""
+              }
+            },
+            {
+              "@id": "4hB5YgxG35IhaSBZS9oyM5phccooZ6vApK26IXwV",
+              "characteristicType": {
+                "@id": "JXfzDRWdD0DBCtD6PuCpcI0LcB59KxQp8QP1hxFk",
+                "annotationValue": "Experiment Start Date (DD/MM/YYYY)",
+                "comments": [],
+                "termAccession": "",
+                "termSource": ""
+              }
+            }
+          ],
+          "comments": [
+            {
+              "name": "Acknowledgments",
+              "value": ""
+            },
+            {
+              "name": "DOI",
+              "value": "10.25966/t6db-f633"
+            }
+          ],
+          "description": "Space travel presents unlimited opportunities for exploration and discovery, but requires a more complete understanding of the immunological consequences of long-term exposure to the conditions of spaceflight. To understand these consequences better and to contribute to design of effective countermeasures, we used the Drosophila model to compare innate immune responses to bacteria and fungi in flies that were either raised on earth or in outer space aboard the NASA Space Shuttle Discovery (STS-121). Microarrays were used to characterize changes in gene expression that occur in response to infection by bacteria and fungus in drosophila that were either hatched and raised in outer space (microgravity) or on earth (normal gravity). Whole Oregon R strain drosophila melanogaster fruit flies either raised on earth or in space that were (1) uninfected, (2) infected with bacteria (Escherichia coli), or (3) infected with fungus (Beauveria bassiana) were used for RNA extraction and hybridization on Affymetrix microarrays.",
+          "factors": [
+            {
+              "@id": "rrAHixexWAdqOKNaj15Ezk66kWZSMcprcBRZfg1k",
+              "comments": [],
+              "factorName": "Spaceflight",
+              "factorType": {
+                "@id": "XJ2x9G5FYOhyGGbYDO0xkevuzcPxPnzdf1nFa9fv",
+                "annotationValue": "Space Flight",
+                "comments": [],
+                "termAccession": "http://purl.bioontology.org/ontology/MESH/D013026",
+                "termSource": "MESH"
+              }
+            },
+            {
+              "@id": "I1C0xbAXyp9LjGosAB6PE57XmnGeiruyb1njFr7I",
+              "comments": [],
+              "factorName": "Infection",
+              "factorType": {
+                "@id": "ChVMQYe3NZRb2iShInudUtYjSeuxYw5SxK8y58UZ",
+                "annotationValue": "Infection",
+                "comments": [],
+                "termAccession": "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl",
+                "termSource": "NCIT"
+              }
+            }
+          ],
+          "identifier": "OSD-1",
+          "materials": {
+            "otherMaterials": [],
+            "samples": [
+              {
+                "@id": "#sample/139758996092480",
+                "characteristics": [
+                  {
+                    "category": {
+                      "@id": "399SzhBQzExSjIr4pjc31bssabQKEbyJxfwbrlYi"
+                    },
+                    "value": {
+                      "@id": "zqKk5bdXuNyksKKxoyi9xqOA4ULpewhpat406I7I",
+                      "annotationValue": "Drosophila melanogaster",
+                      "comments": [],
+                      "termAccession": "http://purl.bioontology.org/ontology/NCBITAXON/7227",
+                      "termSource": "NCBITAXON"
+                    }
+                  },
+                  {
+                    "category": {
+                      "@id": "Kwlyhq1hxTRMRFSZy5BBxNmJhl7mgqIheehyZYt3"
+                    },
+                    "value": {
+                      "@id": "cBPfDB8c2R7shyrR1TWpHQdKA9oMSUtODZrTtjy1",
+                      "annotationValue": "Oregon-R",
+                      "comments": [],
+                      "termAccession": "https://osdr.nasa.gov/",
+                      "termSource": ""
+                    }
+                  }
+                ],
+                "derivesFrom": [],
+                "factorValues": [
+                  {
+                    "@id": "",
+                    "category": {
+                      "@id": "rrAHixexWAdqOKNaj15Ezk66kWZSMcprcBRZfg1k"
+                    },
+                    "value": {
+                      "@id": "XJ2x9G5FYOhyGGbYDO0xkevuzcPxPnzdf1nFa9fv",
+                      "annotationValue": "Space Flight",
+                      "comments": [],
+                      "termAccession": "http://purl.bioontology.org/ontology/MESH/D013026",
+                      "termSource": "MESH"
+                    }
+                  },
+                  {
+                    "@id": "",
+                    "category": {
+                      "@id": "I1C0xbAXyp9LjGosAB6PE57XmnGeiruyb1njFr7I"
+                    },
+                    "value": {
+                      "@id": "sie0RP1nL2FOB0aFySXbdrmGafRMfzUPTYEZR32N",
+                      "annotationValue": "infected with Beauveria bassiana",
+                      "comments": [],
+                      "termAccession": "",
+                      "termSource": ""
+                    }
+                  }
+                ],
+                "name": "Dmel_OR_wo_FLT_infdw-Bbas_Rep1"
+              },
+              {
+                "@id": "#sample/139758996094928",
+                "characteristics": [
+                  {
+                    "category": {
+                      "@id": "399SzhBQzExSjIr4pjc31bssabQKEbyJxfwbrlYi"
+                    },
+                    "value": {
+                      "@id": "zqKk5bdXuNyksKKxoyi9xqOA4ULpewhpat406I7I",
+                      "annotationValue": "Drosophila melanogaster",
+                      "comments": [],
+                      "termAccession": "http://purl.bioontology.org/ontology/NCBITAXON/7227",
+                      "termSource": "NCBITAXON"
+                    }
+                  },
+                  {
+                    "category": {
+                      "@id": "Kwlyhq1hxTRMRFSZy5BBxNmJhl7mgqIheehyZYt3"
+                    },
+                    "value": {
+                      "@id": "cBPfDB8c2R7shyrR1TWpHQdKA9oMSUtODZrTtjy1",
+                      "annotationValue": "Oregon-R",
+                      "comments": [],
+                      "termAccession": "https://osdr.nasa.gov/",
+                      "termSource": ""
+                    }
+                  }
+                ],
+                "derivesFrom": [],
+                "factorValues": [
+                  {
+                    "@id": "",
+                    "category": {
+                      "@id": "rrAHixexWAdqOKNaj15Ezk66kWZSMcprcBRZfg1k"
+                    },
+                    "value": {
+                      "@id": "XJ2x9G5FYOhyGGbYDO0xkevuzcPxPnzdf1nFa9fv",
+                      "annotationValue": "Space Flight",
+                      "comments": [],
+                      "termAccession": "http://purl.bioontology.org/ontology/MESH/D013026",
+                      "termSource": "MESH"
+                    }
+                  },
+                  {
+                    "@id": "",
+                    "category": {
+                      "@id": "I1C0xbAXyp9LjGosAB6PE57XmnGeiruyb1njFr7I"
+                    },
+                    "value": {
+                      "@id": "sie0RP1nL2FOB0aFySXbdrmGafRMfzUPTYEZR32N",
+                      "annotationValue": "infected with Beauveria bassiana",
+                      "comments": [],
+                      "termAccession": "",
+                      "termSource": ""
+                    }
+                  }
+                ],
+                "name": "Dmel_OR_wo_FLT_infdw-Bbas_Rep2"
+              }
+            ],
+            "sources": [
+              {
+                "@id": "#source/139758996092288",
+                "characteristics": [],
+                "name": "GSM1287094 1"
+              },
+              {
+                "@id": "#source/139758996093104",
+                "characteristics": [],
+                "name": "GSM1287095 1"
+              }
+            ]
+          },
+          "people": [
+            {
+              "@id": "",
+              "address": "Medical Microbiology and Immunology, University of California, Davis, 451 Health Sciences Drive, Davis, CA, USA",
+              "affiliation": "University of California, Davis",
+              "comments": [
+                {
+                  "name": "Study Person REF",
+                  "value": ""
+                }
+              ],
+              "email": "mdgeorge@ucdavis.edu",
+              "fax": "",
+              "firstName": "Michael",
+              "lastName": "George",
+              "midInitials": "",
+              "phone": "",
+              "roles": [
+                {
+                  "@id": "PvduV5zW5ZLkVahXKzJBbOxbO5ZHsqtTdZafaUzd",
+                  "annotationValue": "submitter",
+                  "comments": [],
+                  "termAccession": "http://www.ebi.ac.uk/efo/EFO_0001741",
+                  "termSource": "EFO"
+                }
+              ]
+            },
+            {
+              "@id": "",
+              "address": "",
+              "affiliation": "University of California, Davis",
+              "comments": [
+                {
+                  "name": "Study Person REF",
+                  "value": ""
+                }
+              ],
+              "email": "dakimbrell@ucdavis.edu",
+              "fax": "",
+              "firstName": "Deborah",
+              "lastName": "Kimbrell",
+              "midInitials": "",
+              "phone": "",
+              "roles": [
+                {
+                  "@id": "XaUXgZkFZ2nZqB2jkHmZbyxPwibz7V1jw9R9HKnp",
+                  "annotationValue": "principal investigator",
+                  "comments": [],
+                  "termAccession": "http://www.ebi.ac.uk/efo/EFO_0009736",
+                  "termSource": "EFO"
+                }
+              ]
+            }
+          ],
+          "processSequence": [
+            {
+              "@id": "#process/139758260043680",
+              "comments": [],
+              "date": "",
+              "executesProtocol": {
+                "@id": "#139758652111696"
+              },
+              "inputs": [
+                {
+                  "@id": "#sample/139758996091136"
+                }
+              ],
+              "nextProcess": {
+                "@id": "#process/139758641838112"
+              },
+              "outputs": [],
+              "parameterValues": [],
+              "performer": ""
+            },
+            {
+              "@id": "#process/139758268779344",
+              "comments": [],
+              "date": "",
+              "executesProtocol": {
+                "@id": "#139758652111696"
+              },
+              "inputs": [
+                {
+                  "@id": "#sample/139758996092384"
+                }
+              ],
+              "nextProcess": {
+                "@id": "#process/139758641837392"
+              },
+              "outputs": [],
+              "parameterValues": [],
+              "performer": ""
+            }
+          ],
+          "protocols": [
+            {
+              "@id": "#139758652111696",
+              "comments": [],
+              "components": [],
+              "description": "Bacterial infections with E. coli ATCC 25922 were as previously described. A single spore isolate of Beauveria bassiana (strain GHA) was cultured on Sabouraud dextrose agar. Conidia and hyphae were harvested by passing culture through a sterile ASTM No. 100 sieve. Spores were also flown on the space shuttle and we are happy to provide information upon request. Natural infection by B. bassiana used a dosage of 9.5x10^6 spores/fly, with procedures and survival assays as previously described. Ten replicates of 20 flies each for all strains were used in all 3 experiments for the CARU hypergravity tests. The centrifuge was stopped once per day to conduct survival counts. Control survival assays after bacterial and fungal infections on wild-type, hemolectin-Gal4; UAS-GFP, imd1, imdEY08573 and spz4 were conducted at Kennedy Space Center to establish that space and Earth fly infections were proceeding in accordance with our standardized conditions.",
+              "name": "treatment protocol",
+              "parameters": [
+                {
+                  "@id": "#139758267397840",
+                  "parameterName": {
+                    "@id": "3Hq6ViAPdhnUQVpmPN4g5qe1Sc2CIbQALaTc3jdF",
+                    "annotationValue": "",
+                    "comments": [],
+                    "termAccession": "",
+                    "termSource": ""
+                  }
+                }
+              ],
+              "protocolType": {
+                "@id": "LqPqGCGqW30U95npRFwaWKYfnnu3IhQtYDZrgkQE",
+                "annotationValue": "treatment protocol",
+                "comments": [],
+                "termAccession": "",
+                "termSource": ""
+              },
+              "uri": "",
+              "version": ""
+            },
+            {
+              "@id": "#139758267399040",
+              "comments": [],
+              "components": [],
+              "description": "The absorbed dose from ionizing radiation received by the flight specimens was estimated using TLD passive dosimeters located in the middeck of the space shuttle, where the payload was located. More specifically, we computed the average between three dosimeters (DLOC1, DLOC2, and DLOC3) for the mission and we divided it by the total duration of the mission to estimate the average absorbed dose rate in mGy/day. This dose rate did not include any shielding effects from the hardware where the specimens resided. The total absorbed dose in water was then computed by simply multiplying the average dose rate with the duration of the experiment. The duration of the experiment was defined as the time in space during which the specimen was 'living'. Once the specimen was frozen or fixed, the experiment was considered stopped. A table with these detailed computations for all space shuttle datasets is available on GeneLab at <a href=\"https://genelab.nasa.gov/environmental/radiation.\" target=\"_\" >https://genelab.nasa.gov/environmental/radiation.</a> The ground samples were not assessed for radiation exposure.",
+              "name": "radiation dosimetry",
+              "parameters": [
+                {
+                  "@id": "#139758662343984",
+                  "parameterName": {
+                    "@id": "wxFiRV5BXWlvDgeF3X09uHa7lhc46XznlQpBu4F5",
+                    "annotationValue": "vehicle",
+                    "comments": [],
+                    "termAccession": "http://purl.obolibrary.org/obo/ENVO_01000604",
+                    "termSource": ""
+                  }
+                },
+                {
+                  "@id": "#139758662340672",
+                  "parameterName": {
+                    "@id": "QGnq1ZBQG4r5UwZvMZGasxLy3jjaU9tV0a0umLcR",
+                    "annotationValue": "absorbed radiation dose",
+                    "comments": [],
+                    "termAccession": "http://purl.obolibrary.org/obo/RBO_00005010",
+                    "termSource": ""
+                  }
+                }
+              ],
+              "protocolType": {
+                "@id": "E4eRrLxPbIDl7qS8nBLAR5UvtxiBtrAtwgyvGdpp",
+                "annotationValue": "chronic",
+                "comments": [],
+                "termAccession": "http://purl.obolibrary.org/obo/PATO_0001863",
+                "termSource": ""
+              },
+              "uri": "",
+              "version": ""
+            }
+          ],
+          "publicReleaseDate": "11-Dec-2013",
+          "publications": [
+            {
+              "authorList": "Taylor Katherine, Kleinhesselink Kurt, George Michael D., Morgan Rachel, Smallwood Tangi, Hammonds Ann S., Fuller Patrick M., Saelao Perot, Alley Jeff, Gibbs Allen G., Hoshizaki Deborah K., von Kalm Laurence, Fuller Charles A., Beckingham Kathleen M., Kimbrell Deborah A.",
+              "comments": [],
+              "doi": "10.1371/journal.pone.0086485",
+              "pubMedID": "24475130",
+              "status": {
+                "@id": "LmdAvi3HYaAIgsfwpY1sWHGrDR5sHm3luQJDg1Ay",
+                "annotationValue": "published",
+                "comments": [],
+                "termAccession": "http://www.ebi.ac.uk/efo/EFO_0001796",
+                "termSource": "EFO"
+              },
+              "title": "Toll Mediated Infection Response Is Altered by Gravity and Spaceflight in Drosophila"
+            }
+          ],
+          "studyDesignDescriptors": [
+            {
+              "@id": "h0shfCKjUqWbQbBHH9iZLu4lX5tHwbttyXVJiTw5",
+              "annotationValue": "transcription profiling by array",
+              "comments": [],
+              "termAccession": "http://www.ebi.ac.uk/efo/EFO_0002768",
+              "termSource": "EFO"
+            },
+            {
+              "@id": "G18x8YsiHNJtkVdmhg9hAuzPv2Xvir8TpCqjEpRS",
+              "annotationValue": "low Earth orbit",
+              "comments": [],
+              "termAccession": "http://purl.obolibrary.org/obo/RBO_00000019",
+              "termSource": "RBO"
+            }
+          ],
+          "submissionDate": "10-Dec-2013",
+          "title": "Expression data from drosophila melanogaster",
+          "unitCategories": [
+            {
+              "@id": "HD9tp2SLnR0wXOGt79HG2Wa7QP9SkYuVwR6aCHGl",
+              "annotationValue": "day",
+              "comments": [],
+              "termAccession": "http://purl.obolibrary.org/obo/UO_0000033",
+              "termSource": "UO"
+            },
+            {
+              "@id": "SHRIFGDc50meal3f60aKnlHyc0mXQoqiyW1BovrZ",
+              "annotationValue": "milligray",
+              "comments": [],
+              "termAccession": "http://purl.obolibrary.org/obo/UO_0000142",
+              "termSource": "UO"
+            }
+          ]
+        }
+      ],
+      "version": 7
+    }
+  },
+  "success": true
+}

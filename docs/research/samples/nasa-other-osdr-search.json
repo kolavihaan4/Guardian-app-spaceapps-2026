@@ -1,0 +1,202 @@
+{
+  "took": 2,
+  "timed_out": false,
+  "_shards": {
+    "total": 5,
+    "successful": 5,
+    "skipped": 0,
+    "failed": 0
+  },
+  "hits": {
+    "total": 67,
+    "max_score": 9.432975,
+    "hits": [
+      {
+        "_index": "study",
+        "_type": "docs",
+        "_id": "Ft_6g4QB28eYt3lGMLZx",
+        "_score": 9.432975,
+        "_source": {
+          "Space Program": "NASA",
+          "Flight Program": "",
+          "Study Assay Measurement Type": "transcription profiling",
+          "Study Protocol Description": "Permission to collect blood from National Aeronautics and Space Administration (NASA) astronauts was obtained from the Johnson Space Center Committee for the Protection of Human Subjects. Consenting astronauts from several shuttle missions provided whole blood samples 10 days prior to shuttle launch (L-10) and several hours after return to earth (R+0). Whole blood was collected into a Vacutainer Blood collection tubes and then transferred into PAXgene tubes (PreAnalytiX, Hombrechtikon, CH), according to the manufacturer's instructions.     Total RNA was isolated from whole blood samples using the PAXgene Blood RNA Kit (PreAnalytiX, Hombrechtikon, CH), according to the manufacturer's instructions. Duplicate RNA samples were combined and DNase treated using a DNA-free kit (Ambion). RNA was quantitated by ultraviolet absorbance, concentrated by ethanol precipitation and re-suspended in deionized water (BD Biosciences Clontech) to yield a 4 ug sample of RNA for each astronaut at L-10 and R+0. RNA integrity was confirmed using denaturing Formaldehyde-Agarose gel electrophoresis.     Total RNA was converted to 32P-labeled first-strand cDNA by reverse transcription. Reaction volumes were optimized for increased detection on the arrays as follows: 4 ug of total RNA was combined with 2 ul gene-specific CDS primer mix (BD Biosciences Clontech). A master mix was prepared at room temperature including 4 ul 5X Reaction Buffer, 2 ul 10X dNTP Mix (for dATP label), 5 ul [alpha-32P]dATP (10uCi/ul), and 1 ul 100mM DTT. Two microliters of MMLV Reverse Transcriptase was added to the master mix, and was combined with the RNA, primer mix. All incubations were performed according to the manufacturer's instructions. Labeled probes were purified using column chromatography (BD Biosciences Clontech).          Radioactive cDNA probes were hybridized to the microarrays at 68C overnight in ExpressHyb solution (BD Biosciences Clontech) and washed according to the manufacturer's instructions.     Arrays were exposed to a phosphoimager screen at room temperature for 3 days.     For Flight samples: Arrays were analyzed using Atlas Image 2.0 software (Clontech Laboratories, Inc., Palo Alto, CA), according to the manufacturer's instructions. Arrays were normalized to the following housekeeping genes: ubiquitin C (UBC), liver glyceraldehyde 3-phosphate dehydrogenase (GAPDH), tubulin alpha 1 (TUBA1), and major histocompatability complex class I C (HLAC). After background subtraction for each array, the ratio of the post-flight adjusted intensity values (R+0) to the pre-flight adjusted intensity values (L-10) was calculated. Only genes with at least four data points pre-flight and post-flight were taken into consideration for data analysis. ID_REF equals  VALUE equals Background subtracted intensity and gene based normalization.  See Barrila et al. (2013) for details.\n\nFor Control (non-astronaut) sample: Arrays were analyzed using Atlas Image 2.0 software (Clontech Laboratories, Inc., Palo Alto, CA), according to the manufacturer's instructions. All astronaut arrays (L-10 and R+0) were normalized to an average of 5 control arrays from the whole blood of healthy non-astronaut control subjects. Arrays were normalized using the following housekeeping genes: ubiquitin C (UBC), liver glyceraldehyde 3-phosphate dehydrogenase (GAPDH), tubulin alpha 1 (TUBA1), and major histocompatability complex class I C (HLAC). After background subtraction for each array, the ratio of the post-flight adjusted intensity values (R+0) to the pre-flight adjusted intensity values (L-10) was calculated. Only genes for astronauts with at least four data points pre-flight and post-flight were taken into consideration for data analysis. ID_REF equals VALUE equals Background subtracted intensity and gene based normalization. See Barrila et al. (2013) for details",
+          "Material Type": "Whole Blood",
+          "Study Identifier": "OSD-53",
+          "Study Person": {
+            "First Name": "Jennifer C Mark Carly Satish Phillip Duane Cheryl",
+            "Middle Initials": " K A",
+            "Last Name": "Barrila Ott LeBlanc Mehta Stafford Pierson Nickerson"
+          },
+          "ESA Acronym": "",
+          "Acknowledgments": "We thank the NASA astronauts who so generously participated in these flight studies. We apologize to any authors whose work could not be cited due to space limitations. We also thank Andrea Throop for helpful discussions during the writing of this manuscript.",
+          "Managing NASA Center": "",
+          "Data Source Type": "cgene",
+          "Mission": {
+            "Start Date": "",
+            "End Date": "",
+            "Name": ""
+          },
+          "Study Grant Number": "",
+          "Experiment Platform": "",
+          "Study Factor Name": "Spaceflight     Sex     Time",
+          "Study Publication Author List": "Jennifer Barrila  C Mark Ott  Carly LeBlanc  Satish K Mehta  Aurélie Crabbe  Phillip Stafford  Duane L Pierson  Cheryl A Nickerson",
+          "Study Assay Technology Platform": "BD Biosciences Clontech",
+          "Authoritative Source URL": "OSD-53/",
+          "Project Identifier": "",
+          "thumbnail": "/geode-py/ws/studies/OSD-53/image",
+          "Project Title": "",
+          "Study Public Release Date": 1381795200,
+          "Project Link": "",
+          "Study Publication Title": "Spaceflight modulates gene expression in the whole blood of astronauts",
+          "organism": "Homo sapiens",
+          "Accession": "OSD-53",
+          "Study Assay Technology Type": "DNA microarray",
+          "Study Title": "Spaceflight Modulates Gene Expression in Astronauts",
+          "Study Protocol Type": "P-GSE47126-3     nucleic acid extraction protocol     labelling protocol     library construction     hybridization protocol     array scanning protocol     normalization data transformation protocol",
+          "Project Type": "Spaceflight Study",
+          "Study Funding Agency": "This work was funded by USRA Sponsor Award 09930-286-01 (017991-001).",
+          "Study Factor Type": "Space Flight     sex     time",
+          "Factor Value": "",
+          "Study Description": "Astronauts are exposed to a unique combination of stressors during spaceflight, which leads to alterations in their physiology and potentially increases their susceptibility to infectious pathogens. Here we report the first microarray evaluation of any astronaut tissue sample, specifically whole blood, before and after spaceflight using an array comprising 234 well-characterized stress response genes. Differentially regulated genes included those important for DNA repair, oxidative stress, and protein folding/degradation. Microarrays comprising 234 well characterized stress-related genes were used to profile transcriptomic changes in six astronauts before and after short-duration spaceflight. Blood samples were collected for analysis from each eastronaut 10 days prior and 2-3 hours after return from spaceflight. Data submitted for platform GPL140 contain genes that have been pre-filtered by the analytical software to remove values of low certainty, resulting in missing values for some samples. Unfortunately, these original data are no longer available due to physical damage at Tulane University during hurricane Katrina, but the processed values were retained in redundant locations and these are submitted for upload to GEO.",
+          "Study Protocol Name": "P-GSE47126-3     P-GSE47126-5     P-GSE47126-6     library construction     P-GSE47126-7     P-GSE47126-8     P-GSE47126-1",
+          "Characteristics": "",
+          "Parameter Value": "",
+          "Identifiers": "GLDS-53",
+          "Data Source Accession": "E-GEOD-47126"
+        },
+        "highlight": {
+          "all": [
+            "and re-suspended in deionized water (BD Biosciences Clontech) to yield a 4 ug sample of RNA for each <em>astronaut</em>",
+            "All <em>astronaut</em> arrays (L-10 and R+0) were normalized to an average of 5 control arrays from the whole",
+            "blood of healthy non-<em>astronaut</em> control subjects."
+          ]
+        }
+      },
+      {
+        "_index": "study",
+        "_type": "docs",
+        "_id": "ZN_6g4QB28eYt3lGNrY7",
+        "_score": 8.960546,
+        "_source": {
+          "Space Program": "Japan Aerospace Exploration Agency",
+          "Flight Program": "JAXA",
+          "Study Assay Measurement Type": "transcription profiling",
+          "Study Protocol Description": "A hair root was cut into ~15 fragments by using knife under a stereoscopic microscope. Collected fragments were immersed of ISOGEN (TakaraBio, Kyoto, Japan) in tube and stirred using the Bioruptor UCD250 (Cosmo Bio, Tokyo, Japan). Next, Total RNA was purified from hair lysates by using the ISOGEN as manufacutuerer's recommendation. Total RNA was amplified using the Ambion MessageAmp aRNA kit (Thermo Fisher Scientific, MA). Each RNA was quantified using a NanoDrop-1000 spectrophotometer and quality was monitored with the Agilent 2100 Bioanalyzer (Agilent Technologies, Santa Clara, CA).     Cyanine-3 (Cy3) labeled aRNA was prepared from RNA using the MessageAmp aRNA kit (Thermo Fisher Scientific, MA) according to the manufacturer's instructions, followed by RNeasy column purification (QIAGEN, Valencia, CA). Dye incorporation and cRNA yield were checked with the NanoDrop ND-1000 Spectrophotometer.     An 1.5 ug of Cy3-labelled cRNA (specific activity >10.0 pmol Cy3/ug cRNA) was fragmented at 60C for 30 minutes in a reaction volume of 0.1ml containing 1x Agilent fragmentation buffer and 2x Agilent blocking agent following the manufacturers instructions. On completion of the fragmentation reaction, 0.1 ml of 2x Agilent hybridization buffer was added to the fragmentation mixture and hybridized to Agilent Human Gene Expression 4x44K v2 Microarray Kit (G4845A) for 17 hours at 65C in a rotating Agilent hybridization oven. After hybridization, microarrays were washed 1 minute at room temperature with GE Wash Buffer 1 (Agilent) and 1 minute with 37C GE Wash buffer 2 (Agilent), then dried immediately by brief centrifugation.     Slides were scanned on the Agilent DNA Microarray Scanner (G2505B)     The scanned images were analyzed with Feature Extraction Software (Agilent) using default parameters to obtain background subtracted and spatially detrended Processed Signal intensities. Features flagged in Feature Extraction as Feature Non-uniform outliers were excluded.     In each mission, five strands of hair were sampled six times from each astronaut within the period of July 2009 to February 2013. The sampling timings were as follows: 6 sampling time points (Fig 1); first preflight (Launch (L) -180 to -90 days: 6 to 3 months before launch), second preflight (L-60 to -14: 2 months to 2 weeks before launch), first inflight (L+20 to 37: 20 to 37 days after launch), second inflight (Return (R) -20 to -7: 20 to 7 days before return), first postflight (R+2 to 7: 2 to 7 days after return), and second postflight (R+30 to 90: from 1 to 3 months after return).  In sampling day, two astronauts were paired and plucked another hair sample using tweezer in the direction of hair growth without damaging the hair roots. These plucked samples were stored at -80C until analysis.",
+          "Material Type": "Hair follicle",
+          "Study Identifier": "OSD-174",
+          "Study Person": {
+            "First Name": "Masaya Masahiro",
+            "Middle Initials": "",
+            "Last Name": "Seki Terada"
+          },
+          "ESA Acronym": "",
+          "Acknowledgments": "",
+          "Managing NASA Center": "",
+          "Data Source Type": "cgene",
+          "Mission": {
+            "Start Date": "",
+            "End Date": "",
+            "Name": ""
+          },
+          "Study Grant Number": "",
+          "Experiment Platform": "",
+          "Study Factor Name": "Sex     Tim     Spaceflight     Time",
+          "Study Publication Author List": "Terada M  Seki M  Takahashi R  Yamada S et al.",
+          "Study Assay Technology Platform": "Agilent",
+          "Authoritative Source URL": "OSD-174/",
+          "Project Identifier": "",
+          "thumbnail": "/geode-py/ws/studies/OSD-174/image",
+          "Project Title": "",
+          "Study Public Release Date": 1459382400,
+          "Project Link": "",
+          "Study Publication Title": "Effects of a Closed Space Environment on Gene Expression in Hair Follicles of Astronauts in the International Space Station.",
+          "organism": "Homo sapiens",
+          "Accession": "OSD-174",
+          "Study Assay Technology Type": "DNA microarray",
+          "Study Title": "Effects of a Closed Space Environment on Gene Expression in Hair Follicles of Astronauts in the International Space Station",
+          "Study Protocol Type": "RNA extraction     labeling     nucleic acid hybridization     data collection     normalization data transformation     treatment protocol",
+          "Project Type": "Spaceflight",
+          "Study Funding Agency": "The experimental cost for this study was funded by Japan Aerospace Exploration Agency (JAXA).",
+          "Study Factor Type": "Sex     root     Space Flight     time",
+          "Factor Value": "",
+          "Study Description": "In recent times, long-term stay has become a common occurrence in the International Space Station (ISS). However, adaptation to the space environment can sometimes pose physiological problems to the astronauts after their return. Therefore, it is important to develop healthcare technologies for astronauts. In this study, hair, an easy-to-obtain sample, was identified as the candidate. In order to investigate the genetic changes in human hair during space flight, the hair follicles of 10 astronauts were analyzed by DNA microarray and real time q-PCR analyses. Space environment induced gene expression of hair follicles of astronaut was measured 6 differnent times included 2 in flight on orbit. Ten independent experiments were performed on differing astronauts. and the sampling day was differed for each astronaut because of their schedules.",
+          "Study Protocol Name": "RNA extraction     labeling     nucleic acid hybridization     data collection     normalization data transformation     treatment protocol",
+          "Characteristics": "",
+          "Parameter Value": "",
+          "Identifiers": "GLDS-174",
+          "Data Source Accession": "E-GEOD-74708"
+        },
+        "highlight": {
+          "all": [
+            "In each mission, five strands of hair were sampled six times from each <em>astronaut</em> within the period of",
+            "<em>cgene</em>",
+            "Space environment induced gene expression of hair follicles of <em>astronaut</em> was measured 6 differnent times"
+          ]
+        }
+      },
+      {
+        "_index": "study",
+        "_type": "docs",
+        "_id": "f2Rsf40BA9RL2X-SJu7Q",
+        "_score": 7.7999177,
+        "_source": {
+          "Authoritative Source URL": "OSD-624/",
+          "Flight Program": "Virgin Galactic SpaceShipTwo",
+          "Mission": {
+            "End Date": "2021-06-11",
+            "Start Date": "2021-06-11",
+            "Name": "Unity 22"
+          },
+          "Material Type": "",
+          "Project Identifier": "UF-HT-KFT-01",
+          "Accession": "OSD-624",
+          "Identifiers": "GLDS-611",
+          "Study Identifier": "OSD-624",
+          "Study Protocol Name": "Growth Protocol     Treatment Protocol     sample collection     Nucleic Acid Extraction     Library Construction     Nucleic Acid Sequencing     GeneLab raw data processing protocol     GeneLab RNAseq data processing protocol",
+          "Study Assay Technology Type": "RNA Sequencing (RNA-Seq)",
+          "Acknowledgments": "The authors also thank NASA FOP Ryan Dibley, for on-site support of the operations and guidance. We thank the Virgin Galactic personnel who supported experiment operations at Spaceport America launch facilities, in particular Maya Naphade and the other members of the flight crew. We appreciate support and services from members of UF Interdisciplinary Center for Biotechnology Research (ICBR) in cores of Bioinformatics (RRID:SCR_019120), NextGen DNA sequencing (RRID:SCR_019152) and Gene Expression and Genotyping (RRID:SCR_019145), and the support of all members of the UF Space Plants Laboratory.",
+          "Study Assay Technology Platform": "Illumina",
+          "Study Person": {
+            "Last Name": "Ferl Zhou Strickland Haveman Callaham Bandla Ambriz Paul",
+            "Middle Initials": " F J B",
+            "First Name": "Robert Mingqi Hunter Natasha Jordan Sirisha Daniel Anna-Lisa"
+          },
+          "Study Protocol Type": "growth protocol     sample treatment protocol     sample collection     Nucleic Acid Extraction     Library Construction     Nucleic Acid Sequencing     data transformation     data transformation",
+          "Space Program": "NASA",
+          "Study Title": "Arabidopsis transcriptome in Virgin Galactic human-tended suborbital spaceflight",
+          "Study Factor Type": "time     Gravity, Altered     Organism Part",
+          "Study Public Release Date": 1707177600,
+          "Parameter Value": "",
+          "thumbnail": "/geode-py/ws/studies/OSD-624/image",
+          "Study Factor Name": "Time     Altered Gravity     Organism Part",
+          "Study Assay Measurement Type": "transcription profiling",
+          "Project Type": "High Altitude Study",
+          "Factor Value": "",
+          "Data Source Accession": "PRJNA984625",
+          "Project Title": "",
+          "Study Funding Agency": "NASA Flight Opportunities Program (FOP) grant #80NSSC18K1294",
+          "Study Protocol Description": "Plant growth conditions applying Kennedy Space Center Fixation Tubes (KFTs) has been previously described. In brief, the Arabidopsis thaliana seeds of Col-0 were grown on 10cm square petri plates on solid nutrient gel (1% Phytagel, 0.5× MS media, 5g/L sucrose) under constant light in a broad-spectrum LED bank (100 µmoles/m2 ) . After 4 days plants were hand-carried to the launch location on a commercial air flight (around 8-h dark), and then the plates of seedlings were placed in an LED-lit (80 µmoles/m2 ) growth habitat fashioned in the Virgin Galactic Hanger and flown for three additional days.     At 04:00 on Launch Day six, 7-day old plants were transferred from the surface of the growth plates to the surface of a previously prepared stainless steel coupon containing a surface layer of nutrient gel (1% Phytagel, 0.5× MS media, 5g/L sucrose) . The prepared coupons were kept vertical in a ventilated, cool (23°-25° C) environment until being assembled into the Flight and the Ground Control KFTs at 07:00. The Flight KFTs were Turned Over to the Virgin Galactic support crew at 07:20, and were then taken by the support crew to the astronaut.     Samples were taken throughout the VG Unity 22 suborbital spaceflight profile. Plant materials were fixed at three time points, including F1 (During the climb phase of the spaceflight system – approximately 4 minutes before release of spaceship from mothership), F2 (the end of hyper-g and the beginning of approximate 3-min microgravity), and F3 (the end of 3-min microgravity). These three timepoints bracket major transitions from ground to space. Arabidopsis thaliana, Col-0 (Arabidopsis) seedlings were well settled onto agar coated mesh coupons and sealed in the KFT supported environment as previously described. KFTs were actuated (which brings the fixative into contact with the biology) by the suborbital astronaut at the three designated time points. The KFTs were deployed as a wearable payload attached to the astronaut’s calf for easy-access during the flight. The loaded KFTs were secured within the pouch by the astronaut just prior to being deployed to the vehicle. Each KFT remained secured in the pouch until astronaut-actuation in turn at F1, F2 and F3, and then re-stowed in turn until their return to the investigators post-flight. Ground Controls were kept in an analog pouch that was worn by one of the investigators, and actuated approximately at the same F1, F2 and F3 time points, these times within the Ground Control are labeled G1, G2, and G3.     At least two individual plants from one KFT in each condition constituted a biological replicate and 3 replicates were generated for each condition. Seedlings were dissected into roots, leaves and hypocotyls for downstream applications, whereas the intervening hypocotyls were set aside. RNA extraction for tissues of roots or leaves was performed using Qiagen RNeasy Plant mini kit (Qiagen, Germantown, USA). The concentration of resulted RNA samples was determined on Qubit 2.0 Fluorometer (Thermo Fisher Scientific, Waltham, USA) and the quality was assessed using Agilent 2100 Bioanalyzer (Agilent, Santa Clara, USA). Approximately 100 ng of total RNA was used to produce mRNA using NEBNext Poly(A) mRNA Magnetic Isolation Module (NEB, Ipswich, USA).     RNA library construction was performed using NEBNext Ultra II Directional RNA Library Prep Kit (NEB) with 2/3 of poly A enriched RNA. Each uniquely barcoded library was enriched by 15 cycles of amplification, and then purified with AMPure beads (Beckman Coulter, Indianapolis, USA). The prepared libraries were sized on the Bioanalyzer and quantified using the Qubit 2.0 Fluorometer.     The individual libraries were pooled in equimolar concentration, then treated with Free Adapter Blocking Reagent (Illumina, San Diego, USA) in order to minimize the presence of adapter-dimers and index hopping rates. This library pool was diluted to 0.8 nM and sequenced on Illumina NovaSeq6000 platform using one S4 flow cell lane (2 × 151 cycles). The instrument computer was using NovaSeq Control Software v1.6 while Cluster and SBS consumables were v1.5. The final library loading concentration was 120 pM with 1% PhiX spike-in as a control. The fastq files were generated using the BCL2fastQ function in Illumina BaseSpace portal.     Fastq format was checked with fastq_utils v0.25.1. Quality assessment of reads was performed with FastQC v0.12.1 and reports were combined with MultiQC v1.26. rRNA percentages of reads were estimated with the 'hts_SeqScreener' program of htstream v1.3.3 screened against a fasta file of A-thaliana rRNA sequences retrieved from NCBI on 01-Sep-2021.     Data were processed as described in GL-DPPD-7101-G (https://github.com/nasa/GeneLab_Data_Processing/blob/master/RNAseq/Pipeline_GL-DPPD-7101_Versions/GL-DPPD-7101-G.md), using NF_RCP version 2.1.0 (https://github.com/nasa/GeneLab_RNASeq_Workflow/tree/NF_RCP_2.1.0). In short, raw fastq files were filtered using Trim Galore! (version 0.6.10) powered by Cutadapt (version 4.2). Trimmed fastq file quality was evaluated with FastQC (version 0.12.1), and MultiQC (version 1.26) was used to generate MultiQC reports. Arabidopsis Thaliana STAR and RSEM references were built using STAR (version 2.7.11b) and RSEM (version 1.3.3), respectively, Ensembl Plants release 59, genome assembly TAIR10 (Arabidopsis_thaliana.TAIR10.dna.toplevel.fa) and the following gtf annotation file: Arabidopsis_thaliana.TAIR10.59.gtf. Trimmed reads were aligned to the Arabidopsis Thaliana STAR reference with STAR (version 2.7.11b) and alignment log files were compiled with MultiQC (version 1.26). Aligned reads were assessed for strandedness using RSeQC infer_experiment.py (version 5.0.4), gene body coverage using RSeQC geneBody_coverage.py (version 5.0.4), inner distance was assessed using RSeQC inner_distance.py (version 5.0.4), and distribution of RNA features using RSeQC read_distribution.py (version 5.0.4). Aligned reads from all samples were quantified using RSEM (version 1.3.3), with strandedness set to reverse and RSEM count log files were compiled with MultiQC (version 1.26). A runsheet was generated with dp_tools (version 1.3.8) and the runsheet and quantification data were imported to R (version 4.4.2) with tximport (version 1.34.0) to generate the RSEM raw counts data. A set of rRNA-removed raw counts data was also created by removing Ensembl IDs that map to ribosomal RNA (rRNA) from the RSEM gene count data.",
+          "Experiment Platform": "Kennedy Space Center Fixation Tubes (KFTs)",
+          "Characteristics": "",
+          "Study Grant Number": "",
+          "Study Publication Author List": "Ferl RJ  Zhou M  Strickland HF  Haveman NJ  Callaham JB  Bandla S  Ambriz D  Paul AL.",
+          "Project Link": "",
+          "Study Publication Title": "Transcriptomic dynamics in the transition from ground to space are revealed by Virgin Galactic human-tended suborbital spaceflight.",
+          "Managing NASA Center": "Kennedy Space Center (KSC)",
+          "Study Description": "The Virgin Galactic Unity 22 mission conducted the first astronaut-manipulated suborbital spaceflight experiment. The experiment examined the operationalization of Kennedy Space Center Fixation Tubes (KFTs) as a generalizable approach to preserving biology at various phases of suborbital flight. The biology chosen for this experiment was Arabidopsis thaliana, ecotype Col-0, because of the plant’s history of spaceflight experimentation within KFTs and wealth of comparative data from orbital experiments. KFTs were deployed as a wearable device, a leg pouch attached to the astronaut, which proved to be operationally effective during the course of the flight. Data from the inflight samples indicated that the microgravity period of the flight elicited the strongest transcriptomic responses as measured by the number of genes showing differential expression. Genes related to reactive oxygen species and stress, as well as genes associated with orbital spaceflight, were highly represented among the suborbital gene expression profile. In addition, gene families largely unaffected in orbital spaceflight were diversely regulated in suborbital flight, including stress-responsive transcription factors. The human-tended suborbital experiment demonstrated the operational effectiveness of the KFTs in suborbital flight and suggests that rapid transcriptomic responses are a part of the temporal dynamics at the beginning of physiological adaptation to spaceflight.",
+          "organism": "Arabidopsis thaliana",
+          "Data Source Type": "cgene",
+          "ESA Acronym": ""
+        },
+        "highlight": {
+          "all": [
+            "KFTs were actuated (which brings the fixative into contact with the biology) by the suborbital <em>astronaut</em>",
+            "The loaded KFTs were secured within the pouch by the <em>astronaut</em> just prior to being deployed to the vehicle",
+            "Each KFT remained secured in the pouch until <em>astronaut</em>-actuation in turn at F1, F2 and F3, and then re-stowed"
+          ]
+        }
+      }
+    ]
+  }
+}

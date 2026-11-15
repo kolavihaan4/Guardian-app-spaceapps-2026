@@ -1,0 +1,35 @@
+{
+  "name": "astrovitals",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Space-health & human-vitals monitoring prototype: NASA space/environment data beside wearable vitals (NASA Space Apps 2026).",
+  "license": "Apache-2.0",
+  "type": "module",
+  "workspaces": [
+    "packages/shared",
+    "apps/server",
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n server,web -c blue,magenta \"npm run dev -w @astrovitals/server\" \"npm run dev -w @astrovitals/web\"",
+    "build": "npm run build -w @astrovitals/web",
+    "start": "npm run start -w @astrovitals/server",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "gen:key": "node -e \"console.log(require('node:crypto').randomBytes(32).toString('base64'))\"",
+    "setup": "node scripts/setup.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.1",
+    "concurrently": "^10.0.5",
+    "typescript": "5.9.3",
+    "vitest": "^5.0.3"
+  },
+  "allowScripts": {
+    "esbuild": true
+  }
+}

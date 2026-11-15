@@ -1,0 +1,112 @@
+{
+  "_meta": {
+    "note": "Verbatim live response from NASA EONET v3 captured 2026-10-05 ~23:43 UTC. Arrays longer than arraysTruncatedTo were cut to their first elements; no values were edited or invented. This _meta key is NOT part of the API response.",
+    "request": "GET https://eonet.gsfc.nasa.gov/api/v3/categories/wildfires?limit=3&days=30",
+    "httpStatus": 200,
+    "latencySeconds": 0.284,
+    "responseContentType": "application/json; charset=utf-8",
+    "xRateLimitLimit": null,
+    "xRateLimitRemaining": null,
+    "accessControlAllowOrigin": "*",
+    "arraysTruncatedTo": 5,
+    "rawBytes": 2356
+  },
+  "title": "EONET Events: Wildfires",
+  "description": "Wildland fires includes all nature of fire, in forest and plains, as well as those that spread to become urban and industrial fire events. Fires may be naturally caused or manmade.",
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/categories/wildfires",
+  "events": [
+    {
+      "id": "EONET_25043",
+      "title": "Prescribed Fire D3 Bear RX, Greenlee, Arizona",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_25043",
+      "closed": null,
+      "categories": [
+        {
+          "id": "wildfires",
+          "title": "Wildfires"
+        }
+      ],
+      "sources": [
+        {
+          "id": "IRWIN",
+          "url": "https://irwin.doi.gov/observer/incidents/2026-AZASF-000967"
+        }
+      ],
+      "geometry": [
+        {
+          "magnitudeValue": 5072,
+          "magnitudeUnit": "acres",
+          "date": "2026-10-02T17:58:00Z",
+          "type": "Point",
+          "coordinates": [
+            -109.401883,
+            33.447133
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EONET_25042",
+      "title": "Wildfire Bull, Washoe, Nevada",
+      "description": "15 Miles W from Reno, NV",
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_25042",
+      "closed": null,
+      "categories": [
+        {
+          "id": "wildfires",
+          "title": "Wildfires"
+        }
+      ],
+      "sources": [
+        {
+          "id": "IRWIN",
+          "url": "https://irwin.doi.gov/observer/incidents/2026-NVTMFX-030869"
+        }
+      ],
+      "geometry": [
+        {
+          "magnitudeValue": 1529,
+          "magnitudeUnit": "acres",
+          "date": "2026-10-02T14:26:00Z",
+          "type": "Point",
+          "coordinates": [
+            -119.987683,
+            39.539067
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EONET_25045",
+      "title": "Prescribed Fire Starvation 11A Rx, Wallowa, Oregon",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_25045",
+      "closed": null,
+      "categories": [
+        {
+          "id": "wildfires",
+          "title": "Wildfires"
+        }
+      ],
+      "sources": [
+        {
+          "id": "IRWIN",
+          "url": "https://irwin.doi.gov/observer/incidents/2026-ORWWF-000669"
+        }
+      ],
+      "geometry": [
+        {
+          "magnitudeValue": 719,
+          "magnitudeUnit": "acres",
+          "date": "2026-09-30T15:52:00Z",
+          "type": "Point",
+          "coordinates": [
+            -117.251676,
+            45.701354
+          ]
+        }
+      ]
+    }
+  ]
+}

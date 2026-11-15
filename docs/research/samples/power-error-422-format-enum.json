@@ -1,0 +1,16 @@
+{
+  "detail": [
+    {
+      "type": "enum",
+      "loc": [
+        "query",
+        "format"
+      ],
+      "msg": "Input should be 'csv', 'json', 'ascii', 'netcdf', 'icasa' or 'xarray'",
+      "input": "geojson",
+      "ctx": {
+        "expected": "'csv', 'json', 'ascii', 'netcdf', 'icasa' or 'xarray'"
+      }
+    }
+  ]
+}

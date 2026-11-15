@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#e8eff3">
+  <meta name="description" content="Still — a flexible dashboard template with reusable cards and local workspace controls.">
+  <title>Dashboard · Still</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="background-trees" aria-hidden="true"></div>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="site-header" aria-label="Workspace navigation">
+    <div class="header-inner">
+      <a class="brand" href="#overview" aria-label="Still dashboard"><span class="brand-mark" data-icon="mountain"></span><span>still<span class="brand-dot">.</span></span></a>
+      <nav class="primary-nav" id="primary-navigation" aria-label="Main pages">
+      <a href="#overview" data-page="overview"><span data-icon="overview"></span><span>Dashboard</span></a>
+      <a href="#workspace" data-page="workspace"><span data-icon="grid"></span><span>My cards</span><span class="nav-count" id="card-count">0</span></a>
+      <a href="#collections" data-page="collections"><span data-icon="layers"></span><span>Collections</span></a>
+      <a href="#components" data-page="components"><span data-icon="shapes"></span><span>Card library</span></a>
+      <a href="#settings" data-page="settings"><span data-icon="settings"></span><span>Settings</span></a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-button header-search" data-action="search" aria-label="Search pages, cards, and collections" title="Search (/)"><span data-icon="search"></span></button>
+        <button class="icon-button header-help" data-action="guide" aria-label="Open quick guide" title="Quick guide"><span data-icon="help"></span></button>
+        <button class="button button-primary header-add" data-action="add-card"><span data-icon="plus"></span><span>Add card</span></button>
+      </div>
+    </div>
+  </header>
+  <div class="app-shell" id="app-shell">
+    <main id="main-content" tabindex="-1"></main>
+    <footer class="page-footer"><span>Still · v1.0</span><span><i></i> Local workspace</span></footer>
+  </div>
+  <dialog id="editor-dialog" aria-labelledby="editor-title">
+    <form id="editor-form">
+      <div class="dialog-heading"><div><h2 id="editor-title">Add card</h2></div><button type="button" class="icon-button" data-close aria-label="Close"><span data-icon="x"></span></button></div>
+      <p class="dialog-description" id="editor-description">Choose a card type, give it a title, and add any details.</p>
+      <div id="card-type-fields"><label class="field">Card type <select name="type" id="item-type" aria-describedby="card-type-help"><option value="note">Note</option><option value="metric">Metric placeholder</option><option value="chart">Chart placeholder</option></select></label><p class="field-help" id="card-type-help" aria-live="polite">Use a note for observations and project details.</p></div>
+      <label class="field">Title <span class="optional">Required</span><input id="item-title" name="title" required maxlength="60" placeholder="Card title" autocomplete="off"></label>
+      <label class="field">Details <span class="optional">Optional</span><textarea id="item-description" name="description" rows="3" maxlength="240" placeholder="Add a short note or description"></textarea></label>
+      <div id="card-fields"><label class="field">Collection <span class="optional">Optional</span><select name="collection" id="item-collection" aria-describedby="collection-help"><option value="">No collection</option></select></label><p class="field-help" id="collection-help">Group related cards together, or leave this blank.</p></div>
+      <div class="dialog-footer"><button type="button" class="button button-quiet" data-close>Cancel</button><button class="button button-primary" id="editor-submit" type="submit">Add card <span data-icon="plus"></span></button></div>
+    </form>
+  </dialog>
+  <dialog id="customize-dialog" aria-labelledby="customize-title">
+    <div class="dialog-heading"><div><p class="eyebrow">Dashboard layout</p><h2 id="customize-title">Customize dashboard</h2></div><button class="icon-button" data-close aria-label="Close"><span data-icon="x"></span></button></div>
+    <p class="dialog-description">Choose the sections shown on your dashboard.</p>
+    <div id="visibility-options"></div>
+    <div class="dialog-footer"><button class="button button-primary" data-close>Done <span data-icon="check"></span></button></div>
+  </dialog>
+  <dialog id="guide-dialog" aria-labelledby="guide-title">
+    <div class="dialog-heading"><div><p class="eyebrow">Space Apps project</p><h2 id="guide-title">Quick guide</h2></div><button class="icon-button" data-close aria-label="Close"><span data-icon="x"></span></button></div>
+    <p class="dialog-description">A simple starting point for your project. Everything begins with a card.</p>
+    <div class="guide-step"><span>01</span><div><h3>Add your first card</h3><p>Choose Add card, select a type, and give it a title. Notes hold your text; metrics and charts start as blank placeholders.</p></div></div>
+    <div class="guide-step"><span>02</span><div><h3>Find and organize your work</h3><p>Open My cards to edit a card or pin a favorite. Create a collection to group related cards. Search finds titles and details.</p></div></div>
+    <div class="guide-step"><span>03</span><div><h3>Make the view work for you</h3><p>Dashboard brings recent cards and collections together. Customize view hides sections you don’t need. On mobile, swipe the page links at the top.</p></div></div>
+    <div class="info-note"><span data-icon="info"></span><p>Changes save automatically in this browser. Use Export layout in Settings to keep a copy.</p></div>
+    <div class="dialog-footer"><button class="button button-quiet" data-close>Got it</button><button class="button button-primary" data-action="guide-start">Add card <span data-icon="plus"></span></button></div>
+  </dialog>
+  <dialog id="search-dialog" class="search-dialog" aria-labelledby="search-title">
+    <div class="search-input-wrap"><span data-icon="search"></span><label class="sr-only" id="search-title" for="search-input">Search pages, cards, and collections</label><input id="search-input" type="search" placeholder="Find a page, card, or collection…" autocomplete="off"><button class="icon-button" data-close aria-label="Close search"><span data-icon="x"></span></button></div>
+    <div id="search-results" class="search-results"></div><p class="search-hint">Select a result to open it. <kbd>esc</kbd> to close.</p>
+  </dialog>
+  <dialog id="confirm-dialog" class="small-dialog" aria-labelledby="confirm-title"><div class="dialog-heading"><h2 id="confirm-title">Remove this card?</h2><button class="icon-button" data-close aria-label="Close"><span data-icon="x"></span></button></div><p id="confirm-description" class="dialog-description"></p><div class="dialog-footer"><button class="button button-quiet" data-close>Keep it</button><button class="button button-danger" id="confirm-action">Remove</button></div></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden><span data-icon="check-circle"></span><span id="toast-text"></span></div>
+  <noscript><p class="noscript">Please enable JavaScript to use this interactive frontend template.</p></noscript>
+</body>
+</html>

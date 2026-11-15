@@ -1,0 +1,121 @@
+import json
+import random
+
+CREW_BASELINES = {
+    "C001": {"hr": 60, "spo2": 98, "temp": 36.7, "sodium": 140, "glucose": 88},
+    "C002": {"hr": 64, "spo2": 98, "temp": 36.8, "sodium": 141, "glucose": 92},
+    "C003": {"hr": 58, "spo2": 99, "temp": 36.6, "sodium": 139, "glucose": 85},
+    "C004": {"hr": 62, "spo2": 98, "temp": 36.8, "sodium": 140, "glucose": 90},
+}
+
+TOOL_SETS = [
+    ["Pulse Oximeter", "Blood Pressure Cuff", "Hydration Pack"],
+    ["Pulse Oximeter", "Thermometer", "Ultrasound", "Hydration Pack"],
+    ["Eye Exam Kit", "Blood Pressure Cuff", "Sleep Mask", "Hydration Pack"],
+    ["Pulse Oximeter", "ECG Patch", "Hydration Pack", "Electrolyte Tabs"],
+]
+
+SPACE_EVENTS = [
+    {"kp_index": 2, "solar_flare": "None", "sep_event": "None"},
+    {"kp_index": 5, "solar_flare": "M1.4", "sep_event": "None"},
+    {"kp_index": 7, "solar_flare": "X1.2", "sep_event": "S2"},
+    {"kp_index": 4, "solar_flare": "C8.5", "sep_event": "S1"},
+]
+
+SYSTEM_PROMPT = (
+    "You are AstroVitals Overarching AI, an onboard deep-space crew health-data exploration assistant. "
+    "Never diagnose. Always check sensor quality first, compare against the crew member's personal "
+    "preflight baseline, ask a confirmation question, restrict action plans to available_tools, and "
+    "flag contact_ground_support when persistent multi-vital drift or high-risk thresholds occur. "
+    "Respond strictly in valid JSON."
+)
+
+def build_sample(idx: int) -> dict:
+    crew_id = random.choice(list(CREW_BASELINES.keys()))
+    base = CREW_BASELINES[crew_id]
+    tools = random.choice(TOOL_SETS)
+    weather = random.choice(SPACE_EVENTS)
+    scenario = random.choice(["nominal", "sensor_artifact", "mild_drift", "escalate"])
+
+    if scenario == "nominal":
+        hr = base["hr"] + random.randint(-4, 6)
+        spo2 = random.randint(97, 99)
+        temp = round(base["temp"] + random.uniform(-0.2, 0.2), 1)
+        verified = True
+        escalate = False
+        reason = None
+        quality = "All telemetry sits within expected sensor bounds and personal preflight baseline."
+        causes = ["Normal circadian variation in microgravity"]
+        confirm = "Confirming routine check-in—are you feeling well-rested ahead of your next scheduled task?"
+        plan = [f"Continue routine logging with {tools[0]}", "Maintain standard hydration schedule"]
+    elif scenario == "sensor_artifact":
+        hr = base["hr"] + random.randint(45, 70)
+        spo2 = random.randint(82, 88)
+        temp = base["temp"]
+        verified = False
+        escalate = False
+        reason = None
+        quality = "Out-of-range SpO2/HR spike with unverified sensor contact suggests motion artifact or loose strap rather than physiological change."
+        causes = ["Wearable strap shift during EVA/resistive exercise", "Optical sensor perfusion drop in cool cabin"]
+        confirm = "Can you check if your wearable sensor is snug against your wrist and confirm you feel normal?"
+        plan = [f"Re-seat wearable and cross-check with {tools[0]}", "Re-test after 3 minutes at rest"]
+    elif scenario == "mild_drift":
+        hr = base["hr"] + random.randint(18, 28)
+        spo2 = random.randint(93, 95)
+        temp = round(base["temp"] + random.uniform(0.3, 0.6), 1)
+        verified = True
+        escalate = False
+        reason = None
+        quality = "Sensor contact verified; moderate upward HR drift and mild SpO2 dip relative to preflight median."
+        causes = ["Microgravity fluid shift or mild dehydration", f"Elevated workload during Kp-{weather['kp_index']} geomagnetic activity"]
+        confirm = "Have you noticed mild fatigue, headache, or reduced fluid intake over the past 12 hours?"
+        plan = [f"Verify resting vitals using {tools[0]}", "Rehydrate and log intake", "Re-evaluate vitals in 30 minutes"]
+    else:
+        hr = base["hr"] + random.randint(42, 60)
+        spo2 = random.randint(88, 91)
+        temp = round(base["temp"] + random.uniform(1.3, 1.9), 1)
+        verified = True
+        escalate = True
+        reason = f"Verified concurrent elevation in HR ({hr} bpm vs {base['hr']} baseline), Temp ({temp}°C), and low SpO2 ({spo2}%) under Kp-{weather['kp_index']} conditions."
+        quality = "Sensor placement verified; persistent multi-parameter deviation outside personal preflight range."
+        causes = ["Acute physiological stress or febrile response", "Environmental/radiation stressor compounding dehydration"]
+        confirm = "Are you experiencing dizziness, chest tightness, or difficulty concentrating right now?"
+        plan = [f"Repeat measurements immediately with {tools[0]}", f"Prepare {tools[-1]} per Flight Surgeon checklist", "Initiate Ground Support telemetry downlink"]
+
+    user_payload = {
+        "crew_id": crew_id,
+        "vitals": {
+            "hr_bpm": hr,
+            "preflight_hr_median": base["hr"],
+            "spo2_pct": spo2,
+            "temp_c": temp,
+            "preflight_temp_median": base["temp"],
+            "sensor_verified": verified,
+        },
+        "space_weather": weather,
+        "available_tools": tools,
+    }
+
+    assistant_payload = {
+        "data_quality_check": quality,
+        "baseline_comparison": f"HR {hr} bpm (preflight median {base['hr']} bpm), SpO2 {spo2}%, Temp {temp}°C (preflight {base['temp']}°C).",
+        "common_causes": causes,
+        "confirmation_prompt": confirm,
+        "available_tool_action_plan": plan,
+        "contact_ground_support": escalate,
+        "ground_support_reason": reason,
+    }
+
+    return {
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": json.dumps(user_payload)},
+            {"role": "assistant", "content": json.dumps(assistant_payload)},
+        ]
+    }
+
+if __name__ == "__main__":
+    with open("astrovitals_train.jsonl", "w", encoding="utf-8") as f:
+        for i in range(300):
+            f.write(json.dumps(build_sample(i)) + "\n")
+    print("Generated 300 training examples in astrovitals_train.jsonl")

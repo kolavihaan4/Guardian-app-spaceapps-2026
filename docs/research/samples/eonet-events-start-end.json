@@ -1,0 +1,132 @@
+{
+  "_meta": {
+    "note": "Verbatim live response from NASA EONET v3 captured 2026-10-05 ~23:43 UTC. Arrays longer than arraysTruncatedTo were cut to their first elements; no values were edited or invented. This _meta key is NOT part of the API response.",
+    "request": "GET https://eonet.gsfc.nasa.gov/api/v3/events?status=all&start=2026-09-01&end=2026-09-30&limit=3",
+    "httpStatus": 200,
+    "latencySeconds": 0.387,
+    "responseContentType": "application/json; charset=utf-8",
+    "xRateLimitLimit": "60",
+    "xRateLimitRemaining": "53",
+    "accessControlAllowOrigin": "*",
+    "arraysTruncatedTo": 5,
+    "rawBytes": 7514
+  },
+  "title": "EONET Events",
+  "description": "Natural events from EONET.",
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/events",
+  "events": [
+    {
+      "id": "EONET_25001",
+      "title": "Flood in Malaysia 1104207",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_25001",
+      "closed": "2026-10-02T00:00:00Z",
+      "categories": [
+        {
+          "id": "floods",
+          "title": "Floods"
+        }
+      ],
+      "sources": [
+        {
+          "id": "GDACS",
+          "url": "https://www.gdacs.org/report.aspx?eventtype=FL&eventid=1104207"
+        }
+      ],
+      "geometry": [
+        {
+          "magnitudeValue": null,
+          "magnitudeUnit": null,
+          "date": "2026-09-30T20:00:00Z",
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                116.0823267,
+                5.898481554954956
+              ],
+              [
+                116.08453695560033,
+                5.898535813684453
+              ],
+              [
+                116.08674188650133,
+                5.898698459158911
+              ],
+              [
+                116.08893618083131,
+                5.898969099551137
+              ],
+              [
+                116.09111455234306,
+                5.899347082864721
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EONET_25014",
+      "title": "Wildfire in The Democratic Republic of Congo 1032552",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_25014",
+      "closed": "2026-10-02T00:00:00Z",
+      "categories": [
+        {
+          "id": "wildfires",
+          "title": "Wildfires"
+        }
+      ],
+      "sources": [
+        {
+          "id": "GDACS",
+          "url": "https://www.gdacs.org/report.aspx?eventtype=WF&eventid=1032552"
+        }
+      ],
+      "geometry": [
+        {
+          "magnitudeValue": 10102,
+          "magnitudeUnit": "hectare",
+          "date": "2026-09-30T19:00:00Z",
+          "type": "Point",
+          "coordinates": [
+            30.075264052032,
+            -7.2493543377792
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EONET_25045",
+      "title": "Prescribed Fire Starvation 11A Rx, Wallowa, Oregon",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_25045",
+      "closed": null,
+      "categories": [
+        {
+          "id": "wildfires",
+          "title": "Wildfires"
+        }
+      ],
+      "sources": [
+        {
+          "id": "IRWIN",
+          "url": "https://irwin.doi.gov/observer/incidents/2026-ORWWF-000669"
+        }
+      ],
+      "geometry": [
+        {
+          "magnitudeValue": 719,
+          "magnitudeUnit": "acres",
+          "date": "2026-09-30T15:52:00Z",
+          "type": "Point",
+          "coordinates": [
+            -117.251676,
+            45.701354
+          ]
+        }
+      ]
+    }
+  ]
+}

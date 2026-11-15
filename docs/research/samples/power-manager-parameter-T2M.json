@@ -1,0 +1,47 @@
+{
+  "T2M": {
+    "temporal": {
+      "HOURLY": {
+        "name": "Temperature at 2 Meters",
+        "definition": "The average air (dry bulb) temperature at 2 meters above the surface of the earth.",
+        "communities": [
+          "AG",
+          "RE",
+          "SB"
+        ],
+        "calculated": false
+      },
+      "DAILY": {
+        "name": "Temperature at 2 Meters",
+        "definition": "The average air (dry bulb) temperature at 2 meters above the surface of the earth.",
+        "communities": [
+          "AG",
+          "RE",
+          "SB"
+        ],
+        "calculated": false
+      },
+      "MONTHLY": {
+        "name": "Temperature at 2 Meters",
+        "definition": "The average air (dry bulb) temperature at 2 meters above the surface of the earth.",
+        "communities": [
+          "AG",
+          "RE",
+          "SB"
+        ],
+        "calculated": false
+      },
+      "CLIMATOLOGY": {
+        "name": "Temperature at 2 Meters",
+        "definition": "The average air (dry bulb) temperature at 2 meters above the surface of the earth.",
+        "communities": [
+          "AG",
+          "RE",
+          "SB"
+        ],
+        "calculated": false
+      }
+    },
+    "type": "METEOROLOGY"
+  }
+}

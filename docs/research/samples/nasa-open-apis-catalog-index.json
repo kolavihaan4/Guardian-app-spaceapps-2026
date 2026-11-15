@@ -1,0 +1,205 @@
+[
+  {
+    "id": "1",
+    "name": "APOD",
+    "summary": "Astronomy Picture of the Day",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": true,
+    "has_configurations": true
+  },
+  {
+    "id": "1",
+    "name": "Asteroids NeoWs",
+    "summary": "Near Earth Object Web Service",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": false,
+    "has_configurations": false
+  },
+  {
+    "id": "1",
+    "name": "DONKI",
+    "summary": "Space Weather Database Of Notifications, Knowledge, Information",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": false,
+    "has_configurations": false
+  },
+  {
+    "id": "1",
+    "name": "EONET",
+    "summary": "The Earth Observatory Natural Event Tracker",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": false,
+    "has_configurations": false
+  },
+  {
+    "id": "1",
+    "name": "EPIC",
+    "summary": "Earth Polychromatic Imaging Camera",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": false,
+    "has_configurations": false
+  },
+  {
+    "id": "1",
+    "name": "Exoplanet",
+    "summary": "Programmatic access to NASA's Exoplanet Archive database",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": false,
+    "has_configurations": false
+  },
+  {
+    "id": "1",
+    "name": "GIBS",
+    "summary": "Standardized web services that deliver global, full-resolution satellite imagery, enabling interactive exploration of Earth.",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": false,
+    "has_configurations": false
+  },
+  {
+    "id": "1",
+    "name": "Insight",
+    "summary": "Mars Weather Service API",
+    "tags": null,
+    "has_swagger_data": false,
+    "has_configurations": false
+  },
+  {
+    "id": "1",
+    "name": "NASA Image and Video Library",
+    "summary": "API to access the NASA Image and Video Library site at images.nasa.gov",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": false,
+    "has_configurations": false
+  },
+  {
+    "id": "1",
+    "name": "Open Science Data Repository",
+    "summary": "Programmatic interface for the Open Science Data Repository website",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": false,
+    "has_configurations": false
+  },
+  {
+    "id": "1",
+    "name": "Satellite Situation Center",
+    "summary": "System to cast geocentric spacecraft location information into a framework of (empirical) geophysical regions",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": false,
+    "has_configurations": false
+  },
+  {
+    "id": "1",
+    "name": "SSD/CNEOS",
+    "summary": "Solar System Dynamics and Center for Near-Earth Object Studies",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": false,
+    "has_configurations": false
+  },
+  {
+    "id": "1",
+    "name": "Techport",
+    "summary": "API to make NASA technology project data available in a machine-readable format",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": true,
+    "has_configurations": false
+  },
+  {
+    "id": "1",
+    "name": "TechTransfer",
+    "summary": "Patents, Software, and Tech Transfer Reports",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": false,
+    "has_configurations": false
+  },
+  {
+    "id": "1",
+    "name": "TLE API",
+    "summary": "Two line element data for earth-orbiting objects at a given point in time",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": false,
+    "has_configurations": false
+  },
+  {
+    "id": "1",
+    "name": "Vesta/Moon/Mars Trek WMTS",
+    "summary": "A Web Map Tile Service for the Vesta, Moon, and Mars Trek imagery projects",
+    "tags": [
+      "tags1",
+      "tags2",
+      "tags3",
+      "tags4"
+    ],
+    "has_swagger_data": false,
+    "has_configurations": false
+  }
+]

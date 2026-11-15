@@ -1,0 +1,82 @@
+{
+  "OSD-1": {
+    "REST_URL": "https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/OSD-1/",
+    "assays": {
+      "REST_URL": "https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/OSD-1/assays/"
+    },
+    "files": {
+      "REST_URL": "https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/OSD-1/files/"
+    },
+    "metadata": {
+      "space program": "NASA",
+      "flight program": "Space Transportation System (STS)",
+      "study assay measurement type": "transcription profiling",
+      "study protocol description": [
+        "Bacterial infections with E. coli ATCC 25922 were as previously described. A single spore isolate of Beauveria bassiana (strain GHA) was cultured on Sabouraud dextrose agar. Conidia and hyphae were harvested by passing culture through a sterile ASTM No. 100 sieve. Spores were also flown on the space shuttle and we are happy to provide information upon request. Natural infection by B. bassiana used a dosage of 9.5x10^6 spores/fly, with procedures and survival assays as previously described. Ten replicates of 20 flies each for all strains were used in all 3 experiments for the CARU hypergravity tests. The centrifuge was stopped once per day to conduct survival counts. Control survival assays after bacterial and fungal infections on wild-type, hemolectin-Gal4; UAS-GFP, imd1, imdEY08573 and spz4 were conducted at Kennedy Space Center to establish that space and Earth fly infections were proceeding in accordance with our standardized conditions.",
+        "The absorbed dose from ionizing radiation received by the flight specimens was estimated using TLD passive dosimeters located in the middeck of the space shuttle, where the payload was located. More specifically, we computed the average between three dosimeters (DLOC1, DLOC2, and DLOC3) for the mission and we divided it by the total duration of the mission to estimate the average absorbed dose rate in mGy/day. This dose rate did not include any shielding effects from the hardware where the specimens resided. The total absorbed dose in water was then computed by simply multiplying the average dose rate with the duration of the experiment. The duration of the experiment was defined as the time in space during which the specimen was 'living'. Once the specimen was frozen or fixed, the experiment was considered stopped. A table with these detailed computations for all space shuttle datasets is available on GeneLab at https://genelab.nasa.gov/environmental/radiation. The ground samples were not assessed for radiation exposure.",
+        "RNA was extracted with the Qiagen Rneasy kit according to the manufacturer's instructions."
+      ],
+      "material type": "Whole Organism",
+      "study identifier": "OSD-1",
+      "study person": {
+        "first name": "Michael Deborah",
+        "middle initials": "",
+        "last name": "George Kimbrell"
+      },
+      "esa acronym": "",
+      "acknowledgments": "",
+      "managing nasa center": "NASA Ames Research Center (ARC)",
+      "data source type": "cgene",
+      "mission": {
+        "start date": "07/04/2006",
+        "end date": "07/17/2006",
+        "name": "STS-121"
+      },
+      "study grant number": "NNA04CC76A",
+      "experiment platform": "",
+      "study factor name": [
+        "Spaceflight",
+        "Infection"
+      ],
+      "study publication author list": [
+        "Taylor Katherine",
+        "Kleinhesselink Kurt",
+        "George Michael D."
+      ],
+      "study assay technology platform": "Affymetrix",
+      "authoritative source url": "OSD-1/",
+      "project identifier": "FIT",
+      "thumbnail": "/geode-py/ws/studies/OSD-1/image",
+      "project title": "Drosophila as a model of immune function in conditions of altered gravitational force",
+      "study public release date": 1386720000,
+      "project link": "https://lsda.jsc.nasa.gov/scripts/experiment/exper.aspx?exp_index=13676",
+      "study publication title": "Toll Mediated Infection Response Is Altered by Gravity and Spaceflight in Drosophila",
+      "organism": "Drosophila melanogaster",
+      "accession": "OSD-1",
+      "study assay technology type": "DNA microarray",
+      "study title": "Expression data from drosophila melanogaster",
+      "study protocol type": [
+        "treatment protocol",
+        "chronic",
+        "RNA extraction"
+      ],
+      "project type": "Spaceflight Study",
+      "study funding agency": "NASA grants NNA04CC76A and NNA05CV40A",
+      "study factor type": [
+        "Space Flight",
+        "Infection"
+      ],
+      "factor value": "",
+      "study description": "Space travel presents unlimited opportunities for exploration and discovery, but requires a more complete understanding of the immunological consequences of long-term exposure to the conditions of spaceflight. To understand these consequences better and to contribute to design of effective countermeasures, we used the Drosophila model to compare innate immune responses to bacteria and fungi in flies that were either raised on earth or in outer space aboard the NASA Space Shuttle Discovery (STS-121). Microarrays were used to characterize changes in gene expression that occur in response to infection by bacteria and fungus in drosophila that were either hatched and raised in outer space (microgravity) or on earth (normal gravity). Whole Oregon R strain drosophila melanogaster fruit flies either raised on earth or in space that were (1) uninfected, (2) infected with bacteria (Escherichia coli), or (3) infected with fungus (Beauveria bassiana) were used for RNA extraction and hybridization on Affymetrix microarrays.",
+      "study protocol name": [
+        "treatment protocol",
+        "radiation dosimetry",
+        "RNA Extraction"
+      ],
+      "characteristics": "",
+      "parameter value": "",
+      "identifiers": "GLDS-1",
+      "data source accession": "E-GEOD-53196"
+    }
+  }
+}

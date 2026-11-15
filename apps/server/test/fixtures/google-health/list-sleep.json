@@ -1,0 +1,21 @@
+{
+  "_provenance": "SYNTHETIC — shaped after DataPoint.sleep (Sleep, SessionTimeInterval, SleepStage, SleepSummary) in the v4 discovery document (2026-10-05). Not real data.",
+  "dataPoints": [
+    {
+      "dataSource": { "platform": "FITBIT", "device": { "displayName": "Charge 6", "manufacturer": "Fitbit" } },
+      "sleep": {
+        "type": "STAGES",
+        "interval": { "startTime": "2026-10-03T04:10:00Z", "endTime": "2026-10-03T11:40:00Z", "startUtcOffset": "-18000s", "endUtcOffset": "-18000s" },
+        "summary": { "minutesInSleepPeriod": "450", "minutesAsleep": "412", "minutesAwake": "38" },
+        "metadata": { "processed": true, "mainSleep": true, "externalId": "sleep-abc-123" },
+        "stages": [
+          { "type": "LIGHT", "startTime": "2026-10-03T04:10:00Z", "endTime": "2026-10-03T05:00:00Z", "startUtcOffset": "-18000s", "endUtcOffset": "-18000s" },
+          { "type": "DEEP", "startTime": "2026-10-03T05:00:00Z", "endTime": "2026-10-03T05:45:00Z", "startUtcOffset": "-18000s", "endUtcOffset": "-18000s" },
+          { "type": "REM", "startTime": "2026-10-03T05:45:00Z", "endTime": "2026-10-03T06:10:00Z", "startUtcOffset": "-18000s", "endUtcOffset": "-18000s" },
+          { "type": "AWAKE", "startTime": "2026-10-03T06:10:00Z", "endTime": "2026-10-03T06:15:00Z", "startUtcOffset": "-18000s", "endUtcOffset": "-18000s" },
+          { "type": "SLEEP_STAGE_TYPE_UNSPECIFIED", "startTime": "2026-10-03T06:15:00Z", "endTime": "2026-10-03T06:16:00Z", "startUtcOffset": "-18000s", "endUtcOffset": "-18000s" }
+        ]
+      }
+    }
+  ]
+}

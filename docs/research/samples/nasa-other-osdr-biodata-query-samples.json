@@ -1,0 +1,37 @@
+[
+  {
+    "id.accession": "OSD-174",
+    "id.assay name": "OSD-174_transcription-profiling_dna-microarray_Agilent",
+    "id.sample name": "Humanhair_inflight_10p_3",
+    "study.characteristics.organism": "Homo sapiens",
+    "study.factor value.spaceflight": "in-flight"
+  },
+  {
+    "id.accession": "OSD-174",
+    "id.assay name": "OSD-174_transcription-profiling_dna-microarray_Agilent",
+    "id.sample name": "Humanhair_inflight_10p_4",
+    "study.characteristics.organism": "Homo sapiens",
+    "study.factor value.spaceflight": "in-flight"
+  },
+  {
+    "id.accession": "OSD-174",
+    "id.assay name": "OSD-174_transcription-profiling_dna-microarray_Agilent",
+    "id.sample name": "Humanhair_inflight_11p_3",
+    "study.characteristics.organism": "Homo sapiens",
+    "study.factor value.spaceflight": "in-flight"
+  },
+  {
+    "id.accession": "OSD-174",
+    "id.assay name": "OSD-174_transcription-profiling_dna-microarray_Agilent",
+    "id.sample name": "Humanhair_inflight_11p_4",
+    "study.characteristics.organism": "Homo sapiens",
+    "study.factor value.spaceflight": "in-flight"
+  },
+  {
+    "id.accession": "OSD-174",
+    "id.assay name": "OSD-174_transcription-profiling_dna-microarray_Agilent",
+    "id.sample name": "Humanhair_inflight_12p_3",
+    "study.characteristics.organism": "Homo sapiens",
+    "study.factor value.spaceflight": "in-flight"
+  }
+]

@@ -1,0 +1,24 @@
+{
+  "_note": "Verbatim response headers captured with curl -s -D - on 2026-10-05 (UTC). Request: GET https://api.nasa.gov/planetary/apod with NO api_key parameter. Body saved in nasa-open-apis-planetary-apod-nokey-403.json. Note: no X-RateLimit-* headers are returned on this 403.",
+  "request": {
+    "method": "GET",
+    "url": "https://api.nasa.gov/planetary/apod",
+    "http_code": 403,
+    "time_total_seconds": 0.27257
+  },
+  "response_headers": {
+    "Date": "Mon, 05 Oct 2026 23:47:13 GMT",
+    "Content-Type": "application/json",
+    "Transfer-Encoding": "chunked",
+    "Connection": "keep-alive",
+    "Vary": "Accept-Encoding",
+    "Access-Control-Allow-Origin": "*",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+    "X-Api-Umbrella-Request-Id": "d11prdrtvn9acnspvem0",
+    "X-Cache": "MISS",
+    "X-Content-Type-Options": "nosniff",
+    "X-Vcap-Request-Id": "d4ef50fa-5654-4f5b-6801-0ee5de22b8ad",
+    "X-Xss-Protection": "1; mode=block",
+    "X-Frame-Options": "DENY"
+  }
+}

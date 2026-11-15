@@ -1,0 +1,29 @@
+{
+  "collection": {
+    "version": "1.1",
+    "href": "http://images-api.nasa.gov/asset/iss072e126509",
+    "items": [
+      {
+        "href": "http://images-assets.nasa.gov/image/iss072e126509/iss072e126509~orig.jpg"
+      },
+      {
+        "href": "http://images-assets.nasa.gov/image/iss072e126509/iss072e126509~large.jpg"
+      },
+      {
+        "href": "http://images-assets.nasa.gov/image/iss072e126509/iss072e126509~medium.jpg"
+      },
+      {
+        "href": "http://images-assets.nasa.gov/image/iss072e126509/iss072e126509~small.jpg"
+      },
+      {
+        "href": "http://images-assets.nasa.gov/image/iss072e126509/iss072e126509~thumb.jpg"
+      },
+      {
+        "href": "http://images-assets.nasa.gov/image/iss072e126509/iss072e126509~orig.jpg"
+      },
+      {
+        "href": "http://images-assets.nasa.gov/image/iss072e126509/metadata.json"
+      }
+    ]
+  }
+}

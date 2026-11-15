@@ -1,0 +1,39 @@
+node_modules/
+dist/
+coverage/
+*.log
+
+# Secrets and local state — never commit
+.env
+.env.*
+!.env.example
+data/
+*.sqlite
+*.sqlite-*
+*.db
+
+# Personal health exports must never be committed
+export.xml
+export.zip
+export_cda.xml
+apple_health_export/
+
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+
+# Local agent / IDE tooling
+.claude/
+.codex/
+.cursor/
+.factory/
+.gemini/
+.reticle/
+.reticle.json
+apps/web/.reticle/
+apps/web/.reticle.json
+AGENTS.md
+CLAUDE.md
+RETICLE.md
+apps/web/src/reticle-dev.ts

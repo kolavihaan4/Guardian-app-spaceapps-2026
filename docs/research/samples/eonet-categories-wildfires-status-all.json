@@ -1,0 +1,50 @@
+{
+  "_meta": {
+    "note": "Verbatim live response from NASA EONET v3 captured 2026-10-05 ~23:43 UTC. Arrays longer than arraysTruncatedTo were cut to their first elements; no values were edited or invented. This _meta key is NOT part of the API response.",
+    "request": "GET https://eonet.gsfc.nasa.gov/api/v3/categories/wildfires?status=all&limit=1&days=30",
+    "httpStatus": 200,
+    "latencySeconds": 0.313,
+    "responseContentType": "application/json; charset=utf-8",
+    "xRateLimitLimit": null,
+    "xRateLimitRemaining": null,
+    "accessControlAllowOrigin": "*",
+    "arraysTruncatedTo": 5,
+    "rawBytes": 1014
+  },
+  "title": "EONET Events: Wildfires",
+  "description": "Wildland fires includes all nature of fire, in forest and plains, as well as those that spread to become urban and industrial fire events. Fires may be naturally caused or manmade.",
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/categories/wildfires",
+  "events": [
+    {
+      "id": "EONET_25033",
+      "title": "Wildfire in Ethiopia 1032562",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_25033",
+      "closed": "2026-10-03T00:00:00Z",
+      "categories": [
+        {
+          "id": "wildfires",
+          "title": "Wildfires"
+        }
+      ],
+      "sources": [
+        {
+          "id": "GDACS",
+          "url": "https://www.gdacs.org/report.aspx?eventtype=WF&eventid=1032562"
+        }
+      ],
+      "geometry": [
+        {
+          "magnitudeValue": 5130,
+          "magnitudeUnit": "hectare",
+          "date": "2026-10-03T19:00:00Z",
+          "type": "Point",
+          "coordinates": [
+            35.143826420618,
+            6.0744556146361
+          ]
+        }
+      ]
+    }
+  ]
+}

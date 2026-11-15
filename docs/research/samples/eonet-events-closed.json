@@ -1,0 +1,152 @@
+{
+  "_meta": {
+    "note": "Verbatim live response from NASA EONET v3 captured 2026-10-05 ~23:43 UTC. Arrays longer than arraysTruncatedTo were cut to their first elements; no values were edited or invented. This _meta key is NOT part of the API response.",
+    "request": "GET https://eonet.gsfc.nasa.gov/api/v3/events?status=closed&limit=3&days=30",
+    "httpStatus": 200,
+    "latencySeconds": 0.562,
+    "responseContentType": "application/json; charset=utf-8",
+    "xRateLimitLimit": "60",
+    "xRateLimitRemaining": "55",
+    "accessControlAllowOrigin": "*",
+    "arraysTruncatedTo": 5,
+    "rawBytes": 225399
+  },
+  "title": "EONET Events",
+  "description": "Natural events from EONET.",
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/events",
+  "events": [
+    {
+      "id": "EONET_24511",
+      "title": "Flood in Thailand 1104169",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24511",
+      "closed": "2026-10-06T00:00:00Z",
+      "categories": [
+        {
+          "id": "floods",
+          "title": "Floods"
+        }
+      ],
+      "sources": [
+        {
+          "id": "GDACS",
+          "url": "https://www.gdacs.org/report.aspx?eventtype=FL&eventid=1104169"
+        }
+      ],
+      "geometry": [
+        {
+          "magnitudeValue": null,
+          "magnitudeUnit": null,
+          "date": "2026-10-04T20:00:00Z",
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                17.7858722,
+                97.742169
+              ],
+              [
+                17.7850699,
+                97.7421856
+              ],
+              [
+                17.7828428,
+                97.7426147
+              ],
+              [
+                17.7770346,
+                97.7450277
+              ],
+              [
+                17.7764502,
+                97.7450121
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EONET_24832",
+      "title": "Flood in Mexico 1104191",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24832",
+      "closed": "2026-10-06T00:00:00Z",
+      "categories": [
+        {
+          "id": "floods",
+          "title": "Floods"
+        }
+      ],
+      "sources": [
+        {
+          "id": "GDACS",
+          "url": "https://www.gdacs.org/report.aspx?eventtype=FL&eventid=1104191"
+        }
+      ],
+      "geometry": [
+        {
+          "magnitudeValue": null,
+          "magnitudeUnit": null,
+          "date": "2026-10-04T20:00:00Z",
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                17.6732155,
+                -101.6593836
+              ],
+              [
+                17.6735219,
+                -101.6592283
+              ],
+              [
+                17.6736662,
+                -101.6575861
+              ],
+              [
+                17.6733682,
+                -101.6573254
+              ],
+              [
+                17.6736534,
+                -101.6567341
+              ]
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EONET_25033",
+      "title": "Wildfire in Ethiopia 1032562",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_25033",
+      "closed": "2026-10-03T00:00:00Z",
+      "categories": [
+        {
+          "id": "wildfires",
+          "title": "Wildfires"
+        }
+      ],
+      "sources": [
+        {
+          "id": "GDACS",
+          "url": "https://www.gdacs.org/report.aspx?eventtype=WF&eventid=1032562"
+        }
+      ],
+      "geometry": [
+        {
+          "magnitudeValue": 5130,
+          "magnitudeUnit": "hectare",
+          "date": "2026-10-03T19:00:00Z",
+          "type": "Point",
+          "coordinates": [
+            35.143826420618,
+            6.0744556146361
+          ]
+        }
+      ]
+    }
+  ]
+}

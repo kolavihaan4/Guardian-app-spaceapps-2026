@@ -1,0 +1,177 @@
+{
+  "_meta": {
+    "note": "Verbatim live response from NASA EONET v3 captured 2026-10-05 ~23:43 UTC. Arrays longer than arraysTruncatedTo were cut to their first elements; no values were edited or invented. This _meta key is NOT part of the API response.",
+    "request": "GET https://eonet.gsfc.nasa.gov/api/v3/events/geojson?category=severeStorms&limit=2&days=60",
+    "httpStatus": 200,
+    "latencySeconds": 0.302267,
+    "responseContentType": "application/rss+xml; charset=utf-8",
+    "xRateLimitLimit": "60",
+    "xRateLimitRemaining": "59",
+    "accessControlAllowOrigin": "*",
+    "arraysTruncatedTo": 5,
+    "rawBytes": 30887
+  },
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "EONET_24962",
+        "title": "Super Typhoon Choi-wan",
+        "description": null,
+        "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24962/geojson",
+        "closed": null,
+        "date": "2026-09-30T12:00:00Z",
+        "magnitudeValue": 35,
+        "magnitudeUnit": "kts",
+        "categories": [
+          {
+            "id": "severeStorms",
+            "title": "Severe Storms"
+          }
+        ],
+        "sources": [
+          {
+            "id": "JTWC",
+            "url": "https://www.metoc.navy.mil/jtwc/products/wp2626.tcw"
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.8,
+          16
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "EONET_24962",
+        "title": "Super Typhoon Choi-wan",
+        "description": null,
+        "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24962/geojson",
+        "closed": null,
+        "date": "2026-09-30T18:00:00Z",
+        "magnitudeValue": 35,
+        "magnitudeUnit": "kts",
+        "categories": [
+          {
+            "id": "severeStorms",
+            "title": "Severe Storms"
+          }
+        ],
+        "sources": [
+          {
+            "id": "JTWC",
+            "url": "https://www.metoc.navy.mil/jtwc/products/wp2626.tcw"
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          149.5,
+          16.3
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "EONET_24962",
+        "title": "Super Typhoon Choi-wan",
+        "description": null,
+        "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24962/geojson",
+        "closed": null,
+        "date": "2026-10-01T00:00:00Z",
+        "magnitudeValue": 40,
+        "magnitudeUnit": "kts",
+        "categories": [
+          {
+            "id": "severeStorms",
+            "title": "Severe Storms"
+          }
+        ],
+        "sources": [
+          {
+            "id": "JTWC",
+            "url": "https://www.metoc.navy.mil/jtwc/products/wp2626.tcw"
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          147.9,
+          16.7
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "EONET_24962",
+        "title": "Super Typhoon Choi-wan",
+        "description": null,
+        "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24962/geojson",
+        "closed": null,
+        "date": "2026-10-01T06:00:00Z",
+        "magnitudeValue": 40,
+        "magnitudeUnit": "kts",
+        "categories": [
+          {
+            "id": "severeStorms",
+            "title": "Severe Storms"
+          }
+        ],
+        "sources": [
+          {
+            "id": "JTWC",
+            "url": "https://www.metoc.navy.mil/jtwc/products/wp2626.tcw"
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          146.8,
+          16.7
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "EONET_24962",
+        "title": "Super Typhoon Choi-wan",
+        "description": null,
+        "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24962/geojson",
+        "closed": null,
+        "date": "2026-10-01T12:00:00Z",
+        "magnitudeValue": 50,
+        "magnitudeUnit": "kts",
+        "categories": [
+          {
+            "id": "severeStorms",
+            "title": "Severe Storms"
+          }
+        ],
+        "sources": [
+          {
+            "id": "JTWC",
+            "url": "https://www.metoc.navy.mil/jtwc/products/wp2626.tcw"
+          }
+        ]
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.8,
+          16.5
+        ]
+      }
+    }
+  ]
+}

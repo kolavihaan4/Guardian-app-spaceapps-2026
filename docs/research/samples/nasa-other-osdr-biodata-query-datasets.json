@@ -1,0 +1,27 @@
+[
+  {
+    "id.accession": "OSD-2",
+    "study.characteristics.organism": "Homo sapiens",
+    "study.factor value.spaceflight": null
+  },
+  {
+    "id.accession": "OSD-5",
+    "study.characteristics.organism": "Homo sapiens",
+    "study.factor value.spaceflight": null
+  },
+  {
+    "id.accession": "OSD-9",
+    "study.characteristics.organism": "Homo sapiens",
+    "study.factor value.spaceflight": null
+  },
+  {
+    "id.accession": "OSD-13",
+    "study.characteristics.organism": "Homo sapiens",
+    "study.factor value.spaceflight": "Space Flight"
+  },
+  {
+    "id.accession": "OSD-51",
+    "study.characteristics.organism": "Homo sapiens",
+    "study.factor value.spaceflight": null
+  }
+]

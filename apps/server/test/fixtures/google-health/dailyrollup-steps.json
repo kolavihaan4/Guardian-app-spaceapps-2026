@@ -1,0 +1,7 @@
+{
+  "_provenance": "SYNTHETIC — shaped after DailyRollUpDataPointsResponse/DailyRollupDataPoint/StepsRollupValue in the v4 discovery document (2026-10-05). Not real data.",
+  "rollupDataPoints": [
+    { "civilStartTime": { "date": { "year": 2026, "month": 10, "day": 3 } }, "civilEndTime": { "date": { "year": 2026, "month": 10, "day": 4 } }, "steps": { "countSum": "9234" } },
+    { "civilStartTime": { "date": { "year": 2026, "month": 10, "day": 4 } }, "civilEndTime": { "date": { "year": 2026, "month": 10, "day": 5 } }, "steps": { "countSum": "11012" } }
+  ]
+}

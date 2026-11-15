@@ -1,0 +1,58 @@
+{
+  "hits": 1,
+  "input": "1",
+  "page_number": 1,
+  "page_size": 25,
+  "page_total": 1,
+  "studies": {
+    "OSD-1": {
+      "file_count": 73,
+      "study_files": [
+        {
+          "category": "Study Metadata Files",
+          "date_created": 1726639966.77,
+          "date_updated": 1726639966.77,
+          "file_name": "OSD-1_metadata_OSD-1-ISA.zip",
+          "file_size": 47456,
+          "organization": "OSD",
+          "remote_url": "/geode-py/ws/studies/OSD-1/download?source=datamanager&file=OSD-1_metadata_OSD-1-ISA.zip",
+          "restricted": false,
+          "subcategory": "",
+          "subdirectory": "",
+          "visible": true
+        },
+        {
+          "category": "GeneLab Processed Microarray Data Files",
+          "date_created": 1682567912.919,
+          "date_updated": 1682567912.919,
+          "file_name": "GLDS-1_array_differential_expression.csv",
+          "file_size": 57639514,
+          "organization": "genelab",
+          "remote_url": "/geode-py/ws/studies/OSD-1/download?source=datamanager&file=GLDS-1_array_differential_expression.csv",
+          "restricted": false,
+          "subcategory": "Differential gene expression analysis",
+          "subdirectory": "",
+          "visible": true
+        },
+        {
+          "category": "GeneLab Processed Microarray Data Files",
+          "date_created": 1682567912.927,
+          "date_updated": 1682567912.927,
+          "file_name": "GLDS-1_array_contrasts.csv",
+          "file_size": 5231,
+          "organization": "genelab",
+          "remote_url": "/geode-py/ws/studies/OSD-1/download?source=datamanager&file=GLDS-1_array_contrasts.csv",
+          "restricted": false,
+          "subcategory": "Differential gene expression analysis",
+          "subdirectory": "",
+          "visible": true
+        }
+      ]
+    }
+  },
+  "success": true,
+  "total_hits": 1,
+  "valid_input": [
+    "1"
+  ]
+}

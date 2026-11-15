@@ -1,0 +1,144 @@
+[
+  {
+    "rbeID": "2026-08-21T10:15:00-RBE-001",
+    "eventTime": "2026-08-21T10:15Z",
+    "instruments": [
+      {
+        "displayName": "GOES-P: SEISS >2MeV"
+      }
+    ],
+    "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/RBE/48182/-1",
+    "linkedEvents": [
+      {
+        "activityID": "2026-08-18T12:40:00-HSS-001"
+      }
+    ],
+    "sentNotifications": [
+      {
+        "messageID": "20260821-AL-001",
+        "messageIssueTime": "2026-08-21T10:24Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48183/1"
+      },
+      {
+        "messageID": "20260821-AL-002",
+        "messageIssueTime": "2026-08-21T11:22Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48184/1"
+      },
+      {
+        "messageID": "20260823-AL-003",
+        "messageIssueTime": "2026-08-23T14:58Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48217/1"
+      },
+      {
+        "messageID": "20260825-AL-004",
+        "messageIssueTime": "2026-08-25T14:59Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48252/1"
+      },
+      {
+        "messageID": "20260827-AL-002",
+        "messageIssueTime": "2026-08-27T15:46Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48315/1"
+      }
+    ],
+    "submissionTime": "2026-08-21T10:24Z",
+    "versionId": 1
+  },
+  {
+    "rbeID": "2026-08-31T11:20:00-RBE-001",
+    "eventTime": "2026-08-31T11:20Z",
+    "instruments": [
+      {
+        "displayName": "GOES-P: SEISS >2MeV"
+      }
+    ],
+    "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/RBE/48428/-1",
+    "linkedEvents": [
+      {
+        "activityID": "2026-08-25T10:38:00-CME-001"
+      },
+      {
+        "activityID": "2026-08-25T12:53:00-CME-001"
+      },
+      {
+        "activityID": "2026-08-25T14:53:00-CME-001"
+      },
+      {
+        "activityID": "2026-08-28T14:28:00-HSS-001"
+      }
+    ],
+    "sentNotifications": [
+      {
+        "messageID": "20260831-AL-001",
+        "messageIssueTime": "2026-08-31T11:28Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48429/1"
+      },
+      {
+        "messageID": "20260831-AL-002",
+        "messageIssueTime": "2026-08-31T12:09Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48430/1"
+      },
+      {
+        "messageID": "20260902-AL-001",
+        "messageIssueTime": "2026-09-02T12:23Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48458/1"
+      },
+      {
+        "messageID": "20260904-AL-003",
+        "messageIssueTime": "2026-09-04T12:13Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48520/1"
+      },
+      {
+        "messageID": "20260906-AL-005",
+        "messageIssueTime": "2026-09-06T18:25Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48596/1"
+      }
+    ],
+    "submissionTime": "2026-08-31T11:28Z",
+    "versionId": 1
+  },
+  {
+    "rbeID": "2026-09-08T15:50:00-RBE-001",
+    "eventTime": "2026-09-08T15:50Z",
+    "instruments": [
+      {
+        "displayName": "GOES-P: SEISS >2MeV"
+      }
+    ],
+    "link": "https://ccmc.gsfc.nasa.gov/DONKI/view/RBE/48620/-1",
+    "linkedEvents": [
+      {
+        "activityID": "2026-09-05T11:09:00-CME-001"
+      },
+      {
+        "activityID": "2026-09-05T18:09:00-CME-001"
+      },
+      {
+        "activityID": "2026-09-07T23:55:00-HSS-001"
+      }
+    ],
+    "sentNotifications": [
+      {
+        "messageID": "20260908-AL-001",
+        "messageIssueTime": "2026-09-08T16:29Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48621/1"
+      },
+      {
+        "messageID": "20260910-AL-001",
+        "messageIssueTime": "2026-09-10T16:29Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48641/1"
+      },
+      {
+        "messageID": "20260912-AL-001",
+        "messageIssueTime": "2026-09-12T16:40Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48681/1"
+      },
+      {
+        "messageID": "20260914-AL-003",
+        "messageIssueTime": "2026-09-14T16:37Z",
+        "messageURL": "https://ccmc.gsfc.nasa.gov/DONKI/view/Alert/48708/1"
+      }
+    ],
+    "submissionTime": "2026-09-08T16:06Z",
+    "versionId": 1
+  }
+]

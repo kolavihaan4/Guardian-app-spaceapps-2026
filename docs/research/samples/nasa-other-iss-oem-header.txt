@@ -1,0 +1,40 @@
+CCSDS_OEM_VERS = 2.0
+CREATION_DATE  = 2026-10-05T20:52:43.093
+ORIGINATOR     = NASA/JSC/FOD/TOPO
+
+META_START
+OBJECT_NAME          = ISS
+OBJECT_ID            = 1998-067-A
+CENTER_NAME          = Earth
+REF_FRAME            = EME2000
+TIME_SYSTEM          = UTC
+START_TIME           = 2026-10-05T12:00:00.000
+USEABLE_START_TIME   = 2026-10-05T12:00:00.000
+USEABLE_STOP_TIME    = 2026-10-20T12:00:00.000
+STOP_TIME            = 2026-10-20T12:00:00.000
+META_STOP
+
+COMMENT Source: This file was produced by the TOPO office within FOD at JSC.
+COMMENT Units are in kg and m^2
+COMMENT MASS=482630.00
+COMMENT DRAG_AREA=1247.94
+COMMENT DRAG_COEFF=1.20
+COMMENT SOLAR_RAD_AREA=0.00
+COMMENT SOLAR_RAD_COEFF=0.00
+COMMENT Orbits start at the ascending node epoch
+COMMENT ISS first asc. node: EPOCH = 2026-10-05T13:30:22.690 $ ORBIT = 2886 $ LAN(DEG) = -102.97634
+COMMENT ISS last asc. node : EPOCH = 2026-10-20T11:13:17.326 $ ORBIT = 3117 $ LAN(DEG) = -157.11717
+COMMENT Begin sequence of events
+COMMENT TRAJECTORY EVENT SUMMARY:
+COMMENT 
+COMMENT |       EVENT        |       TIG        | ORB |   DV    |   HA    |   HP    |
+COMMENT |                    |       GMT        |     |   M/S   |   KM    |   KM    |
+COMMENT |                    |                  |     |  (F/S)  |  (NM)   |  (NM)   |
+COMMENT =============================================================================
+COMMENT  Crew12 NET Undock         280:12:00:00.000             0.0     423.5     416.8
+COMMENT                                                    (0.0)   (228.7)   (225.0)
+COMMENT 
+COMMENT  NG24 NET Departure    282:16:45:00.000             0.0     423.0     417.1
+COMMENT                                                    (0.0)   (228.4)   (225.2)
+COMMENT 
+COMMENT  SpX-35 NET Launch     286:10

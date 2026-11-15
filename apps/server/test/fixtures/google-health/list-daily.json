@@ -1,0 +1,29 @@
+{
+  "_provenance": "SYNTHETIC — shaped after ListDataPointsResponse/DataPoint in https://health.googleapis.com/$discovery/rest?version=v4 (2026-10-05). Not real data.",
+  "dataPoints": [
+    {
+      "dataSource": { "platform": "FITBIT", "recordingMethod": "DERIVED", "device": { "formFactor": "WATCH", "displayName": "Pixel Watch 4", "manufacturer": "Google" } },
+      "dailyRestingHeartRate": { "date": { "year": 2026, "month": 10, "day": 3 }, "beatsPerMinute": "58" }
+    },
+    {
+      "dataSource": { "platform": "FITBIT", "recordingMethod": "DERIVED", "device": { "formFactor": "WATCH", "displayName": "Pixel Watch 4", "manufacturer": "Google" } },
+      "dailyHeartRateVariability": { "date": { "year": 2026, "month": 10, "day": 3 }, "averageHeartRateVariabilityMilliseconds": 41.7, "deepSleepRootMeanSquareOfSuccessiveDifferencesMilliseconds": 48.2 }
+    },
+    {
+      "dataSource": { "platform": "FITBIT" },
+      "dailyOxygenSaturation": { "date": { "year": 2026, "month": 10, "day": 3 }, "averagePercentage": 96.4, "lowerBoundPercentage": 94.1, "upperBoundPercentage": 98.2 }
+    },
+    {
+      "dataSource": { "platform": "FITBIT" },
+      "dailyRespiratoryRate": { "date": { "year": 2026, "month": 10, "day": 3 }, "breathsPerMinute": 14.6 }
+    },
+    {
+      "dataSource": { "platform": "FITBIT" },
+      "dailySleepTemperatureDerivations": { "date": { "year": 2026, "month": 10, "day": 3 }, "nightlyTemperatureCelsius": 33.91, "baselineTemperatureCelsius": 33.62 }
+    },
+    {
+      "dataSource": { "platform": "FITBIT" },
+      "dailyOxygenSaturation": { "date": { "year": 2026, "month": 10, "day": 4 }, "averagePercentage": 104.0, "lowerBoundPercentage": 99.0, "upperBoundPercentage": 100.0 }
+    }
+  ]
+}

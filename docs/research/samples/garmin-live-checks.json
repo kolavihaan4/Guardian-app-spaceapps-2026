@@ -1,0 +1,32 @@
+{
+  "_note": "Real HTTP measurements made with curl on 2026-10-05 from this researcher's machine, no credentials. These are reachability checks only; no user data was requested.",
+  "accessed": "2026-10-05",
+  "doc_pages": [
+    {"url": "https://developer.garmin.com/gc-developer-program/program-faq/", "status": 200, "time_total_s": 0.271852},
+    {"url": "https://developer.garmin.com/gc-developer-program/overview/", "status": 200, "time_total_s": 0.142986},
+    {"url": "https://developer.garmin.com/gc-developer-program/health-api/", "status": 200, "time_total_s": 0.169014},
+    {"url": "https://developer.garmin.com/gc-developer-program/activity-api/", "status": 200, "time_total_s": 0.156473},
+    {"url": "https://developer.garmin.com/gc-developer-program/womens-health-api/", "status": 200, "time_total_s": 0.150782},
+    {"url": "https://developer.garmin.com/health-sdk/overview/", "status": 200, "time_total_s": 0.144483},
+    {"url": "https://www.garmin.com/en-US/forms/GarminConnectDeveloperAccess/", "status": 200, "time_total_s": 0.516526, "observation": "page renders a 'System Maintenance - Garmin Connect Developer Program' copy block ('Stay tuned for more updates on the program.') and no form fields"},
+    {"url": "https://apis.garmin.com/tools/login", "status": 200, "time_total_s": 0.329553, "observation": "login page: 'Please log in with your Client Id and Client Secret.'"},
+    {"url": "https://developerportal.garmin.com/sites/default/files/OAuth2PKCE_1.pdf", "status": 200, "time_total_s": 0.374702, "content_type": "application/pdf", "bytes": 363006},
+    {"url": "https://developerportal.garmin.com/sites/default/files/Garmin%20Connect%20Developer%20Program%20Agreement.pdf", "status": 200, "time_total_s": 0.158296, "content_type": "application/pdf", "bytes": 288572},
+    {"url": "https://developerportal.garmin.com/developer-programs/connect-developer-api", "status": 200, "time_total_s": 0.289698},
+    {"url": "https://developerportal.garmin.com/blog/backfill-available", "status": 403, "time_total_s": 0.251742, "observation": "Drupal 'Access denied - You are not authorized to access this page.' (portal login required)"},
+    {"url": "https://developerportal.garmin.com/blog/new-backfill-history-limits-user", "status": 403, "time_total_s": 0.261934},
+    {"url": "https://developerportal.garmin.com/blog/hrv-summaries-are-now-available-health-api", "status": 403, "time_total_s": 0.266714},
+    {"url": "https://developerportal.garmin.com/developer-programs/programs-docs", "status": 403, "time_total_s": 0.266778},
+    {"url": "https://developerportal.garmin.com/developer-programs/faqs", "status": 403, "time_total_s": 0.235477},
+    {"url": "https://www8.garmin.com/en-US/GARMINCONNECTDEVELOPERPROGRAMAGREEMENT/GARMINCONNECTDEVELOPERPROGRAMAGREEMENT_EN.pdf", "status": 200, "time_total_s": 0.371715, "content_type": "application/pdf"},
+    {"url": "https://www.garmin.com/en-US/account/datamanagement/", "status": 302, "observation": "redirects to sso.garmin.com sign-in (login required)"}
+  ],
+  "api_hosts_unauthenticated": [
+    {"method": "GET", "url": "https://apis.garmin.com/wellness-api/rest/user/id", "status": 400, "time_total_s": 0.162714, "content_type": "application/json", "server": "cloudflare", "rate_limit_headers_observed": "none", "body": {"errorMessage": "Authorization header not found"}},
+    {"method": "GET", "url": "https://apis.garmin.com/wellness-api/rest/user/permissions", "status": 400, "time_total_s": 0.103598, "content_type": "application/json", "body": {"errorMessage": "Authorization header not found"}},
+    {"method": "POST", "url": "https://diauth.garmin.com/di-oauth2-service/oauth/token", "status": 401, "time_total_s": 0.143265, "content_type": "application/json", "www_authenticate": "Bearer error=\"unauthorized\", error_description=\"There is no client authentication. Try adding an appropriate authentication filter.\"", "body": {"error": "unauthorized", "error_description": "There is no client authentication. Try adding an appropriate authentication filter."}},
+    {"method": "GET", "url": "https://diauth.garmin.com/di-oauth2-service/oauth/token", "status": 405, "time_total_s": 0.279565, "content_type": "application/json"},
+    {"method": "GET", "url": "https://connect.garmin.com/oauth2Confirm", "status": 302, "time_total_s": 0.100161, "location": "https://connect.garmin.com/partner/oauth2Confirm", "observation": "following redirects ends at https://sso.garmin.com/portal/sso/en-US/sign-in?clientId=GarminConnect&service=... (HTTP 403 at the SSO page without parameters)"},
+    {"method": "GET", "url": "https://apis.garmin.com/tools/oauth2/authorizeUser", "status": 200, "time_total_s": 0.256119, "final_url": "https://apis.garmin.com/tools/login?action=sessionExpired"}
+  ]
+}

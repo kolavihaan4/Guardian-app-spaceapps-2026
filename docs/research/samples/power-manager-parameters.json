@@ -1,0 +1,101 @@
+{
+  "ALLSKY_SFC_SW_DWN": {
+    "type": "RADIATION",
+    "temporal": "DAILY",
+    "source": "SOURCE",
+    "community": "RE",
+    "calculated": false,
+    "inputs": null,
+    "units": "kW-hr/m^2/day",
+    "name": "All Sky Surface Shortwave Downward Irradiance",
+    "definition": "The total solar irradiance incident (direct plus diffuse) on a horizontal plane at the surface of the earth under all sky conditions. An alternative term for the total solar irradiance is the \"Global Horizontal Irradiance\" or GHI."
+  },
+  "ALLSKY_SFC_UV_INDEX": {
+    "type": "RADIATION",
+    "temporal": "DAILY",
+    "source": "SOURCE",
+    "community": "RE",
+    "calculated": false,
+    "inputs": null,
+    "units": "W m-2 x 40",
+    "name": "All Sky Surface UV Index",
+    "definition": "The ultraviolet radiation exposure index."
+  },
+  "PRECTOTCORR": {
+    "type": "METEOROLOGY",
+    "temporal": "DAILY",
+    "source": "SOURCE",
+    "community": "RE",
+    "calculated": false,
+    "inputs": null,
+    "units": "mm/day",
+    "name": "Precipitation Corrected",
+    "definition": "The average MERRA-2 bias corrected total precipitation at the surface of the earth."
+  },
+  "PS": {
+    "type": "METEOROLOGY",
+    "temporal": "DAILY",
+    "source": "SOURCE",
+    "community": "RE",
+    "calculated": false,
+    "inputs": null,
+    "units": "kPa",
+    "name": "Surface Pressure",
+    "definition": "The atmospheric pressure at the surface of the earth."
+  },
+  "RH2M": {
+    "type": "METEOROLOGY",
+    "temporal": "DAILY",
+    "source": "POWER",
+    "community": "RE",
+    "calculated": false,
+    "inputs": null,
+    "units": "%",
+    "name": "Relative Humidity at 2 Meters",
+    "definition": "The ratio of vapor pressure to the saturation vapor pressure with respect to a plane surface of pure water, expressed in percent."
+  },
+  "T2M": {
+    "type": "METEOROLOGY",
+    "temporal": "DAILY",
+    "source": "SOURCE",
+    "community": "RE",
+    "calculated": false,
+    "inputs": null,
+    "units": "C",
+    "name": "Temperature at 2 Meters",
+    "definition": "The average air (dry bulb) temperature at 2 meters above the surface of the earth."
+  },
+  "T2M_MAX": {
+    "type": "METEOROLOGY",
+    "temporal": "DAILY",
+    "source": "POWER",
+    "community": "RE",
+    "calculated": false,
+    "inputs": null,
+    "units": "C",
+    "name": "Temperature at 2 Meters Maximum",
+    "definition": "The maximum hourly air (dry bulb) temperature at 2 meters above the surface of the earth in the period of interest."
+  },
+  "T2M_MIN": {
+    "type": "METEOROLOGY",
+    "temporal": "DAILY",
+    "source": "POWER",
+    "community": "RE",
+    "calculated": false,
+    "inputs": null,
+    "units": "C",
+    "name": "Temperature at 2 Meters Minimum",
+    "definition": "The minimum hourly air (dry bulb) temperature at 2 meters above the surface of the earth in the period of interest."
+  },
+  "WS10M": {
+    "type": "METEOROLOGY",
+    "temporal": "DAILY",
+    "source": "POWER",
+    "community": "RE",
+    "calculated": false,
+    "inputs": null,
+    "units": "m/s",
+    "name": "Wind Speed at 10 Meters",
+    "definition": "The average of wind speed at 10 meters above the surface of the earth."
+  }
+}

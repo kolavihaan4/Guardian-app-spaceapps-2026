@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SYNTHETIC fixture: structure mirrors the Health app "Export All Health Data" export.xml; values are invented. -->
+<!DOCTYPE HealthData [
+<!ELEMENT HealthData (ExportDate,Me,(Record|Correlation|Workout|ActivitySummary|ClinicalRecord|Audiogram|VisionPrescription)*)>
+<!ATTLIST HealthData
+  locale CDATA #REQUIRED
+>
+<!ELEMENT Record ((MetadataEntry|HeartRateVariabilityMetadataList)*)>
+<!ATTLIST Record
+  type          CDATA #REQUIRED
+  unit          CDATA #IMPLIED
+  value         CDATA #IMPLIED
+  sourceName    CDATA #REQUIRED
+  sourceVersion CDATA #IMPLIED
+  device        CDATA #IMPLIED
+  creationDate  CDATA #IMPLIED
+  startDate     CDATA #REQUIRED
+  endDate       CDATA #REQUIRED
+>
+]>
+<HealthData locale="en_US">
+ <ExportDate value="2026-10-05 20:00:00 -0500"/>
+ <Me HKCharacteristicTypeIdentifierBiologicalSex="HKBiologicalSexNotSet"/>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Test&#8217;s Apple Watch" sourceVersion="26.0" device="&lt;&lt;HKDevice: 0x600002d1c0a0&gt;, name:Apple Watch, manufacturer:Apple Inc., model:Watch, hardware:Watch7,4, software:26.0&gt;" unit="count/min" creationDate="2026-10-04 08:01:10 -0500" startDate="2026-10-04 08:00:00 -0500" endDate="2026-10-04 08:00:00 -0500" value="64">
+  <MetadataEntry key="HKMetadataKeyHeartRateMotionContext" value="1"/>
+ </Record>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Test&#8217;s Apple Watch" unit="count/min" creationDate="2026-10-04 08:06:10 -0500" startDate="2026-10-04 08:05:00 -0500" endDate="2026-10-04 08:05:00 -0500" value="320"/>
+ <Record type="HKQuantityTypeIdentifierRestingHeartRate" sourceName="Test&#8217;s Apple Watch" unit="count/min" creationDate="2026-10-04 23:59:00 -0500" startDate="2026-10-04 00:00:00 -0500" endDate="2026-10-04 23:59:00 -0500" value="57"/>
+ <Record type="HKQuantityTypeIdentifierHeartRateVariabilitySDNN" sourceName="Test&#8217;s Apple Watch" unit="ms" creationDate="2026-10-04 03:10:00 -0500" startDate="2026-10-04 03:09:00 -0500" endDate="2026-10-04 03:10:00 -0500" value="52.3">
+  <HeartRateVariabilityMetadataList>
+   <InstantaneousBeatsPerMinute bpm="58" time="3:09:01.10 AM"/>
+  </HeartRateVariabilityMetadataList>
+ </Record>
+ <Record type="HKQuantityTypeIdentifierOxygenSaturation" sourceName="Test&#8217;s Apple Watch" unit="%" creationDate="2026-10-04 03:30:00 -0500" startDate="2026-10-04 03:30:00 -0500" endDate="2026-10-04 03:30:00 -0500" value="0.97"/>
+ <Record type="HKQuantityTypeIdentifierRespiratoryRate" sourceName="Test&#8217;s Apple Watch" unit="count/min" creationDate="2026-10-04 03:40:00 -0500" startDate="2026-10-04 03:40:00 -0500" endDate="2026-10-04 03:40:00 -0500" value="14.5"/>
+ <Record type="HKQuantityTypeIdentifierAppleSleepingWristTemperature" sourceName="Test&#8217;s Apple Watch" unit="degF" creationDate="2026-10-04 07:00:00 -0500" startDate="2026-10-03 23:30:00 -0500" endDate="2026-10-04 06:30:00 -0500" value="95.9"/>
+ <Record type="HKQuantityTypeIdentifierStepCount" sourceName="Test&#8217;s iPhone" unit="count" creationDate="2026-10-04 09:10:00 -0500" startDate="2026-10-04 09:00:00 -0500" endDate="2026-10-04 09:09:00 -0500" value="812"/>
+ <Record type="HKQuantityTypeIdentifierActiveEnergyBurned" sourceName="Test&#8217;s Apple Watch" unit="kJ" creationDate="2026-10-04 09:10:00 -0500" startDate="2026-10-04 09:00:00 -0500" endDate="2026-10-04 09:09:00 -0500" value="209.2"/>
+ <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="Scale" unit="kg" creationDate="2026-10-04 07:00:00 -0500" startDate="2026-10-04 07:00:00 -0500" endDate="2026-10-04 07:00:00 -0500" value="70"/>
+ <Record type="HKQuantityTypeIdentifierHeartRate" sourceName="Test&#8217;s Apple Watch" unit="count/min" creationDate="2025-01-01 08:00:00 -0500" startDate="2025-01-01 08:00:00 -0500" endDate="2025-01-01 08:00:00 -0500" value="70"/>
+ <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Test&#8217;s iPhone" creationDate="2026-10-04 07:00:00 -0500" startDate="2026-10-03 23:00:00 -0500" endDate="2026-10-04 07:00:00 -0500" value="HKCategoryValueSleepAnalysisInBed"/>
+ <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Test&#8217;s Apple Watch" creationDate="2026-10-04 07:00:00 -0500" startDate="2026-10-03 23:30:00 -0500" endDate="2026-10-04 01:00:00 -0500" value="HKCategoryValueSleepAnalysisAsleepCore"/>
+ <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Test&#8217;s Apple Watch" creationDate="2026-10-04 07:00:00 -0500" startDate="2026-10-04 01:00:00 -0500" endDate="2026-10-04 02:00:00 -0500" value="HKCategoryValueSleepAnalysisAsleepDeep"/>
+ <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Test&#8217;s Apple Watch" creationDate="2026-10-04 07:00:00 -0500" startDate="2026-10-04 02:00:00 -0500" endDate="2026-10-04 02:10:00 -0500" value="HKCategoryValueSleepAnalysisAwake"/>
+ <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Test&#8217;s Apple Watch" creationDate="2026-10-04 07:00:00 -0500" startDate="2026-10-04 02:10:00 -0500" endDate="2026-10-04 03:00:00 -0500" value="HKCategoryValueSleepAnalysisAsleepREM"/>
+ <Workout workoutActivityType="HKWorkoutActivityTypeRunning" duration="32.5" durationUnit="min" sourceName="Test&#8217;s Apple Watch" creationDate="2026-10-04 18:40:00 -0500" startDate="2026-10-04 18:05:00 -0500" endDate="2026-10-04 18:37:30 -0500">
+  <WorkoutStatistics type="HKQuantityTypeIdentifierActiveEnergyBurned" startDate="2026-10-04 18:05:00 -0500" endDate="2026-10-04 18:37:30 -0500" sum="331.2" unit="kcal"/>
+  <WorkoutStatistics type="HKQuantityTypeIdentifierHeartRate" startDate="2026-10-04 18:05:00 -0500" endDate="2026-10-04 18:37:30 -0500" average="148.6" minimum="96" maximum="171" unit="count/min"/>
+  <WorkoutStatistics type="HKQuantityTypeIdentifierDistanceWalkingRunning" startDate="2026-10-04 18:05:00 -0500" endDate="2026-10-04 18:37:30 -0500" sum="5.21" unit="km"/>
+ </Workout>
+</HealthData>

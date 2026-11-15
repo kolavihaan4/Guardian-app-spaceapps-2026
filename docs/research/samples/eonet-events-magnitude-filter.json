@@ -1,0 +1,161 @@
+{
+  "_meta": {
+    "note": "Verbatim live response from NASA EONET v3 captured 2026-10-05 ~23:43 UTC. Arrays longer than arraysTruncatedTo were cut to their first elements; no values were edited or invented. This _meta key is NOT part of the API response.",
+    "request": "GET https://eonet.gsfc.nasa.gov/api/v3/events?status=all&category=severeStorms&magID=mag_kts&magMin=1.50&magMax=200&limit=2&days=90",
+    "httpStatus": 200,
+    "latencySeconds": 0.334,
+    "responseContentType": "application/json; charset=utf-8",
+    "xRateLimitLimit": "60",
+    "xRateLimitRemaining": "54",
+    "accessControlAllowOrigin": "*",
+    "arraysTruncatedTo": 5,
+    "rawBytes": 6603
+  },
+  "title": "EONET Events",
+  "description": "Natural events from EONET.",
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/events",
+  "events": [
+    {
+      "id": "EONET_24962",
+      "title": "Super Typhoon Choi-wan",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24962",
+      "closed": null,
+      "categories": [
+        {
+          "id": "severeStorms",
+          "title": "Severe Storms"
+        }
+      ],
+      "sources": [
+        {
+          "id": "JTWC",
+          "url": "https://www.metoc.navy.mil/jtwc/products/wp2626.tcw"
+        }
+      ],
+      "geometry": [
+        {
+          "magnitudeValue": 35,
+          "magnitudeUnit": "kts",
+          "date": "2026-09-30T12:00:00Z",
+          "type": "Point",
+          "coordinates": [
+            150.8,
+            16
+          ]
+        },
+        {
+          "magnitudeValue": 35,
+          "magnitudeUnit": "kts",
+          "date": "2026-09-30T18:00:00Z",
+          "type": "Point",
+          "coordinates": [
+            149.5,
+            16.3
+          ]
+        },
+        {
+          "magnitudeValue": 40,
+          "magnitudeUnit": "kts",
+          "date": "2026-10-01T00:00:00Z",
+          "type": "Point",
+          "coordinates": [
+            147.9,
+            16.7
+          ]
+        },
+        {
+          "magnitudeValue": 40,
+          "magnitudeUnit": "kts",
+          "date": "2026-10-01T06:00:00Z",
+          "type": "Point",
+          "coordinates": [
+            146.8,
+            16.7
+          ]
+        },
+        {
+          "magnitudeValue": 50,
+          "magnitudeUnit": "kts",
+          "date": "2026-10-01T12:00:00Z",
+          "type": "Point",
+          "coordinates": [
+            145.8,
+            16.5
+          ]
+        }
+      ]
+    },
+    {
+      "id": "EONET_24909",
+      "title": "Tropical Storm Hanna",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24909",
+      "closed": null,
+      "categories": [
+        {
+          "id": "severeStorms",
+          "title": "Severe Storms"
+        }
+      ],
+      "sources": [
+        {
+          "id": "NOAA_NHC",
+          "url": "https://www.nhc.noaa.gov/archive/2026/HANNA.shtml"
+        }
+      ],
+      "geometry": [
+        {
+          "magnitudeValue": 40,
+          "magnitudeUnit": "kts",
+          "date": "2026-09-28T15:00:00Z",
+          "type": "Point",
+          "coordinates": [
+            -50.4,
+            36.6
+          ]
+        },
+        {
+          "magnitudeValue": 40,
+          "magnitudeUnit": "kts",
+          "date": "2026-09-28T21:00:00Z",
+          "type": "Point",
+          "coordinates": [
+            -48.7,
+            36.5
+          ]
+        },
+        {
+          "magnitudeValue": 40,
+          "magnitudeUnit": "kts",
+          "date": "2026-09-29T03:00:00Z",
+          "type": "Point",
+          "coordinates": [
+            -47.7,
+            36
+          ]
+        },
+        {
+          "magnitudeValue": 40,
+          "magnitudeUnit": "kts",
+          "date": "2026-09-29T09:00:00Z",
+          "type": "Point",
+          "coordinates": [
+            -46.2,
+            35.2
+          ]
+        },
+        {
+          "magnitudeValue": 35,
+          "magnitudeUnit": "kts",
+          "date": "2026-09-29T15:00:00Z",
+          "type": "Point",
+          "coordinates": [
+            -45.5,
+            34.6
+          ]
+        }
+      ]
+    }
+  ]
+}

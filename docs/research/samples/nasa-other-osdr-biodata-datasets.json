@@ -1,0 +1,17 @@
+{
+  "OSD-1": {
+    "REST_URL": "https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/OSD-1/"
+  },
+  "OSD-2": {
+    "REST_URL": "https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/OSD-2/"
+  },
+  "OSD-3": {
+    "REST_URL": "https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/OSD-3/"
+  },
+  "OSD-4": {
+    "REST_URL": "https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/OSD-4/"
+  },
+  "OSD-5": {
+    "REST_URL": "https://visualization.osdr.nasa.gov/biodata/api/v2/dataset/OSD-5/"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "_note": "Verbatim response headers captured with curl -s -D - on 2026-10-05 (UTC). Request: GET https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY . Body saved in nasa-open-apis-planetary-apod.json. This was the FIRST DEMO_KEY request from this IP in this session.",
+  "request": {
+    "method": "GET",
+    "url": "https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY",
+    "http_code": 200,
+    "time_total_seconds": 2.583099
+  },
+  "response_headers": {
+    "Date": "Mon, 05 Oct 2026 23:42:09 GMT",
+    "Content-Type": "application/json",
+    "Content-Length": "1275",
+    "Connection": "keep-alive",
+    "Vary": "Accept-Encoding",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Expose-Headers": "X-RateLimit-Limit, X-RateLimit-Remaining",
+    "Age": "2",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+    "Via": "https/1.1 api-umbrella (ApacheTrafficServer [cMsSf ])",
+    "X-Api-Umbrella-Request-Id": "d11pp36msfqh72h11l8g",
+    "X-Cache": "MISS",
+    "X-Content-Type-Options": "nosniff",
+    "X-Powered-By": "appdat",
+    "X-Ratelimit-Limit": "10",
+    "X-Ratelimit-Remaining": "9",
+    "X-Using-Nginx-Controller": "true",
+    "X-Vcap-Request-Id": "8e0be53a-df8d-4111-7fda-ce8880e41e63",
+    "X-Xss-Protection": "1; mode=block",
+    "X-Frame-Options": "SAMEORIGIN"
+  }
+}

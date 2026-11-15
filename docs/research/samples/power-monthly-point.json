@@ -1,0 +1,74 @@
+{
+  "type": "Feature",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [
+      -95.097,
+      29.55,
+      8.9
+    ]
+  },
+  "properties": {
+    "parameter": {
+      "PRECTOTCORR": {
+        "202501": 3.84,
+        "202502": 2.39,
+        "202503": 1.99,
+        "202504": 2.48,
+        "202505": 6.01,
+        "202506": 6.02,
+        "202507": 2.51,
+        "202508": 4.37,
+        "202509": 2.46,
+        "202510": 2,
+        "202511": 1.88,
+        "202512": 2.2,
+        "202513": 3.19
+      },
+      "T2M": {
+        "202501": 10.25,
+        "202502": 14.34,
+        "202503": 18.88,
+        "202504": 22.77,
+        "202505": 25.64,
+        "202506": 28.47,
+        "202507": 29.32,
+        "202508": 29.77,
+        "202509": 28.23,
+        "202510": 25.43,
+        "202511": 20.45,
+        "202512": 15.15,
+        "202513": 22.43
+      }
+    }
+  },
+  "header": {
+    "title": "NASA/POWER Source Native Resolution Monthly and Annual",
+    "api": {
+      "version": "v2.10.0",
+      "name": "POWER Monthly and Annual API"
+    },
+    "sources": [
+      "MERRA2"
+    ],
+    "fill_value": -999,
+    "time_standard": "LST",
+    "start": "20250101",
+    "end": "20251231"
+  },
+  "messages": [],
+  "parameters": {
+    "PRECTOTCORR": {
+      "units": "mm/day",
+      "longname": "Precipitation Corrected"
+    },
+    "T2M": {
+      "units": "C",
+      "longname": "Temperature at 2 Meters"
+    }
+  },
+  "times": {
+    "data": 0.113,
+    "process": 0.01
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "collection": {
+    "version": "1.1",
+    "href": "http://images-api.nasa.gov/search?q=astronaut%20exercise&media_type=image&year_start=2020&page_size=5",
+    "items": [
+      {
+        "href": "https://images-assets.nasa.gov/image/iss072e126509/collection.json",
+        "data": [
+          {
+            "album": [
+              "Expedition_72"
+            ],
+            "center": "JSC",
+            "date_created": "2024-10-29T00:00:00Z",
+            "description": "iss072e126509 (Oct. 29, 2024) --- NASA astronaut and Expedition 72 Flight Engineer Nick Hague exercises on the advanced resistive exercise device (ARED) aboard the International Space Station's Tranquility module. The ARED mimics the inertial forces of lifting free weights on Earth to maintain muscle health during long-term space missions. During his exercise session, Hague wore Bio-Monitor, a garment and headband set outfitted with sensors to collect physiological data and minimally interfere with space station life. Hague wore the garment 48 hours as part of Vascular Aging, a study that monitors an astronaut’s cardiovascular health in space.",
+            "description_508": "736C5097.NEF",
+            "media_type": "image",
+            "nasa_id": "iss072e126509",
+            "title": "Astronaut Nick Hague exercises on the advanced resistive exercise device"
+          }
+        ],
+        "links": [
+          {
+            "href": "https://images-assets.nasa.gov/image/iss072e126509/iss072e126509~medium.jpg",
+            "rel": "alternate",
+            "render": "image",
+            "width": 1280,
+            "size": 207000,
+            "height": 853
+          },
+          {
+            "href": "https://images-assets.nasa.gov/image/iss072e126509/iss072e126509~small.jpg",
+            "rel": "alternate",
+            "render": "image",
+            "width": 640,
+            "size": 67000,
+            "height": 426
+          },
+          {
+            "href": "https://images-assets.nasa.gov/image/iss072e126509/iss072e126509~thumb.jpg",
+            "rel": "preview",
+            "render": "image",
+            "width": 640,
+            "size": 67000,
+            "height": 426
+          }
+        ]
+      },
+      {
+        "href": "https://images-assets.nasa.gov/image/iss074e0420483/collection.json",
+        "data": [
+          {
+            "center": "JSC",
+            "date_created": "2026-03-28T00:00:00Z",
+            "description": "iss074e0420483 (March 28, 2026) --- NASA astronaut and Expedition 74 flight engineer Jack Hathaway pedals on an exercise cycle, also known as the Cycle Ergometer with Vibration Isolation and Stabilization (CEVIS), inside the International Space Station's Destny laboratory module. Astronauts living and working aboard the orbital outpost exercise two hours a day, seven days a week, to maintain muscle and bone health and counteract the effects of microgravity. Credit: NASA/Chris Williams",
+            "description_508": "008H9095.NEF",
+            "media_type": "image",
+            "nasa_id": "iss074e0420483",
+            "title": "NASA astronaut Jack Hathaway pedals on an exercise cycle",
+            "album": [
+              "Expedition_74"
+            ]
+          }
+        ],
+        "links": [
+          {
+            "href": "https://images-assets.nasa.gov/image/iss074e0420483/iss074e0420483~large.jpg",
+            "rel": "alternate",
+            "render": "image",
+            "width": 1280,
+            "size": 343040,
+            "height": 1920
+          },
+          {
+            "href": "https://images-assets.nasa.gov/image/iss074e0420483/iss074e0420483~medium.jpg",
+            "rel": "alternate",
+            "render": "image",
+            "width": 853,
+            "size": 165888,
+            "height": 1280
+          },
+          {
+            "href": "https://images-assets.nasa.gov/image/iss074e0420483/iss074e0420483~small.jpg",
+            "rel": "alternate",
+            "render": "image",
+            "width": 426,
+            "size": 53248,
+            "height": 640
+          }
+        ]
+      },
+      {
+        "href": "https://images-assets.nasa.gov/image/KSC-20200722-PH-SPX01_0002/collection.json",
+        "data": [
+          {
+            "album": [
+              "SpaceX_Crew_1"
+            ],
+            "center": "KSC",
+            "date_created": "2020-07-22T00:00:00Z",
+            "description": "From left, Japan Aerospace Exploration Agency (JAXA) astronaut and mission specialist Soichi Noguchi, and NASA astronauts Michael Hopkins, spacecraft commander, and Victor Glover, pilot, participate in a SpaceX training exercise on July 22, 2020, at the agency’s Kennedy Space Center in Florida in preparation for NASA’s SpaceX Crew-1 mission. Also participating in the training but not pictured was NASA astronaut and mission specialist Shannon Walker. The exercise involved simulating an emergency situation prior to liftoff at Kennedy’s Launch Complex 39A. Crew-1 will be the first operational mission to the International Space Station under NASA’s Commercial Crew Program, following the agency’s certification of SpaceX’s crew transportation system.",
+            "keywords": [
+              "CCP",
+              "Commercial Crew Program",
+              "Astronaut Training"
+            ],
+            "location": "LC 39A",
+            "media_type": "image",
+            "nasa_id": "KSC-20200722-PH-SPX01_0002",
+            "photographer": "SpaceX",
+            "title": "CCP Crew-1 Astronaut Training: Emergency Land Egress Exercises"
+          }
+        ],
+        "links": [
+          {
+            "href": "https://images-assets.nasa.gov/image/KSC-20200722-PH-SPX01_0002/KSC-20200722-PH-SPX01_0002~medium.jpg",
+            "rel": "alternate",
+            "render": "image",
+            "width": 1280,
+            "size": 236000,
+            "height": 853
+          },
+          {
+            "href": "https://images-assets.nasa.gov/image/KSC-20200722-PH-SPX01_0002/KSC-20200722-PH-SPX01_0002~small.jpg",
+            "rel": "alternate",
+            "render": "image",
+            "width": 640,
+            "size": 72000,
+            "height": 426
+          },
+          {
+            "href": "https://images-assets.nasa.gov/image/KSC-20200722-PH-SPX01_0002/KSC-20200722-PH-SPX01_0002~thumb.jpg",
+            "rel": "preview",
+            "render": "image",
+            "width": 640,
+            "size": 72000,
+            "height": 426
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "total_hits": 107
+    },
+    "links": [
+      {
+        "rel": "next",
+        "prompt": "Next",
+        "href": "http://images-api.nasa.gov/search?q=astronaut+exercise&media_type=image&year_start=2020&page_size=5&page=2"
+      }
+    ]
+  }
+}

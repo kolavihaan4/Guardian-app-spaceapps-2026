@@ -1,0 +1,9 @@
+{
+  "name": "still-blank-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A calm, buildless, frontend-only dashboard template",
+  "type": "module",
+  "scripts": { "start": "node preview.mjs", "check": "node --check app.js && node --check preview.mjs" },
+  "engines": { "node": ">=18" }
+}

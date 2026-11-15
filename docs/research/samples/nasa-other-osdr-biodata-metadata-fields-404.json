@@ -1,0 +1,6 @@
+{
+  "code": 404,
+  "HTTPError": "NOT_FOUND",
+  "exception": "Exception",
+  "OpenAPI specification": "https://visualization.osdr.nasa.gov/biodata/api/openapi.json"
+}

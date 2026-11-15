@@ -1,0 +1,134 @@
+{
+  "_meta": {
+    "note": "Verbatim live response from NASA EONET v3 captured 2026-10-05 ~23:52 UTC. Arrays longer than arraysTruncatedTo were cut to their first elements; no values were edited or invented. This _meta key is NOT part of the API response.",
+    "request": "GET https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24962/geojson",
+    "httpStatus": 200,
+    "latencySeconds": 0.21394,
+    "responseContentType": "application/rss+xml; charset=utf-8",
+    "xRateLimitLimit": null,
+    "xRateLimitRemaining": null,
+    "accessControlAllowOrigin": "*",
+    "arraysTruncatedTo": 5,
+    "rawBytes": 9745
+  },
+  "type": "FeatureCollection",
+  "id": "EONET_24962",
+  "title": "Super Typhoon Choi-wan",
+  "description": null,
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24962/geojson",
+  "closed": null,
+  "categories": [
+    {
+      "id": "severeStorms",
+      "title": "Severe Storms"
+    }
+  ],
+  "sources": [
+    {
+      "id": "JTWC",
+      "url": "https://www.metoc.navy.mil/jtwc/products/wp2626.tcw"
+    }
+  ],
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          150.8,
+          16
+        ]
+      },
+      "properties": {
+        "id": "EONET_24962",
+        "title": "Super Typhoon Choi-wan",
+        "description": null,
+        "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24962/geojson",
+        "closed": null,
+        "date": "2026-09-30T12:00:00Z",
+        "magnitudeValue": 35,
+        "magnitudeUnit": "kts"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          149.5,
+          16.3
+        ]
+      },
+      "properties": {
+        "id": "EONET_24962",
+        "title": "Super Typhoon Choi-wan",
+        "description": null,
+        "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24962/geojson",
+        "closed": null,
+        "date": "2026-09-30T18:00:00Z",
+        "magnitudeValue": 35,
+        "magnitudeUnit": "kts"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          147.9,
+          16.7
+        ]
+      },
+      "properties": {
+        "id": "EONET_24962",
+        "title": "Super Typhoon Choi-wan",
+        "description": null,
+        "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24962/geojson",
+        "closed": null,
+        "date": "2026-10-01T00:00:00Z",
+        "magnitudeValue": 40,
+        "magnitudeUnit": "kts"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          146.8,
+          16.7
+        ]
+      },
+      "properties": {
+        "id": "EONET_24962",
+        "title": "Super Typhoon Choi-wan",
+        "description": null,
+        "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24962/geojson",
+        "closed": null,
+        "date": "2026-10-01T06:00:00Z",
+        "magnitudeValue": 40,
+        "magnitudeUnit": "kts"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          145.8,
+          16.5
+        ]
+      },
+      "properties": {
+        "id": "EONET_24962",
+        "title": "Super Typhoon Choi-wan",
+        "description": null,
+        "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24962/geojson",
+        "closed": null,
+        "date": "2026-10-01T12:00:00Z",
+        "magnitudeValue": 50,
+        "magnitudeUnit": "kts"
+      }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "time_tag": "2026-09-28T00:00:00",
+    "kp": 0.67,
+    "observed": "observed",
+    "noaa_scale": null
+  },
+  {
+    "time_tag": "2026-09-28T03:00:00",
+    "kp": 1.67,
+    "observed": "observed",
+    "noaa_scale": null
+  },
+  {
+    "time_tag": "2026-09-28T06:00:00",
+    "kp": 1,
+    "observed": "observed",
+    "noaa_scale": null
+  },
+  {
+    "time_tag": "2026-09-28T09:00:00",
+    "kp": 1.33,
+    "observed": "observed",
+    "noaa_scale": null
+  },
+  {
+    "time_tag": "2026-09-28T12:00:00",
+    "kp": 1.33,
+    "observed": "observed",
+    "noaa_scale": null
+  }
+]

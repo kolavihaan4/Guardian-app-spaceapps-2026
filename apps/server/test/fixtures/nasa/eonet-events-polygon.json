@@ -1,0 +1,60 @@
+{
+ "title": "EONET Events",
+ "events": [
+  {
+   "id": "EONET_24511",
+   "title": "Flood in Thailand 1104169",
+   "description": null,
+   "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_24511",
+   "closed": "2026-10-06T00:00:00Z",
+   "categories": [
+    {
+     "id": "floods",
+     "title": "Floods"
+    }
+   ],
+   "sources": [
+    {
+     "id": "GDACS",
+     "url": "https://www.gdacs.org/report.aspx?eventtype=FL&eventid=1104169"
+    }
+   ],
+   "geometry": [
+    {
+     "magnitudeValue": null,
+     "magnitudeUnit": null,
+     "date": "2026-10-04T20:00:00Z",
+     "type": "Polygon",
+     "coordinates": [
+      [
+       [
+        17.7858722,
+        97.742169
+       ],
+       [
+        17.7850699,
+        97.7421856
+       ],
+       [
+        17.7828428,
+        97.7426147
+       ],
+       [
+        17.7770346,
+        97.7450277
+       ],
+       [
+        17.7764502,
+        97.7450121
+       ],
+       [
+        17.7858722,
+        97.742169
+       ]
+      ]
+     ]
+    }
+   ]
+  }
+ ]
+}

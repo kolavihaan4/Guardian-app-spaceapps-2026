@@ -1,0 +1,56 @@
+{
+  "_meta": {
+    "note": "Verbatim live response from NASA EONET v3 captured 2026-10-05 ~23:43 UTC. Arrays longer than arraysTruncatedTo were cut to their first elements; no values were edited or invented. This _meta key is NOT part of the API response.",
+    "request": "GET https://eonet.gsfc.nasa.gov/api/v3/layers",
+    "httpStatus": 200,
+    "latencySeconds": 0.389,
+    "responseContentType": "application/rss+xml; charset=utf-8",
+    "xRateLimitLimit": null,
+    "xRateLimitRemaining": null,
+    "accessControlAllowOrigin": "*",
+    "arraysTruncatedTo": 3,
+    "rawBytes": 56991
+  },
+  "title": "EONET Web Service Layers",
+  "description": "List of web service layers in the EONET system",
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/layers",
+  "categories": [
+    {
+      "layers": [
+        {
+          "name": "AIRS_CO_Total_Column_Day",
+          "serviceUrl": "https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/wmts.cgi",
+          "serviceTypeId": "WMTS_1_0_0",
+          "parameters": [
+            {
+              "TILEMATRIXSET": "2km",
+              "FORMAT": "image/png"
+            }
+          ]
+        },
+        {
+          "name": "AIRS_CO_Total_Column_Day",
+          "serviceUrl": "https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/wmts.cgi",
+          "serviceTypeId": "WMTS_1_0_0",
+          "parameters": [
+            {
+              "TILEMATRIXSET": "2km",
+              "FORMAT": "image/png"
+            }
+          ]
+        },
+        {
+          "name": "AIRS_CO_Total_Column_Day",
+          "serviceUrl": "https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/wmts.cgi",
+          "serviceTypeId": "WMTS_1_0_0",
+          "parameters": [
+            {
+              "TILEMATRIXSET": "2km",
+              "FORMAT": "image/png"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

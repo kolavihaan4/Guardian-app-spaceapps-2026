@@ -1,0 +1,8 @@
+{
+  "_provenance": "SYNTHETIC — shaped after RollUpDataPointsResponse/RollupDataPoint/HeartRateRollupValue in the v4 discovery document (2026-10-05). Not real data.",
+  "rollupDataPoints": [
+    { "startTime": "2026-10-04T14:00:00Z", "endTime": "2026-10-04T14:05:00Z", "heartRate": { "beatsPerMinuteAvg": 71.42, "beatsPerMinuteMin": 66, "beatsPerMinuteMax": 79 } },
+    { "startTime": "2026-10-04T14:05:00Z", "endTime": "2026-10-04T14:10:00Z", "heartRate": { "beatsPerMinuteAvg": 74.0, "beatsPerMinuteMin": 70, "beatsPerMinuteMax": 81 } },
+    { "startTime": "2026-10-04T14:10:00Z", "endTime": "2026-10-04T14:15:00Z" }
+  ]
+}
