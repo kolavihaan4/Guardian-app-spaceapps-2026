@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AstroVitals // Mission Control Crew Telemetry & Neuro-Ocular Console</title>
+  <title>Guardian // Autonomous Crew Health &amp; Neuro-Ocular Sentinel</title>
   <style>
     :root {
       --bg: #04070f;
@@ -85,6 +85,7 @@
       letter-spacing: 0.6px;
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: 10px;
     }
 
@@ -511,8 +512,8 @@
       <div class="brand">
         <div class="pulse-orb" id="headerOrb"></div>
         <div class="title-block">
-          <h1>ASTROVITAL // CREW TELEMETRY <span class="tag-chip">FLIGHT SURGEON HUD</span></h1>
-          <p>Personal Earth preflight median anchoring • Ocular ultrasound + Pupillometry fusion</p>
+          <h1>GUARDIAN <span class="tag-chip">AUTONOMOUS CREW SENTINEL</span></h1>
+          <p>Autonomous Crew Health &amp; Neuro-Ocular Sentinel • Earth preflight median anchoring + Flight Surgeon escalation</p>
         </div>
       </div>
       <div class="controls-bar">
@@ -593,7 +594,7 @@
 
       <div class="card">
         <div class="panel-header">
-          <h2>🔦 Eye Dilation & Pupillometry</h2>
+          <h2>🔦 Eye Dilation &amp; Pupillometry</h2>
           <span class="badge ok" id="pupilBadge">Lux Calibrated</span>
         </div>
         <div class="sub-metrics">
@@ -645,12 +646,12 @@
     <!-- Deterministic Triage Matrix -->
     <div class="triage-box">
       <div class="panel-header">
-        <h2>🧠 Overarching AI Triage Assessment</h2>
+        <h2>🧠 Guardian Autonomous Triage Assessment</h2>
         <span class="badge info" id="sourceBadge">Source: Simulated Mission Log</span>
       </div>
       <div class="triage-grid">
         <div class="triage-item">
-          <h4>1. Data Quality & Artifact Guardrail</h4>
+          <h4>1. Data Quality &amp; Artifact Guardrail</h4>
           <p id="triageQuality"></p>
         </div>
         <div class="triage-item">
@@ -658,18 +659,18 @@
           <p id="triageBaseline"></p>
         </div>
         <div class="triage-item">
-          <h4>3. Differential & Environmental Context</h4>
+          <h4>3. Differential &amp; Environmental Context</h4>
           <ul id="triageCauses"></ul>
         </div>
         <div class="triage-item">
-          <h4>4. Action Plan & Flight Surgeon Status</h4>
+          <h4>4. Action Plan &amp; Flight Surgeon Status</h4>
           <ul id="triageActions"></ul>
         </div>
       </div>
     </div>
 
     <div class="disclaimer">
-      Not a medical device. Exploratory NASA Space Apps crew decision-support prototype only; does not diagnose or treat.
+      Not a medical device. Guardian is an exploratory NASA Space Apps crew decision-support prototype only; does not diagnose or treat.
     </div>
   </div>
 
@@ -682,10 +683,10 @@
       </div>
       <div class="modal-tabs">
         <button id="loadFitbitSampleBtn">Load Sample Fitbit API Payload</button>
-        <button id="loadAstroSampleBtn">Load Sample AstroVitals Payload</button>
+        <button id="loadAstroSampleBtn">Load Sample Guardian Payload</button>
       </div>
       <p style="font-size:0.82rem; color:var(--muted); margin-bottom:10px;">
-        Paste raw Fitbit Web API intraday JSON (<code>activities-heart</code>, <code>spo2</code>, <code>sleep</code>) or a full AstroVitals JSON object (including <code>daily_ultrasound</code> and <code>pupillometry</code>).
+        Paste raw Fitbit Web API intraday JSON (<code>activities-heart</code>, <code>spo2</code>, <code>sleep</code>) or a full Guardian telemetry JSON object (including <code>daily_ultrasound</code> and <code>pupillometry</code>).
       </p>
       <textarea id="jsonInput" spellcheck="false"></textarea>
       <div class="error-msg" id="modalError"></div>
@@ -757,7 +758,7 @@
       "sensor_verified": true
     };
 
-    const SAMPLE_ASTROVITAL_JSON = {
+    const SAMPLE_GUARDIAN_JSON = {
       label: "Live Custom Sync",
       source: "Fitbit Web API + Pupillometry",
       vitals: { hr_bpm: 88, preflight_hr_median: 62, spo2_pct: 95, temp_c: 37.2, preflight_temp_median: 36.7, sleep_hours: 6.1, sensor_verified: true },
@@ -780,325 +781,5 @@
       const lastY = normY(values[values.length - 1]).toFixed(1);
 
       svg.innerHTML = `
-        <line x1="0" y1="${baseY}" x2="${w}" y2="${baseY}" stroke="rgba(148,163,184,0.3)" stroke-dasharray="3,3" stroke-width="1"/>
-        <polyline fill="none" stroke="${strokeColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${pts}"/>
-        <circle cx="${lastX}" cy="${lastY}" r="3.5" fill="${strokeColor}"/>
-      `;
-    }
-
-    function normalizeImportedJson(raw) {
-      if (raw["activities-heart"] || raw["activities-heart-intraday"] || raw["spo2"]) {
-        const intraday = raw["activities-heart-intraday"]?.dataset;
-        const latestHr = Array.isArray(intraday) && intraday.length
-          ? intraday[intraday.length - 1].value
-          : raw["activities-heart"]?.[0]?.value?.restingHeartRate ?? 70;
-        const restingHr = raw["activities-heart"]?.[0]?.value?.restingHeartRate ?? 62;
-        const spo2Val = raw["spo2"]?.value?.avg ?? 98;
-        const minsAsleep = raw["sleep"]?.[0]?.summary?.totalMinutesAsleep ?? 420;
-
-        return {
-          day: "Live", label: "Fitbit Live Sync", pillClass: "custom-pill", source: "Fitbit Web API",
-          vitals: {
-            hr_bpm: Number(latestHr), preflight_hr_median: Number(restingHr),
-            spo2_pct: Math.round(Number(spo2Val)), temp_c: 36.9, preflight_temp_median: 36.7,
-            sleep_hours: +(minsAsleep / 60).toFixed(1), sensor_verified: raw.sensor_verified !== false
-          },
-          ultrasound: raw.daily_ultrasound || raw.ultrasound || {
-            onsd_mm: 4.8, preflight_onsd_mm: 4.6, ijv_flow_status: "normal_forward", probe_contact_verified: true
-          },
-          pupillometry: raw.pupillometry || {
-            left_pupil_mm: 3.5, right_pupil_mm: 3.6, plr_constriction_pct: 32, lighting_lux_verified: true
-          }
-        };
-      }
-
-      if (raw.vitals && typeof raw.vitals.hr_bpm === "number") {
-        return {
-          day: "Live", label: raw.label || "Custom JSON Sync", pillClass: "custom-pill", source: raw.source || "Custom JSON Import",
-          vitals: {
-            hr_bpm: raw.vitals.hr_bpm, preflight_hr_median: raw.vitals.preflight_hr_median ?? 62,
-            spo2_pct: raw.vitals.spo2_pct ?? 98, temp_c: raw.vitals.temp_c ?? 36.8,
-            preflight_temp_median: raw.vitals.preflight_temp_median ?? 36.7,
-            sleep_hours: raw.vitals.sleep_hours ?? 7.0, sensor_verified: raw.vitals.sensor_verified !== false
-          },
-          ultrasound: raw.daily_ultrasound || raw.ultrasound || {
-            onsd_mm: 4.7, preflight_onsd_mm: 4.6, ijv_flow_status: "normal_forward", probe_contact_verified: true
-          },
-          pupillometry: raw.pupillometry || {
-            left_pupil_mm: 3.5, right_pupil_mm: 3.5, plr_constriction_pct: 33, lighting_lux_verified: true
-          }
-        };
-      }
-
-      throw new Error("Unrecognized JSON format. Include 'vitals.hr_bpm' or Fitbit 'activities-heart' fields.");
-    }
-
-    function renderPills() {
-      const container = document.getElementById("dayPills");
-      container.innerHTML = "";
-      MISSION_DAYS.forEach((item, idx) => {
-        const btn = document.createElement("button");
-        btn.className = `day-pill ${item.pillClass || ""}` + (idx === currentIndex ? " active" : "");
-        btn.textContent = item.label;
-        btn.onclick = () => {
-          currentIndex = idx;
-          syncSlidersToRecord(MISSION_DAYS[currentIndex]);
-          renderPills();
-          renderDashboard();
-        };
-        container.appendChild(btn);
-      });
-    }
-
-    function syncSlidersToRecord(rec) {
-      document.getElementById("simHr").value = rec.vitals.hr_bpm;
-      document.getElementById("simHrLabel").textContent = `${rec.vitals.hr_bpm} bpm`;
-      document.getElementById("simOnsd").value = rec.ultrasound.onsd_mm;
-      document.getElementById("simOnsdLabel").textContent = `${rec.ultrasound.onsd_mm.toFixed(1)} mm`;
-      document.getElementById("simPupil").value = rec.pupillometry.right_pupil_mm;
-      document.getElementById("simPupilLabel").textContent = `${rec.pupillometry.right_pupil_mm.toFixed(1)} mm`;
-    }
-
-    function renderDashboard() {
-      const record = MISSION_DAYS[currentIndex];
-      const loc = document.getElementById("locationSelect").value;
-      const weather = document.getElementById("weatherSelect").value;
-      const locLabel = LOCATION_LABELS[loc];
-
-      const { vitals, ultrasound, pupillometry } = record;
-      const hrDelta = vitals.hr_bpm - vitals.preflight_hr_median;
-      const tempDelta = +(vitals.temp_c - vitals.preflight_temp_median).toFixed(1);
-      const onsdDelta = +(ultrasound.onsd_mm - ultrasound.preflight_onsd_mm).toFixed(2);
-      const anisocoria = +Math.abs(pupillometry.left_pupil_mm - pupillometry.right_pupil_mm).toFixed(2);
-
-      document.getElementById("hrVal").textContent = `${vitals.hr_bpm} bpm`;
-      document.getElementById("hrSub").textContent = `Preflight median: ${vitals.preflight_hr_median} bpm (${hrDelta >= 0 ? "+" : ""}${hrDelta} bpm)`;
-
-      document.getElementById("spo2Val").textContent = `${vitals.spo2_pct}%`;
-      document.getElementById("spo2Sub").textContent = vitals.sensor_verified ? "Target ≥ 95% • Sensor verified" : "⚠️ Unverified strap fit";
-
-      document.getElementById("tempVal").textContent = `${vitals.temp_c.toFixed(1)} °C`;
-      document.getElementById("tempSub").textContent = `Preflight median: ${vitals.preflight_temp_median.toFixed(1)} °C (${tempDelta >= 0 ? "+" : ""}${tempDelta} °C)`;
-
-      document.getElementById("sleepVal").textContent = `${vitals.sleep_hours} hrs`;
-      document.getElementById("sleepSub").textContent = `Source: ${record.source}`;
-      document.getElementById("sourceBadge").textContent = `Source: ${record.source}`;
-
-      // Draw sparklines up to current day
-      const slice = MISSION_DAYS.slice(0, currentIndex + 1);
-      drawSparkline("hrSpark", slice.map(d => d.vitals.hr_bpm), vitals.preflight_hr_median, 55, 125, "#38bdf8");
-      drawSparkline("spo2Spark", slice.map(d => d.vitals.spo2_pct), 95, 86, 100, "#10b981");
-      drawSparkline("onsdSpark", slice.map(d => d.ultrasound.onsd_mm), ultrasound.preflight_onsd_mm, 4.4, 6.1, "#a78bfa");
-
-      // Ultrasound Card
-      document.getElementById("onsdVal").textContent = `${ultrasound.onsd_mm.toFixed(1)} mm`;
-      document.getElementById("onsdSub").textContent = `Preflight: ${ultrasound.preflight_onsd_mm.toFixed(1)} mm (${onsdDelta >= 0 ? "+" : ""}${onsdDelta} mm)`;
-      const ijvMap = {
-        normal_forward: "Normal Forward",
-        mild_stasis: "Mild Stasis",
-        stagnant_retrograde: "Stagnant / Retrograde",
-        indeterminate: "Indeterminate"
-      };
-      document.getElementById("ijvVal").textContent = ijvMap[ultrasound.ijv_flow_status] || ultrasound.ijv_flow_status;
-      document.getElementById("ijvSub").textContent = ultrasound.probe_contact_verified ? "Acoustic window verified" : "⚠️ Re-seat probe before reading";
-      const usBadge = document.getElementById("usBadge");
-      usBadge.textContent = ultrasound.probe_contact_verified ? "Probe Verified" : "Unverified Probe";
-      usBadge.className = "badge " + (ultrasound.probe_contact_verified ? "ok" : "warn");
-
-      // Pupillometry Card + Visual Rings
-      document.getElementById("pupilVal").textContent = `${pupillometry.left_pupil_mm.toFixed(1)} / ${pupillometry.right_pupil_mm.toFixed(1)} mm`;
-      document.getElementById("anisocoriaSub").textContent = `Anisocoria: ${anisocoria.toFixed(1)} mm (${anisocoria >= 1.0 ? "⚠️ ≥ 1.0 mm asymmetry" : "Normal < 1.0 mm"})`;
-      document.getElementById("plrVal").textContent = `${pupillometry.plr_constriction_pct}%`;
-      document.getElementById("plrSub").textContent = pupillometry.plr_constriction_pct >= 20 ? "Brisk symmetric constriction (≥ 20%)" : "⚠️ Sluggish constriction (< 20%)";
-
-      const scalePx = mm => Math.round(Math.max(8, Math.min(28, mm * 4.4)));
-      document.getElementById("leftPupilDot").style.width = `${scalePx(pupillometry.left_pupil_mm)}px`;
-      document.getElementById("leftPupilDot").style.height = `${scalePx(pupillometry.left_pupil_mm)}px`;
-      document.getElementById("rightPupilDot").style.width = `${scalePx(pupillometry.right_pupil_mm)}px`;
-      document.getElementById("rightPupilDot").style.height = `${scalePx(pupillometry.right_pupil_mm)}px`;
-      document.getElementById("leftPupilTag").textContent = `${pupillometry.left_pupil_mm.toFixed(1)} mm`;
-      document.getElementById("rightPupilTag").textContent = `${pupillometry.right_pupil_mm.toFixed(1)} mm`;
-      document.getElementById("deltaTag").textContent = `Δ ${anisocoria.toFixed(1)} mm`;
-
-      const pupilBadge = document.getElementById("pupilBadge");
-      pupilBadge.textContent = pupillometry.lighting_lux_verified ? "Lux Calibrated" : "Unverified Ambient Lux";
-      pupilBadge.className = "badge " + (pupillometry.lighting_lux_verified ? "ok" : "warn");
-
-      // Triage Decision
-      const unverifiedAny = !vitals.sensor_verified || !ultrasound.probe_contact_verified || !pupillometry.lighting_lux_verified;
-      const vitalsEscalation = vitals.sensor_verified && (hrDelta >= 35 || vitals.spo2_pct <= 91 || vitals.temp_c >= 38.0);
-      const ultrasoundEscalation = ultrasound.probe_contact_verified && (
-        ultrasound.onsd_mm >= 5.5 || onsdDelta >= 0.8 || ultrasound.ijv_flow_status === "stagnant_retrograde"
-      );
-      const pupilEscalation = pupillometry.lighting_lux_verified && (
-        anisocoria >= 1.0 || pupillometry.plr_constriction_pct < 15
-      );
-
-      const escalate = vitalsEscalation || ultrasoundEscalation || pupilEscalation;
-      const mildWatch = !escalate && !unverifiedAny && (
-        onsdDelta >= 0.4 || ultrasound.ijv_flow_status === "mild_stasis" || hrDelta >= 12 || pupillometry.plr_constriction_pct < 20
-      );
-
-      const banner = document.getElementById("statusBanner");
-      const badge = document.getElementById("bannerBadge");
-      const bTitle = document.getElementById("bannerTitle");
-      const bSub = document.getElementById("bannerSub");
-      const orb = document.getElementById("headerOrb");
-
-      if (unverifiedAny) {
-        banner.className = "banner warn";
-        badge.className = "badge warn";
-        badge.textContent = "ARTIFACT BLOCKED";
-        orb.style.background = "var(--warn)";
-        orb.style.boxShadow = "0 0 14px var(--warn)";
-        bTitle.textContent = `${record.label} — Unverified Sensor / Calibration Hold`;
-        bSub.textContent = "Escalation suppressed: confirm wearable strap contact, ultrasound acoustic window, and ambient lux calibration first.";
-      } else if (escalate) {
-        banner.className = "banner danger";
-        badge.className = "badge danger";
-        badge.textContent = "FLIGHT SURGEON ESCALATION";
-        orb.style.background = "var(--danger)";
-        orb.style.boxShadow = "0 0 14px var(--danger)";
-        bTitle.textContent = `${record.label} — Verified Neuro-Ocular / Vital Red Flag`;
-        bSub.textContent = "Verified deviation beyond personal Earth preflight baseline. Initiate Flight Surgeon telemetry package.";
-      } else if (mildWatch) {
-        banner.className = "banner warn";
-        badge.className = "badge warn";
-        badge.textContent = "MONITOR & RE-TEST";
-        orb.style.background = "var(--warn)";
-        orb.style.boxShadow = "0 0 14px var(--warn)";
-        bTitle.textContent = `${record.label} — Mild Baseline Drift`;
-        bSub.textContent = "Sub-threshold cephalad fluid or post-activity drift detected. Repeat ultrasound & pupillometry after rest.";
-      } else {
-        banner.className = "banner";
-        badge.className = "badge ok";
-        badge.textContent = "NOMINAL";
-        orb.style.background = "var(--ok)";
-        orb.style.boxShadow = "0 0 14px var(--ok)";
-        bTitle.textContent = `${record.label} — Within Personal Preflight Baseline`;
-        bSub.textContent = `All verified vitals, ocular ultrasound, and pupillometry readings nominal in ${locLabel}.`;
-      }
-
-      document.getElementById("triageQuality").textContent = unverifiedAny
-        ? `Hold triggered: Wearable=${vitals.sensor_verified ? "OK" : "Unverified"}, Ultrasound Probe=${ultrasound.probe_contact_verified ? "OK" : "Unverified"}, Pupillometry Lux=${pupillometry.lighting_lux_verified ? "OK" : "Unverified"}. Re-acquire clean signals before clinical escalation.`
-        : `Wearable strap, ultrasound probe placement, and pupillometry ambient lux all verified in ${locLabel}.`;
-
-      document.getElementById("triageBaseline").textContent =
-        `HR ${vitals.hr_bpm} bpm (${hrDelta >= 0 ? "+" : ""}${hrDelta} vs preflight ${vitals.preflight_hr_median}); SpO₂ ${vitals.spo2_pct}%; ONSD ${ultrasound.onsd_mm.toFixed(1)} mm (${onsdDelta >= 0 ? "+" : ""}${onsdDelta} vs ${ultrasound.preflight_onsd_mm} mm); Anisocoria ${anisocoria.toFixed(1)} mm, PLR ${pupillometry.plr_constriction_pct}%.`;
-
-      const causesEl = document.getElementById("triageCauses");
-      causesEl.innerHTML = "";
-      const causes = [
-        `Cephalad fluid shift in ${locLabel}, recent EVA/resistive workout, or cabin CO₂/hydration variance`,
-        unverifiedAny ? "Sensor motion artifact, acoustic coupling loss, or uncalibrated cabin lighting" : "True neuro-ocular pressure / autonomic shift requiring paired ONSD + pupillometry correlation"
-      ];
-      if (weather === "storm") {
-        causes.push("Elevated geomagnetic/solar activity (Kp 7 / SEP) logged as environmental context — correlate with crew dosimeter without assuming deterministic vital-sign offsets.");
-      }
-      causes.forEach(c => {
-        const li = document.createElement("li");
-        li.textContent = c;
-        causesEl.appendChild(li);
-      });
-
-      const actionsEl = document.getElementById("triageActions");
-      actionsEl.innerHTML = "";
-      const actions = unverifiedAny
-        ? [
-            "Re-seat wearable strap and re-apply ultrasound gel over closed eyelid",
-            "Standardize cabin lighting lux and repeat 3-second pupillometry scan",
-            "Re-run triage once all three quality checks read Verified"
-          ]
-        : escalate
-        ? [
-            "Transmit verified ONSD, IJV Doppler, and pupillometry log to Flight Surgeon",
-            "Check cabin ppCO₂, hydration intake, and visual acuity chart (Amsler grid)",
-            "Avoid high-strain resistive exercise until ground medical review completes"
-          ]
-        : [
-            "Continue routine daily wearable, ocular ultrasound, and pupillometry logging",
-            "Maintain standard hydration and post-EVA recovery rest window"
-          ];
-      actions.forEach(a => {
-        const li = document.createElement("li");
-        li.textContent = a;
-        actionsEl.appendChild(li);
-      });
-    }
-
-    // Live Stage Sliders Wiring
-    document.getElementById("simHr").oninput = e => {
-      const val = Number(e.target.value);
-      document.getElementById("simHrLabel").textContent = `${val} bpm`;
-      MISSION_DAYS[currentIndex].vitals.hr_bpm = val;
-      MISSION_DAYS[currentIndex].vitals.sensor_verified = true;
-      renderDashboard();
-    };
-    document.getElementById("simOnsd").oninput = e => {
-      const val = Number(e.target.value);
-      document.getElementById("simOnsdLabel").textContent = `${val.toFixed(1)} mm`;
-      MISSION_DAYS[currentIndex].ultrasound.onsd_mm = val;
-      MISSION_DAYS[currentIndex].ultrasound.probe_contact_verified = true;
-      renderDashboard();
-    };
-    document.getElementById("simPupil").oninput = e => {
-      const val = Number(e.target.value);
-      document.getElementById("simPupilLabel").textContent = `${val.toFixed(1)} mm`;
-      MISSION_DAYS[currentIndex].pupillometry.right_pupil_mm = val;
-      MISSION_DAYS[currentIndex].pupillometry.lighting_lux_verified = true;
-      renderDashboard();
-    };
-
-    // Modal Controls
-    const modalBackdrop = document.getElementById("modalBackdrop");
-    const jsonInput = document.getElementById("jsonInput");
-    const modalError = document.getElementById("modalError");
-
-    document.getElementById("openModalBtn").onclick = () => {
-      modalError.style.display = "none";
-      if (!jsonInput.value.trim()) jsonInput.value = JSON.stringify(SAMPLE_FITBIT_JSON, null, 2);
-      modalBackdrop.classList.add("open");
-    };
-    document.getElementById("closeModalBtn").onclick = () => modalBackdrop.classList.remove("open");
-    document.getElementById("cancelModalBtn").onclick = () => modalBackdrop.classList.remove("open");
-    document.getElementById("loadFitbitSampleBtn").onclick = () => {
-      modalError.style.display = "none";
-      jsonInput.value = JSON.stringify(SAMPLE_FITBIT_JSON, null, 2);
-    };
-    document.getElementById("loadAstroSampleBtn").onclick = () => {
-      modalError.style.display = "none";
-      jsonInput.value = JSON.stringify(SAMPLE_ASTROVITAL_JSON, null, 2);
-    };
-
-    document.getElementById("applyJsonBtn").onclick = () => {
-      try {
-        const parsed = JSON.parse(jsonInput.value);
-        const normalized = normalizeImportedJson(parsed);
-        const existingLiveIdx = MISSION_DAYS.findIndex(d => d.day === "Live");
-        if (existingLiveIdx >= 0) {
-          MISSION_DAYS[existingLiveIdx] = normalized;
-          currentIndex = existingLiveIdx;
-        } else {
-          MISSION_DAYS.push(normalized);
-          currentIndex = MISSION_DAYS.length - 1;
-        }
-        modalError.style.display = "none";
-        modalBackdrop.classList.remove("open");
-        syncSlidersToRecord(normalized);
-        renderPills();
-        renderDashboard();
-      } catch (err) {
-        modalError.textContent = err.message || "Invalid JSON syntax.";
-        modalError.style.display = "block";
-      }
-    };
-
-    document.getElementById("locationSelect").onchange = renderDashboard;
-    document.getElementById("weatherSelect").onchange = renderDashboard;
-
-    syncSlidersToRecord(MISSION_DAYS[0]);
-    renderPills();
-    renderDashboard();
-  </script>
-</body>
-</html>
+        <line x1="0" y1="\${baseY}" x2="${w}" y2="${baseY}" stroke="rgba(148,163,184,0.3)" stroke-dasharray="3,3" stroke-width="1"/>
+        <polyline fill="none" stroke="\${strokeColor}" stroke-width="2.2" stroke-linecap="round" stroke
