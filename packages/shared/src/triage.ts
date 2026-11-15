@@ -584,7 +584,8 @@ export function compareWithAstronautAverage(
   return { averageSystolic, averageDiastolic, group, summary }
 }
 
-export const HR_REFERENCE_SOURCE = 'resting adult range 60–100 bpm (StatPearls Vital Sign Assessment; Cleveland Clinic), Earth reference'
+// Pulse reference: https://opentextbc.ca/vitalsignmeasurement/chapter/what-is-pulse/
+export const HR_REFERENCE_SOURCE = 'resting adult range 60–100 bpm (StatPearls Vital Sign Assessment; Vital Sign Measurement Across the Lifespan, 2nd Canadian Edition, "What is Pulse?"), Earth reference'
 
 /**
  * 24-hour average heart rate in healthy adults aged 50–65 wearing an ambulatory ECG
