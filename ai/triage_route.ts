@@ -1,160 +1,217 @@
-import { Router, type Request, type Response } from 'express';
-import { z } from 'zod';
-import {
-  TriageRequestSchema,
-  TriageResponseSchema,
-  type MissionLocation,
-  type TriageRequest,
-  type TriageResponse,
-} from './triage_shared';
+import { z } from "zod";
 
-const router = Router();
-const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_TRIAGE_MODEL ?? 'astrovitals-triage';
+export const MissionLocationEnum = z.enum([
+  "earth_preflight",
+  "deep_space_transit",
+  "lunar_surface",
+  "mars_surface",
+]);
 
-const LOCATION_CONTEXT: Record<MissionLocation, string> = {
-  earth_preflight: 'Earth Preflight (1.0g)',
-  deep_space_transit: 'Deep-Space Transit (0g)',
-  lunar_surface: 'Lunar Surface (1/6g)',
-  mars_surface: 'Mars Surface (3/8g)',
-};
+export const SpaceWeatherEnum = z.enum(["quiet", "storm"]);
 
-function buildDeterministicFallback(input: TriageRequest): TriageResponse {
-  const { vitals, daily_ultrasound, available_tools, mission_location, space_weather } = input;
-  const locationLabel = LOCATION_CONTEXT[mission_location];
+export const IjvFlowStatusEnum = z.enum([
+  "normal_forward",
+  "mild_stasis",
+  "stagnant_retrograde",
+  "indeterminate",
+]);
 
-  const hrDelta = vitals.hr_bpm - vitals.preflight_hr_median;
+export const TelemetrySourceEnum = z.enum([
+  "simulated_mission_log",
+  "fitbit_web_api",
+  "manual_entry",
+]);
 
-  // Hard clinical safety limits anchored strictly to personal Earth preflight medians
-  const vitalsMultiDrift =
-    vitals.sensor_verified &&
-    (hrDelta >= 35 ||
-      vitals.spo2_pct <= 91 ||
-      (vitals.temp_c !== undefined && vitals.temp_c >= 38.0));
-
-  const onsdDelta = daily_ultrasound
-    ? +(daily_ultrasound.onsd_mm - daily_ultrasound.preflight_onsd_mm).toFixed(2)
-    : 0;
-
-  const ultrasoundEscalation = Boolean(
-    daily_ultrasound &&
-      daily_ultrasound.probe_contact_verified &&
-      (daily_ultrasound.onsd_mm >= 5.5 ||
-        onsdDelta >= 0.8 ||
-        daily_ultrasound.ijv_flow_status === 'stagnant_retrograde')
-  );
-
-  const shouldEscalate = vitalsMultiDrift || ultrasoundEscalation;
-
-  const hasElevatedSpaceWeather = Boolean(
-    space_weather &&
-      ((space_weather.kp_index !== undefined && space_weather.kp_index >= 5) ||
-        Boolean(space_weather.sep_event))
-  );
-
-  const radiationContextNote = hasElevatedSpaceWeather
-    ? ' Concurrent elevated solar/geomagnetic activity logged as environmental context (correlate with crew dosimeter without assuming deterministic vital-sign causality).'
-    : '';
-
-  const ultrasoundQualityNote = daily_ultrasound
-    ? daily_ultrasound.probe_contact_verified
-      ? ` Ultrasound probe placement verified (ONSD ${daily_ultrasound.onsd_mm} mm, IJV flow: ${daily_ultrasound.ijv_flow_status}).`
-      : ' Unverified ultrasound probe contact: re-seat transducer and verify acoustic window before interpreting ONSD.'
-    : '';
-
-  const ultrasoundBaselineNote = daily_ultrasound
-    ? ` | Daily Ultrasound ONSD: ${daily_ultrasound.onsd_mm} mm (${onsdDelta >= 0 ? '+' : ''}${onsdDelta} mm vs personal preflight ${daily_ultrasound.preflight_onsd_mm} mm).`
-    : '';
-
-  return {
-    data_quality_check:
-      (vitals.sensor_verified
-        ? `Wearable sensor placement verified in ${locationLabel}; evaluating telemetry strictly against personal preflight baseline.`
-        : 'Unverified wearable sensor fit: confirm strap contact and rule out motion artifact before interpreting readings.') +
-      ultrasoundQualityNote,
-    baseline_comparison: `HR ${vitals.hr_bpm} bpm (${hrDelta >= 0 ? '+' : ''}${hrDelta} bpm vs personal preflight ${vitals.preflight_hr_median} bpm); SpO2 ${vitals.spo2_pct}%.${ultrasoundBaselineNote}`,
-    common_causes: [
-      `Cephalad fluid redistribution in ${locationLabel}, recent EVA/resistive exercise, or cabin hydration/CO2 shift`,
-      'Wearable strap shift or acoustic probe alignment variance',
-    ],
-    confirmation_prompt:
-      'Can you confirm probe/sensor placement is snug and note any visual changes, headache, fever, or pressure sensations?',
-    available_tool_action_plan: [
-      `Verify readings using ${available_tools[0]}`,
-      ...(available_tools[1] ? [`Cross-check status with ${available_tools[1]}`] : []),
-      'Re-test after 5 minutes at rest and review dosimeter log if space weather is elevated',
-    ],
-    contact_ground_support: shouldEscalate,
-    ground_support_reason: shouldEscalate
-      ? ultrasoundEscalation
-        ? `Verified daily ultrasound drift in ${locationLabel} (ONSD ${daily_ultrasound?.onsd_mm} mm, +${onsdDelta} mm over personal preflight; IJV ${daily_ultrasound?.ijv_flow_status}) warrants Flight Surgeon consultation.${radiationContextNote}`
-        : `Verified multi-parameter vital deviation in ${locationLabel} outside personal preflight baseline; recommend Flight Surgeon review.${radiationContextNote}`
-      : null,
-  };
-}
-
-router.post('/', async (req: Request, res: Response) => {
-  const parsed = TriageRequestSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({
-      error: 'validation_error',
-      message: 'Invalid triage payload',
-      issues: parsed.error.issues,
-    });
-    return;
-  }
-
-  const payload = parsed.data;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15_000);
-
-  try {
-    const ollamaRes = await fetch(`${OLLAMA_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: OLLAMA_MODEL,
-        stream: false,
-        think: false,
-        format: z.toJSONSchema(TriageResponseSchema),
-        messages: [
-          {
-            role: 'user',
-            content: JSON.stringify(payload),
-          },
-        ],
-      }),
-    });
-
-    if (!ollamaRes.ok) {
-      throw new Error(`Ollama returned HTTP ${ollamaRes.status}`);
-    }
-
-    const data = (await ollamaRes.json()) as { message?: { content?: string } };
-    const rawContent = data.message?.content ?? '{}';
-    const validatedOutput = TriageResponseSchema.parse(JSON.parse(rawContent));
-
-    res.json({
-      source: `local-ollama:${OLLAMA_MODEL}`,
-      disclaimer:
-        'Not a medical device. Exploratory crew decision-support prototype only; does not diagnose or treat.',
-      triage: validatedOutput,
-    });
-  } catch {
-    req.log?.warn(
-      { route: '/api/ai/triage' },
-      'Ollama unavailable or timed out; serving offline baseline fallback'
-    );
-    res.json({
-      source: 'offline-deterministic-fallback',
-      disclaimer:
-        'Not a medical device. Exploratory crew decision-support prototype only; does not diagnose or treat.',
-      triage: buildDeterministicFallback(payload),
-    });
-  } finally {
-    clearTimeout(timeout);
-  }
+export const VitalsSchema = z.object({
+  hr_bpm: z.number().min(25).max(240),
+  preflight_hr_median: z.number().min(35).max(120).default(62),
+  spo2_pct: z.number().min(50).max(100),
+  temp_c: z.number().min(32.0).max(42.5),
+  preflight_temp_median: z.number().min(35.0).max(38.5).default(36.7),
+  sleep_hours: z.number().min(0).max(24).optional(),
+  sensor_verified: z.boolean().default(true),
 });
 
-export default router;
+export const DailyUltrasoundSchema = z.object({
+  onsd_mm: z.number().min(2.0).max(9.0),
+  preflight_onsd_mm: z.number().min(3.0).max(6.5).default(4.6),
+  ijv_flow_status: IjvFlowStatusEnum,
+  probe_contact_verified: z.boolean().default(true),
+});
+
+export const PupillometrySchema = z.object({
+  left_pupil_mm: z.number().min(1.0).max(10.0),
+  right_pupil_mm: z.number().min(1.0).max(10.0),
+  plr_constriction_pct: z.number().min(0).max(70),
+  lighting_lux_verified: z.boolean().default(true),
+});
+
+export const TriageRequestSchema = z.object({
+  crew_id: z.string().min(1).default("CREW-01"),
+  mission_day: z.union([z.number().int().min(1), z.literal("Live")]).default(1),
+  location: MissionLocationEnum.default("mars_surface"),
+  space_weather: SpaceWeatherEnum.default("quiet"),
+  telemetry_source: TelemetrySourceEnum.default("simulated_mission_log"),
+  vitals: VitalsSchema,
+  daily_ultrasound: DailyUltrasoundSchema.optional(),
+  pupillometry: PupillometrySchema.optional(),
+  crew_notes: z.string().max(1000).optional(),
+});
+
+export type TriageRequest = z.infer<typeof TriageRequestSchema>;
+
+export const TriageDecisionSchema = z.object({
+  status: z.enum([
+    "NOMINAL",
+    "ARTIFACT_BLOCKED",
+    "MONITOR_AND_RETEST",
+    "FLIGHT_SURGEON_ESCALATION",
+  ]),
+  escalate_to_flight_surgeon: z.boolean(),
+  data_quality_verified: z.boolean(),
+  unverified_channels: z.array(z.string()),
+  baseline_deltas: z.object({
+    hr_delta_bpm: z.number(),
+    temp_delta_c: z.number(),
+    onsd_delta_mm: z.number().nullable(),
+    anisocoria_mm: z.number().nullable(),
+    plr_constriction_pct: z.number().nullable(),
+  }),
+  differential_context: z.array(z.string()),
+  recommended_actions: z.array(z.string()),
+  disclaimer: z.string(),
+});
+
+export type TriageDecision = z.infer<typeof TriageDecisionSchema>;
+
+/**
+ * Deterministic evidence-based clinical rules engine.
+ * Anchors strictly to personal Earth preflight medians, blocks unverified
+ * sensor/probe/lux artifacts, and treats space weather as contextual only.
+ */
+export function evaluateDeterministicTriage(req: TriageRequest): TriageDecision {
+  const { vitals, daily_ultrasound, pupillometry, location, space_weather } = req;
+
+  const hrDelta = Number((vitals.hr_bpm - vitals.preflight_hr_median).toFixed(1));
+  const tempDelta = Number((vitals.temp_c - vitals.preflight_temp_median).toFixed(2));
+  const onsdDelta = daily_ultrasound
+    ? Number((daily_ultrasound.onsd_mm - daily_ultrasound.preflight_onsd_mm).toFixed(2))
+    : null;
+  const anisocoriaMm = pupillometry
+    ? Number(Math.abs(pupillometry.left_pupil_mm - pupillometry.right_pupil_mm).toFixed(2))
+    : null;
+  const plrPct = pupillometry ? pupillometry.plr_constriction_pct : null;
+
+  // 1. Artifact & Calibration Guardrail
+  const unverifiedChannels: string[] = [];
+  if (!vitals.sensor_verified) unverifiedChannels.push("wearable_strap_contact");
+  if (daily_ultrasound && !daily_ultrasound.probe_contact_verified) {
+    unverifiedChannels.push("ultrasound_probe_contact");
+  }
+  if (pupillometry && !pupillometry.lighting_lux_verified) {
+    unverifiedChannels.push("pupillometry_ambient_lux");
+  }
+
+  const dataQualityVerified = unverifiedChannels.length === 0;
+
+  // 2. Verified Clinical Escalation Checks
+  const vitalsRedFlag =
+    vitals.sensor_verified &&
+    (hrDelta >= 35 || vitals.spo2_pct <= 91 || vitals.temp_c >= 38.0);
+
+  const ultrasoundRedFlag =
+    Boolean(daily_ultrasound?.probe_contact_verified) &&
+    daily_ultrasound !== undefined &&
+    (daily_ultrasound.onsd_mm >= 5.5 ||
+      (onsdDelta !== null && onsdDelta >= 0.8) ||
+      daily_ultrasound.ijv_flow_status === "stagnant_retrograde");
+
+  const pupillometryRedFlag =
+    Boolean(pupillometry?.lighting_lux_verified) &&
+    pupillometry !== undefined &&
+    ((anisocoriaMm !== null && anisocoriaMm >= 1.0) ||
+      pupillometry.plr_constriction_pct < 15);
+
+  const escalate = dataQualityVerified && (vitalsRedFlag || ultrasoundRedFlag || pupillometryRedFlag);
+
+  // 3. Mild Sub-Threshold Drift Check
+  const mildDrift =
+    dataQualityVerified &&
+    !escalate &&
+    (hrDelta >= 12 ||
+      (onsdDelta !== null && onsdDelta >= 0.4) ||
+      daily_ultrasound?.ijv_flow_status === "mild_stasis" ||
+      (pupillometry !== undefined && pupillometry.plr_constriction_pct < 20));
+
+  let status: TriageDecision["status"] = "NOMINAL";
+  if (!dataQualityVerified) {
+    status = "ARTIFACT_BLOCKED";
+  } else if (escalate) {
+    status = "FLIGHT_SURGEON_ESCALATION";
+  } else if (mildDrift) {
+    status = "MONITOR_AND_RETEST";
+  }
+
+  // 4. Differential & Non-Deterministic Space-Weather Context
+  const differentialContext: string[] = [
+    `Cephalad fluid shift in ${location}, recent EVA/resistive workout, or cabin ppCO2/hydration variance`,
+  ];
+
+  if (!dataQualityVerified) {
+    differentialContext.push(
+      `Unverified telemetry channel(s): ${unverifiedChannels.join(", ")} — artifact suppression active`
+    );
+  } else {
+    differentialContext.push(
+      "Verified neuro-ocular and cardiopulmonary telemetry compared directly against personal Earth preflight medians"
+    );
+  }
+
+  if (space_weather === "storm") {
+    differentialContext.push(
+      "Elevated geomagnetic/solar activity (Kp 7 / SEP) logged as contextual environmental stressor — correlate with crew dosimeter without applying synthetic vital-sign offsets"
+    );
+  }
+
+  // 5. Action Plan
+  const recommendedActions: string[] = [];
+  if (!dataQualityVerified) {
+    if (!vitals.sensor_verified) {
+      recommendedActions.push("Re-seat wearable strap and confirm skin contact before trusting HR/SpO2");
+    }
+    if (daily_ultrasound && !daily_ultrasound.probe_contact_verified) {
+      recommendedActions.push("Re-apply ultrasound gel over closed eyelid and confirm optic nerve acoustic window");
+    }
+    if (pupillometry && !pupillometry.lighting_lux_verified) {
+      recommendedActions.push("Standardize ambient cabin lighting lux and repeat 3-second pupillometry scan");
+    }
+    recommendedActions.push("Re-run triage once all active channels report verified acquisition");
+  } else if (escalate) {
+    recommendedActions.push("Transmit verified vitals, ONSD/IJV ultrasound, and pupillometry log to Flight Surgeon");
+    recommendedActions.push("Inspect cabin ppCO2, hydration log, and perform visual acuity check (Amsler grid)");
+    recommendedActions.push("Defer high-strain resistive exercise until ground medical review completes");
+  } else if (mildDrift) {
+    recommendedActions.push("Hydrate, rest 30 minutes post-EVA/exercise, and repeat ocular ultrasound + pupillometry");
+    recommendedActions.push("Log follow-up reading to confirm return toward personal preflight median");
+  } else {
+    recommendedActions.push("Continue routine daily wearable, ocular ultrasound, and pupillometry logging");
+  }
+
+  return {
+    status,
+    escalate_to_flight_surgeon: escalate,
+    data_quality_verified: dataQualityVerified,
+    unverified_channels: unverifiedChannels,
+    baseline_deltas: {
+      hr_delta_bpm: hrDelta,
+      temp_delta_c: tempDelta,
+      onsd_delta_mm: onsdDelta,
+      anisocoria_mm: anisocoriaMm,
+      plr_constriction_pct: plrPct,
+    },
+    differential_context: differentialContext,
+    recommended_actions: recommendedActions,
+    disclaimer:
+      "Not a medical device. Exploratory NASA Space Apps crew decision-support prototype only; does not diagnose or treat.",
+  };
+}
