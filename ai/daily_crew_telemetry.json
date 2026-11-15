@@ -1,0 +1,38 @@
+[
+  {
+    "mission_day": 1,
+    "crew_id": "C001",
+    "crew_name": "Cmdr. Vance",
+    "vitals": { "hr_bpm": 62, "preflight_hr_median": 60, "spo2_pct": 98, "temp_c": 36.7, "preflight_temp_median": 36.7, "sensor_verified": true },
+    "daily_ultrasound": { "onsd_mm": 4.5, "preflight_onsd_mm": 4.4, "ijv_flow_status": "normal_forward", "probe_contact_verified": true },
+    "space_weather": { "kp_index": 2, "solar_flare": "None" },
+    "available_tools": ["Ultrasound", "Pulse Oximeter", "Blood Pressure Cuff", "Hydration Pack"]
+  },
+  {
+    "mission_day": 5,
+    "crew_id": "C001",
+    "crew_name": "Cmdr. Vance",
+    "vitals": { "hr_bpm": 102, "preflight_hr_median": 60, "spo2_pct": 86, "temp_c": 36.7, "preflight_temp_median": 36.7, "sensor_verified": false },
+    "daily_ultrasound": { "onsd_mm": 5.8, "preflight_onsd_mm": 4.4, "ijv_flow_status": "indeterminate", "probe_contact_verified": false },
+    "space_weather": { "kp_index": 5, "solar_flare": "M1.1" },
+    "available_tools": ["Ultrasound", "Pulse Oximeter", "Blood Pressure Cuff", "Hydration Pack"]
+  },
+  {
+    "mission_day": 6,
+    "crew_id": "C001",
+    "crew_name": "Cmdr. Vance",
+    "vitals": { "hr_bpm": 79, "preflight_hr_median": 60, "spo2_pct": 94, "temp_c": 37.1, "preflight_temp_median": 36.7, "sensor_verified": true },
+    "daily_ultrasound": { "onsd_mm": 5.0, "preflight_onsd_mm": 4.4, "ijv_flow_status": "mild_stasis", "probe_contact_verified": true },
+    "space_weather": { "kp_index": 6, "solar_flare": "M2.4" },
+    "available_tools": ["Ultrasound", "Pulse Oximeter", "Blood Pressure Cuff", "Hydration Pack"]
+  },
+  {
+    "mission_day": 7,
+    "crew_id": "C001",
+    "crew_name": "Cmdr. Vance",
+    "vitals": { "hr_bpm": 106, "preflight_hr_median": 60, "spo2_pct": 90, "temp_c": 38.2, "preflight_temp_median": 36.7, "sensor_verified": true },
+    "daily_ultrasound": { "onsd_mm": 5.7, "preflight_onsd_mm": 4.4, "ijv_flow_status": "stagnant_retrograde", "probe_contact_verified": true },
+    "space_weather": { "kp_index": 7, "solar_flare": "X1.1" },
+    "available_tools": ["Ultrasound", "Pulse Oximeter", "Blood Pressure Cuff", "Hydration Pack"]
+  }
+]
