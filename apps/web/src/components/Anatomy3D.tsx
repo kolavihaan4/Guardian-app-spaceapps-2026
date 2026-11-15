@@ -6,7 +6,8 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { ANATOMY_STRUCTURES, type AnatomySystem } from './anatomyStructures'
-import { regionForSkinPoint, regionForStructure } from './bodyRegions'
+import { isSkinLandmarkPart, regionForSkinPoint, regionForStructure, skinLandmarks, type SkinLandmarks } from './bodyRegions'
+import { HIDDEN_STRUCTURES, smoothModestSkin } from './modestSkin'
 
 export type AnatomySex = 'male' | 'female'
 
@@ -14,7 +15,7 @@ export type AnatomySex = 'male' | 'female'
 const COLOR = {
   body: new THREE.Color('#e6eeec'),
   hover: new THREE.Color('#b4cdc8'),
-  selected: new THREE.Color('#4f7d76'),
+  selected: new THREE.Color('#3a655e'),
   painMild: new THREE.Color('#f1c4ae'),
   painSevere: new THREE.Color('#c9532c'),
   glowSelected: new THREE.Color('#3f8f84'),
@@ -29,12 +30,14 @@ const VIEWS = [
   { label: 'Right side', azimuth: -Math.PI / 2 },
 ] as const
 
-/** The layers a person can show or hide. Organs include the vessels and nerves. */
+/**
+ * The layers a person can show or hide. The models' organs, vessels and nerves are never drawn:
+ * the app's regions are parts of the body, not single organs, so an organ could not be selected.
+ */
 const LAYERS = [
   { id: 'skin', label: 'Skin', systems: ['skin'] },
   { id: 'muscles', label: 'Muscles', systems: ['muscles'] },
   { id: 'skeleton', label: 'Skeleton', systems: ['skeleton'] },
-  { id: 'organs', label: 'Organs', systems: ['organs', 'vessels', 'nerves'] },
 ] as const satisfies readonly { id: string; label: string; systems: readonly AnatomySystem[] }[]
 type LayerId = (typeof LAYERS)[number]['id']
 
@@ -51,11 +54,10 @@ interface Props {
 /** Zoom steps: the whole figure, then closer views centred on the selected region. */
 const ZOOMS = [1, 1.6, 2.4] as const
 
-/** Surface finish per layer: bone is matt, organs and vessels have a soft wet sheen. */
-const FINISH: Record<'muscles' | 'skeleton' | 'organs', THREE.MeshPhysicalMaterialParameters> = {
+/** Surface finish per layer: bone is matt, muscle has a slight sheen. */
+const FINISH: Record<'muscles' | 'skeleton', THREE.MeshPhysicalMaterialParameters> = {
   skeleton: { roughness: 0.72, metalness: 0, clearcoat: 0.05 },
   muscles: { roughness: 0.5, metalness: 0, clearcoat: 0.2, clearcoatRoughness: 0.5 },
-  organs: { roughness: 0.4, metalness: 0, clearcoat: 0.45, clearcoatRoughness: 0.35 },
 }
 
 interface Part {
@@ -69,7 +71,7 @@ interface Part {
 }
 
 /**
- * A rotatable 3D body with the organs, skeleton and muscles inside it (open-anatomy-3d models).
+ * A rotatable 3D body with the skeleton and muscles inside it (open-anatomy-3d models).
  * The skin is see-through, so the structures of the selected region glow through it. Drag to turn,
  * or use the view buttons; click to select a region. The region buttons under the figure give
  * keyboard and screen-reader users the same choices.
@@ -79,7 +81,7 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
   const [hovered, setHovered] = useState<{ region: BodyRegionId; label?: string } | null>(null)
   const [ready, setReady] = useState(false)
   const [zoom, setZoom] = useState(0)
-  const [layers, setLayers] = useState<Record<LayerId, boolean>>({ skin: true, muscles: false, skeleton: true, organs: true })
+  const [layers, setLayers] = useState<Record<LayerId, boolean>>({ skin: true, muscles: true, skeleton: true })
   // One long-lived effect owns the scene; it reads the latest props through this ref.
   const live = useRef({ selected, pain, hovered, layers, zoom, onSelect, onUnavailable, repaint: () => {}, turnTo: (_azimuth: number) => {} })
   live.current.selected = selected
@@ -105,7 +107,7 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
     mount.appendChild(renderer.domElement)
 
     const scene = new THREE.Scene()
-    // A soft studio environment gives the organs and bones gentle reflections instead of flat colour.
+    // A soft studio environment gives the bones and muscles gentle reflections instead of flat colour.
     const pmrem = new THREE.PMREMGenerator(renderer)
     const environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture
     scene.environment = environment
@@ -150,6 +152,9 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
     let skin: THREE.Mesh | null = null
     let figure: THREE.Object3D | null = null
     let skinRegions: BodyRegionId[] = []
+    let skinPoints: Float32Array | null = null
+    let marks: SkinLandmarks | null = null
+    const landmarkParts: Record<string, Float32Array> = {}
     let disposed = false
     let frame = 0
     const loop = () => {
@@ -227,18 +232,39 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
           // The loader renames a mesh that shares its group's name ("skin" inside "skin" becomes "skin_1").
           const name = ANATOMY_STRUCTURES[o.name] ? o.name : o.name.replace(/_\d+$/, '')
           const info = ANATOMY_STRUCTURES[name]
-          if (!info) {
+          if (!info || HIDDEN_STRUCTURES.has(name)) {
             o.visible = false
             return
           }
           if (!o.geometry.getAttribute('normal')) o.geometry.computeVertexNormals()
+          const position = o.geometry.getAttribute('position')
+          const worldPoints = () => {
+            const points = new Float32Array(position.count * 3)
+            for (let i = 0; i < position.count; i++) point.fromBufferAttribute(position, i).applyMatrix4(o.matrixWorld).toArray(points, i * 3)
+            return points
+          }
+          // The skin's regions are measured from the bones and muscles under it.
+          if (isSkinLandmarkPart(name)) landmarkParts[name] = worldPoints()
           if (info.system === 'skin') {
-            // Colour the skin per vertex by region, using each vertex's place on the body.
-            const position = o.geometry.getAttribute('position')
-            skinRegions = Array.from({ length: position.count }, (_, i) => {
-              point.fromBufferAttribute(position, i).applyMatrix4(o.matrixWorld)
-              return regionForSkinPoint(point.x, point.y, point.z)
-            })
+            const world = worldPoints()
+            // Smooth the skin where it is modelled with genitals or nipples, like a mannequin.
+            const original = world.slice()
+            if (smoothModestSkin(world, o.geometry.index?.array ?? null, sex) > 0) {
+              const toLocal = o.matrixWorld.clone().invert()
+              const local = new Float32Array(world.length)
+              for (let i = 0; i < position.count; i++) point.fromArray(world, i * 3).applyMatrix4(toLocal).toArray(local, i * 3)
+              const oldNormal = o.geometry.getAttribute('normal')
+              o.geometry.setAttribute('position', new THREE.BufferAttribute(local, 3))
+              o.geometry.deleteAttribute('normal')
+              o.geometry.computeVertexNormals()
+              // Only the vertices that moved take a new normal; the rest keep the model's own.
+              const normal = o.geometry.getAttribute('normal')
+              for (let i = 0; i < position.count; i++) {
+                const moved = world[i * 3] !== original[i * 3] || world[i * 3 + 1] !== original[i * 3 + 1] || world[i * 3 + 2] !== original[i * 3 + 2]
+                if (!moved) normal.setXYZ(i, oldNormal.getX(i), oldNormal.getY(i), oldNormal.getZ(i))
+              }
+            }
+            skinPoints = world
             o.geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(position.count * 3), 3))
             // See-through, and drawn after everything inside it.
             const skinMaterial = new THREE.MeshStandardMaterial({ vertexColors: true, transparent: true, opacity: 1, depthWrite: false, roughness: 0.45, metalness: 0, envMapIntensity: 0.4 })
@@ -260,15 +286,23 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
             return
           }
           const layer = LAYERS.find((l) => (l.systems as readonly AnatomySystem[]).includes(info.system))
-          if (!layer || layer.id === 'skin') return
+          if (!layer || layer.id === 'skin') {
+            o.visible = false // organs, vessels, nerves and joint markers
+            return
+          }
           const material = new THREE.MeshPhysicalMaterial({ color: info.color, ...FINISH[layer.id] })
           o.material = material
           parts.push({ mesh: o, material, base: new THREE.Color(info.color), region: regionForStructure(name), label: info.label, layer: layer.id })
         })
-        if (!skin) {
+        marks = skinLandmarks(landmarkParts)
+        if (!skin || !skinPoints || !marks) {
           live.current.onUnavailable()
           return
         }
+        // Colour the skin per vertex by region, using each vertex's place on the body.
+        const points: Float32Array = skinPoints
+        const found: SkinLandmarks = marks
+        skinRegions = Array.from({ length: points.length / 3 }, (_, i) => regionForSkinPoint(points[i * 3]!, points[i * 3 + 1]!, points[i * 3 + 2]!, found))
         // Centre the figure on its own height and scale it to fill the view.
         const box = new THREE.Box3().setFromObject(skin)
         const height = box.max.y - box.min.y
@@ -308,9 +342,9 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
         const hit = raycaster.intersectObject(skin)[0]
         if (!hit) return null
         // Back to the model's own metres, undoing the scene's scale and centring.
-        if (!figure) return null
+        if (!figure || !marks) return null
         figure.worldToLocal(local.copy(hit.point))
-        return { region: regionForSkinPoint(local.x, local.y, local.z) }
+        return { region: regionForSkinPoint(local.x, local.y, local.z, marks) }
       }
       const hit = raycaster.intersectObjects(parts.filter((p) => p.mesh.visible).map((p) => p.mesh))[0]
       const part = hit && parts.find((p) => p.mesh === hit.object)
@@ -390,7 +424,7 @@ export default function Anatomy3D({ sex, selected, pain, onSelect, onUnavailable
         ref={mountRef}
         className={`body-3d-canvas tall ${zoom > 0 ? 'zoomed' : ''}`}
         role="img"
-        aria-label={`Rotatable 3D ${sex} body with organs and skeleton. Selected region: ${BODY_REGIONS[selected].name}. Use the region buttons below to choose a region with the keyboard.`}
+        aria-label={`Rotatable 3D ${sex} body with skeleton. Selected region: ${BODY_REGIONS[selected].name}. Use the region buttons below to choose a region with the keyboard.`}
       />
       <p className="body-3d-hint" aria-live="polite">
         {!ready ? 'Loading 3D body…' : hovered ? (hovered.label ? `${hovered.label} · ${BODY_REGIONS[hovered.region].name}` : BODY_REGIONS[hovered.region].name) : 'Drag to turn · click a region'}

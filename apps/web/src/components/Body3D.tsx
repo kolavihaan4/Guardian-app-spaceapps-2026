@@ -13,7 +13,7 @@ const MODEL_URL = '/models/male_base_mesh.glb'
 const COLOR = {
   body: new THREE.Color('#e6eeec'),
   hover: new THREE.Color('#b4cdc8'),
-  selected: new THREE.Color('#4f7d76'),
+  selected: new THREE.Color('#3a655e'),
   painMild: new THREE.Color('#f1c4ae'),
   painSevere: new THREE.Color('#c9532c'),
 }

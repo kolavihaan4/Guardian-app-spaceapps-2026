@@ -431,7 +431,7 @@ export function CrewAssessmentPage() {
         <div className="card-head">
           <div>
             <span className="eyebrow">Step 1 · Select Current Mission Environment</span>
-            <h1 style={{ marginTop: 2 }}>🛰️ Crew Autonomous Health & Triage Console</h1>
+            <h1 style={{ marginTop: 2 }}>Crew Autonomous Health & Triage Console</h1>
           </div>
           <span className="spacer" />
           <div className="row" style={{ gap: 6 }}>
@@ -479,13 +479,13 @@ export function CrewAssessmentPage() {
       <div className="card row" style={{ justifyContent: 'space-between', padding: '10px 16px' }}>
         <div className="row" style={{ gap: 8 }}>
           <strong>Quick Test Scenarios:</strong>
-          <button type="button" onClick={() => loadScenario('nominal')}>🟢 Nominal Orbit Check-in</button>
-          <button type="button" onClick={() => loadScenario('artifact')}>🟡 EVA Loose Sensor Artifact</button>
-          <button type="button" onClick={() => loadScenario('sans_drift')}>🟠 SANS Vision + Fluid Shift</button>
-          <button type="button" onClick={() => loadScenario('escalate')}>🔴 Deep Space S2 Storm Escalation</button>
+          <button type="button" onClick={() => loadScenario('nominal')}>Nominal Orbit Check-in</button>
+          <button type="button" onClick={() => loadScenario('artifact')}>EVA Loose Sensor Artifact</button>
+          <button type="button" onClick={() => loadScenario('sans_drift')}>SANS Vision + Fluid Shift</button>
+          <button type="button" onClick={() => loadScenario('escalate')}>Deep Space S2 Storm Escalation</button>
         </div>
         <button type="button" className="primary" onClick={() => void runAiTriage()} disabled={triageLoading}>
-          {triageLoading ? 'Running Qwen3-8B Triage…' : '⚡ Run Overarching AI Triage'}
+          {triageLoading ? 'Running Qwen3-8B Triage…' : 'Run Overarching AI Triage'}
         </button>
       </div>
 
@@ -493,7 +493,7 @@ export function CrewAssessmentPage() {
       <div className="grid two triage-columns" style={{ alignItems: 'start' }}>
         {/* LEFT COLUMN: INTERACTIVE CLICKABLE HUMAN BODY */}
         <Card
-          title="🧍 Interactive Crew Body Map — Click Region to Inspect & Log Pain"
+          title="Interactive Crew Body Map — Click Region to Inspect & Log Pain"
           actions={
             painPoints.length > 0 ? (
               <button type="button" onClick={() => setPainPoints([])} style={{ fontSize: '0.78rem', padding: '0.2rem 0.55rem' }}>
@@ -690,7 +690,7 @@ export function CrewAssessmentPage() {
               </div>
 
               <div className="instruction-box">
-                <strong>📋 Simple Self-Check Instruction:</strong>
+                <strong>Simple Self-Check Instruction:</strong>
                 <p style={{ margin: '4px 0 0' }}>{regionDetail.selfCheckInstruction}</p>
               </div>
 
@@ -706,7 +706,7 @@ export function CrewAssessmentPage() {
 
         {/* RIGHT COLUMN: ASTRONAUT PROFILE, VITALS INPUT & AVAILABLE TOOLS */}
         <Card
-          title="🩺 Step 2 · Astronaut Profile, Vitals & Exam Input"
+          title="Step 2 · Astronaut Profile, Vitals & Exam Input"
           actions={<span className="badge">Color-Coded Status at a Glance</span>}
         >
           <div className="stack" style={{ gap: 12 }}>
@@ -857,7 +857,7 @@ export function CrewAssessmentPage() {
                   onClick={() => setSensorVerified((v) => !v)}
                   style={{ textAlign: 'left', fontWeight: 600 }}
                 >
-                  {sensorVerified ? '✅ Sensor Snug & Verified' : '⚠️ Unverified (Possible Motion/Slip)'}
+                  {sensorVerified ? 'Sensor Snug & Verified' : 'Unverified (Possible Motion/Slip)'}
                 </button>
                 <small>Check before escalating SpO₂/HR spikes</small>
               </label>
@@ -890,7 +890,7 @@ export function CrewAssessmentPage() {
             {/* Available Onboard Tools Selector (Whiteboard Front End #7) */}
             <div className="subcard">
               <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
-                <strong>🧰 Available Onboard Medical & Countermeasure Tools ({availableTools.length} selected)</strong>
+                <strong>Available Onboard Medical & Countermeasure Tools ({availableTools.length} selected)</strong>
                 <small>AI treatment & workout plans strictly use only checked tools</small>
               </div>
               <div className="tools-grid">
@@ -919,7 +919,7 @@ export function CrewAssessmentPage() {
               onClick={() => void runAiTriage()}
               disabled={triageLoading}
             >
-              {triageLoading ? 'Analyzing Vitals, Body Map & Environment…' : '🧠 Evaluate Health Indicators & Generate Action Plan'}
+              {triageLoading ? 'Analyzing Vitals, Body Map & Environment…' : 'Evaluate Health Indicators & Generate Action Plan'}
             </button>
           </div>
         </Card>
@@ -931,17 +931,17 @@ export function CrewAssessmentPage() {
           <div className="row" style={{ gap: 10 }}>
             <span className={`status-pill ${triageResult?.triage.overall_status ?? 'nominal'}`}>
               {triageResult?.triage.overall_status === 'alert'
-                ? '🔴 ALERT · ESCALATE TO GROUND SUPPORT'
+                ? 'ALERT · ESCALATE TO GROUND SUPPORT'
                 : triageResult?.triage.overall_status === 'caution'
-                  ? '🟡 CAUTION · MONITOR & VERIFY'
-                  : '🟢 NOMINAL · WITHIN MISSION BASELINE'}
+                  ? 'CAUTION · MONITOR & VERIFY'
+                  : 'NOMINAL · WITHIN MISSION BASELINE'}
             </span>
             <h2>Crew Decision-Support</h2>
             {triageResult ? <span className="badge">Answered by: {triageResult.source}</span> : null}
           </div>
           <span className="spacer" />
           <button type="button" onClick={() => setShowBenchmark((v) => !v)} style={{ fontSize: '0.8rem' }}>
-            {showBenchmark ? 'Hide LLM Benchmark' : '📊 View Qwen3-8B vs 4B vs Gemma 3 Benchmark'}
+            {showBenchmark ? 'Hide LLM Benchmark' : 'View Qwen3-8B vs 4B vs Gemma 3 Benchmark'}
           </button>
         </div>
 
@@ -952,7 +952,7 @@ export function CrewAssessmentPage() {
             {/* Ground Support Alert Banner when contact_ground_support is true */}
             {triageResult.triage.contact_ground_support ? (
               <div className="banner error pulse-border" role="alert">
-                <strong>🚨 CONTACT FLIGHT SURGEON / GROUND SUPPORT IMMEDIATELY:</strong>{' '}
+                <strong>CONTACT FLIGHT SURGEON / GROUND SUPPORT IMMEDIATELY:</strong>{' '}
                 {triageResult.triage.ground_support_reason} (Current one-way comms delay: <strong>{envInfo.commsDelay}</strong> — execute onboard action plan while telemetry packet transmits).
               </div>
             ) : null}
@@ -997,14 +997,14 @@ export function CrewAssessmentPage() {
                       className={crewConfirmation === 'confirmed_normal' ? 'primary' : undefined}
                       onClick={() => setCrewConfirmation('confirmed_normal')}
                     >
-                      ✅ Confirmed: Sensor Snug & Feeling Stable
+                      Confirmed: Sensor Snug & Feeling Stable
                     </button>
                     <button
                       type="button"
                       className={crewConfirmation === 'symptoms_present' ? 'danger' : undefined}
                       onClick={() => setCrewConfirmation('symptoms_present')}
                     >
-                      ⚠️ Symptoms Persist After Sensor Check
+                      Symptoms Persist After Sensor Check
                     </button>
                   </div>
                   {crewConfirmation === 'symptoms_present' ? (
@@ -1030,7 +1030,7 @@ export function CrewAssessmentPage() {
 
                 {/* Modify Workout AI (Whiteboard #3-1) */}
                 <div className="workout-ai-box">
-                  <h3>🏋️ 7. Modify Workout AI Countermeasure</h3>
+                  <h3>7. Modify Workout AI Countermeasure</h3>
                   <p style={{ margin: '4px 0 0' }}>{triageResult.triage.workout_modification}</p>
                 </div>
 
@@ -1052,7 +1052,7 @@ export function CrewAssessmentPage() {
         {showBenchmark && benchmark.data ? (
           <div className="subcard" style={{ marginTop: 12 }}>
             <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
-              <strong>🔬 Onboard Local LLM Benchmark ({benchmark.data.testSuite})</strong>
+              <strong>Onboard Local LLM Benchmark ({benchmark.data.testSuite})</strong>
               <span className="badge">Selected Model: {benchmark.data.primarySelected}</span>
             </div>
             <div className="table-wrap">
@@ -1093,11 +1093,11 @@ export function CrewAssessmentPage() {
 
       {/* 4. GAMIFICATION SYSTEM & HEALTHY DAILY MISSION ROUTINE (Whiteboard #5 & #21) */}
       <Card
-        title="🎮 Daily Countermeasure Gamification & Healthy Spaceflight Routine"
+        title="Daily Countermeasure Gamification & Healthy Spaceflight Routine"
         actions={
           <div className="row" style={{ gap: 8 }}>
-            <span className="badge">🔥 {streakDays}-Sol Crew Health Streak</span>
-            <span className="badge">⭐ {totalXp} / {maxXp} Mission XP ({readinessPct}%)</span>
+            <span className="badge">{streakDays}-Sol Crew Health Streak</span>
+            <span className="badge">{totalXp} / {maxXp} Mission XP ({readinessPct}%)</span>
           </div>
         }
       >
@@ -1132,7 +1132,7 @@ export function CrewAssessmentPage() {
       </Card>
 
       {/* 5. NASA HUMAN RESEARCH PROGRAM: 5 HAZARDS OF HUMAN SPACEFLIGHT (Whiteboard #2 & NASA Prompt) */}
-      <Card title="🛡️ NASA Human Research Program — The 5 Hazards of Human Spaceflight">
+      <Card title="NASA Human Research Program — The 5 Hazards of Human Spaceflight">
         <div className="grid tiles" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(215px, 1fr))' }}>
           {FIVE_NASA_HAZARDS.map((h) => (
             <div key={h.id} className="subcard stack" style={{ gap: 6 }}>
