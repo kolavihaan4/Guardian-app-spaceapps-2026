@@ -145,6 +145,8 @@ try {
   check('Loader removed, app interactive', await ev(`!document.getElementById('loader') && !document.getElementById('main').inert && !document.documentElement.classList.contains('intro-active')`));
   check('Header bar visible with only the logo', await ev(`getComputedStyle(document.querySelector('.topbar__glass')).opacity === '1' && getComputedStyle(document.querySelector('.nav')).display === 'none' && getComputedStyle(document.querySelector('.topbar__actions')).display === 'none'`));
   check('Logo uses day colours', await ev(`document.querySelector('.mark').classList.contains('is-day')`));
+  check('Guardian brand: emblem, wordmark and title', await ev(`document.querySelector('.brand__name').textContent === 'GUARDIAN' && document.title.endsWith('· Guardian') && getComputedStyle(document.querySelector('.mark__emblem--navy')).opacity === '1'`));
+  check('Ship has landed into the emblem', await ev(`getComputedStyle(document.querySelector('.mark__ship')).opacity === '0'`));
 
   /* ---------------- environment picker comes straight after the loader */
   check('Picker shown, not the dashboard', await ev(`document.querySelector('h1').textContent === 'Where is your crew?' && !document.querySelector('.hero, .glance, .recent')`));
@@ -280,7 +282,7 @@ try {
     await shot(`11-${name}`);
     const s = await rect('#brandSlot'), m = await rect('.mark-flip');
     check(`${name}: mark lands in the header slot`, near(s.x, m.x, 0.5) && near(s.y, m.y, 0.5));
-    check(`${name}: no sideways scroll`, await ev(`document.documentElement.scrollWidth <= innerWidth`), await ev(`document.documentElement.scrollWidth + ' / ' + innerWidth`));
+    check(`${name}: no sideways scroll`, await ev(`innerWidth === ${w} && document.documentElement.scrollWidth <= ${w}`), await ev(`document.documentElement.scrollWidth + ' / ' + innerWidth + ' (screen ${w})'`));
     if (name === 'phone' || name === 'tablet') {
       // the picker at this size: stacked cards, photo above each, Continue always reachable
       await ev(`(() => { const s = JSON.parse(localStorage.getItem('still.v1')); s.env = null; s.intro = false; localStorage.setItem('still.v1', JSON.stringify(s)); })()`);

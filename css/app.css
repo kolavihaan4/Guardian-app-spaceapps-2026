@@ -1,4 +1,4 @@
-/* still. — misty glass workspace */
+/* Guardian — misty glass workspace */
 @property --hole { syntax: '<length>'; inherits: false; initial-value: 0px; }
 
 :root {
@@ -23,7 +23,8 @@
   --radius-sm: 9px;
   --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --serif: 'Source Serif 4', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
-  --wrap: min(1080px, calc(100% - 32px));
+  --brand-font: 'Montserrat', 'Inter', system-ui, sans-serif;
+  --wrap: min(1120px, calc(100% - 32px));
   --night: #0f2136;
   color-scheme: light;
 }
@@ -69,7 +70,7 @@ kbd { font: 500 11px/1 var(--sans); padding: 3px 6px; border-radius: 5px; backgr
   position: sticky; top: 12px; z-index: 50;
   width: var(--wrap); margin: 12px auto 0;
   min-height: 58px; padding: 9px 10px 9px 14px;
-  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px;
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px;
   border-radius: var(--radius);
   isolation: isolate;
 }
@@ -82,18 +83,20 @@ kbd { font: 500 11px/1 var(--sans); padding: 3px 6px; border-radius: 5px; backgr
   backdrop-filter: blur(16px) saturate(1.15);
   transition: opacity 0.7s ease;
 }
-.brand { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; color: var(--ink); border-radius: 10px; padding: 2px 6px 2px 0; }
-.brand__slot { position: relative; display: block; width: 50px; height: 36px; flex: none; }
+.brand { display: inline-flex; align-items: center; gap: 0; text-decoration: none; color: var(--ink); border-radius: 10px; padding: 2px 4px 2px 0; }
+.brand__slot { position: relative; display: block; width: 66px; height: 44px; flex: none; margin-left: -6px; }
 .mark-flip { position: absolute; inset: 0; display: block; transform-origin: 50% 50%; z-index: 2; }
 .mark { display: block; width: 100%; height: 100%; overflow: visible; }
-.brand__word { font: 500 26px/1 var(--serif); letter-spacing: -0.03em; transition: opacity 0.55s ease var(--d, 0ms), transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms), color 0.2s; }
+.brand__word { display: flex; flex-direction: column; gap: 3px; margin-left: -2px; color: #1c3146; transition: opacity 0.55s ease var(--d, 0ms), transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms), color 0.2s; }
+.brand__name { font: 700 17px/1 var(--brand-font); letter-spacing: 0.07em; }
+.brand__tag { font: 500 7.5px/1 var(--brand-font); letter-spacing: 0.32em; opacity: 0.8; }
 .brand:hover .brand__word { color: var(--teal-600); }
-.brand:hover .mark { filter: drop-shadow(0 3px 8px rgba(77, 120, 112, 0.28)); }
+.brand:hover .mark { filter: drop-shadow(0 3px 8px rgba(77, 120, 112, 0.3)); }
 .mark { transition: filter 0.3s ease; }
 
-.nav { display: flex; justify-content: center; gap: 4px; min-width: 0; }
+.nav { display: flex; justify-content: center; gap: 2px; min-width: 0; }
 .nav__link {
-  display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 12px;
+  display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 10px;
   border-radius: var(--radius-sm); color: var(--ink-2); font-size: 13.5px; font-weight: 500; text-decoration: none; white-space: nowrap;
   transition: opacity 0.5s ease var(--d, 0ms), transform 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms), background-color 0.2s, color 0.2s, box-shadow 0.2s;
 }
@@ -102,7 +105,7 @@ kbd { font: 500 11px/1 var(--sans); padding: 3px 6px; border-radius: 5px; backgr
 .badge { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 6px; background: rgba(28, 49, 70, 0.07); color: var(--muted); font-size: 11px; font-weight: 600; }
 .topbar__actions { display: flex; align-items: center; gap: 4px; }
 .topbar__actions > * { transition: opacity 0.5s ease var(--d, 0ms), transform 0.65s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms), background-color 0.2s, box-shadow 0.2s, color 0.2s; }
-.btn--add { margin-left: 6px; }
+.btn--add { margin-left: 4px; }
 
 /* ---------------------------------------------------------------- buttons */
 .btn {
@@ -175,20 +178,22 @@ kbd { font: 500 11px/1 var(--sans); padding: 3px 6px; border-radius: 5px; backgr
 .mark-flip.is-entering .mark { animation: mark-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 @keyframes mark-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: none; } }
 
-/* the mark: night colours in the loader, day colours as the logo */
-.mark { --orbit: rgba(206, 226, 240, 0.42); --trail: #d6ebf8; --hull: #f1f6fa; --cockpit: #6ea197; --flame: #9fe1ff; }
-.mark.is-day { --orbit: rgba(58, 90, 116, 0.42); --trail: #4d7870; --hull: #3c665e; --cockpit: #d4ebe6; --flame: #6fbfdf; }
-.mark__orbit { fill: none; stroke: var(--orbit); stroke-width: 0.8; transition: stroke 0.9s ease, stroke-width 0.9s ease; }
-.mark.is-day .mark__orbit { stroke-width: 2.2; }
+/* the mark: a white emblem with a pale ship in the loader; a navy emblem as the logo */
+.mark { --orbit: rgba(206, 226, 240, 0.4); --trail: #d6ebf8; --hull: #f1f6fa; --panel: #9fb9d0; --band: #1c3146; --flame: #9fe1ff; }
+.mark.is-day { --orbit: rgba(58, 90, 116, 0.35); --trail: #4d7870; --hull: #1c3146; --panel: #5d7f95; --band: #dbe6ee; --flame: #6fbfdf; }
+.mark__orbit { fill: none; stroke: var(--orbit); stroke-width: 0.7; transition: stroke 0.9s ease, opacity 0.6s ease; }
+.mark.is-day .mark__orbit { opacity: 0; }
+.mark.is-day.is-lapping .mark__orbit { opacity: 1; stroke-width: 1.4; }
 .mark__trail path { fill: none; stroke: var(--trail); stroke-linecap: round; transition: stroke 0.9s ease; }
 .mark__hull { fill: var(--hull); transition: fill 0.9s ease; }
-.mark__cockpit { fill: var(--cockpit); transition: fill 0.9s ease; }
+.mark__nozzle { fill: var(--panel); }
+.mark__panel { fill: var(--panel); transition: fill 0.9s ease; }
+.mark__band { fill: var(--band); }
 .mark__flame-stop { stop-color: var(--flame); }
-.mark__halo { transition: opacity 0.9s ease; }
-.mark.is-day .mark__halo { opacity: 0.55; }
-.mark__bands { animation: drift 12s ease-in-out infinite alternate; }
-.mark.is-still .mark__bands { animation: none; }
-@keyframes drift { from { transform: translateX(-5px); } to { transform: translateX(5px); } }
+.mark__emblem { transition: opacity 0.9s ease; }
+.mark__emblem--navy { opacity: 0; }
+.mark.is-day .mark__emblem--navy { opacity: 1; }
+.mark.is-day .mark__emblem--white { opacity: 0; }
 
 /* ---------------------------------------------------------------- page */
 .page { position: relative; z-index: 1; width: var(--wrap); margin: 0 auto; padding: 38px 0 72px; outline: none; }
@@ -526,7 +531,7 @@ textarea.input { padding: 10px 12px; resize: vertical; line-height: 1.55; min-he
 .toast .i { color: #9fd6cb; }
 
 /* ---------------------------------------------------------------- responsive */
-@media (max-width: 1000px) {
+@media (max-width: 1100px) {
   .topbar { grid-template-columns: auto 1fr; row-gap: 8px; }
   .topbar__actions { justify-self: end; }
   .nav { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; overflow-x: auto; scrollbar-width: none; margin: 0 -4px; padding: 0 4px; }
@@ -568,6 +573,15 @@ textarea.input { padding: 10px 12px; resize: vertical; line-height: 1.55; min-he
   .toolbar .select { flex: 1; }
   .btn, .chip { min-height: 40px; }
   .btn--small { min-height: 36px; }
+}
+
+@media (max-width: 380px) {
+  .topbar { gap: 6px; padding-left: 10px; padding-right: 8px; }
+  .brand__slot { width: 54px; height: 36px; margin-left: -4px; }
+  .brand__name { font-size: 14.5px; letter-spacing: 0.05em; }
+  .brand__tag { font-size: 6.5px; letter-spacing: 0.26em; }
+  .topbar__actions { gap: 2px; }
+  .icon-btn { width: 38px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

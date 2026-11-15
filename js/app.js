@@ -1,4 +1,4 @@
-/* still. — routes, views, modals. */
+/* Guardian — routes, views, modals. */
 (function () {
   'use strict';
   const S = window.Still;
@@ -399,7 +399,7 @@
   }
 
   function notFound() {
-    return pageHead({ eyebrow: 'still.', title: 'Page not found', sub: 'That page is not here.' }) +
+    return pageHead({ eyebrow: 'Guardian', title: 'Page not found', sub: 'That page is not here.' }) +
       `<section class="panel">${emptyBlock('search', 'Nothing at this address', 'Go back to the dashboard to keep working.', `<a class="btn btn--primary" href="#/">Back to Dashboard</a>`)}</section>`;
   }
 
@@ -430,7 +430,7 @@
     const keepSearch = active && active.id === 'cardSearch';
     main.innerHTML = r.html;
     currentKey = r.key;
-    document.title = r.title + ' · still.';
+    document.title = r.title + ' · Guardian';
     document.documentElement.classList.toggle('env-gate', !s.env);
     const env = envOf(s.env), pill = $('#envPill');
     if (pill && env) {
@@ -716,10 +716,10 @@
   /* ---------------------------------------------------------------- data */
   function exportData() {
     const s = store.get();
-    const blob = new Blob([JSON.stringify({ app: 'still.', version: 1, exportedAt: new Date().toISOString(), workspace: s.workspace, cards: s.cards, collections: s.collections }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ app: 'Guardian', version: 1, exportedAt: new Date().toISOString(), workspace: s.workspace, cards: s.cards, collections: s.collections }, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'still-export-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.download = 'guardian-export-' + new Date().toISOString().slice(0, 10) + '.json';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     toast('Export downloaded');
@@ -740,7 +740,7 @@
           toast('Data imported');
         }
       });
-    }).catch(() => toast('That file is not a still. export'));
+    }).catch(() => toast('That file is not a Guardian export'));
   });
 
   /* ---------------------------------------------------------------- events */
@@ -888,8 +888,9 @@
     const fonts = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 2500))]) : Promise.resolve();
     const loaded = document.readyState === 'complete' ? Promise.resolve() : new Promise(r => { window.addEventListener('load', r, { once: true }); setTimeout(r, 4000); });
     // the picker's photos (or the chosen one, for the header pill) are decoded before the reveal
-    const wanted = gated() ? ENVS : [envOf(store.get().env)];
-    const photos = Promise.all(wanted.map(e => { const img = new Image(); img.src = e.img; return img.decode ? img.decode().catch(() => {}) : Promise.resolve(); }));
+    const wanted = (gated() ? ENVS : [envOf(store.get().env)]).map(e => e.img)
+      .concat(['assets/brand/guardian-mark-white.png', 'assets/brand/guardian-mark-navy.png']);
+    const photos = Promise.all(wanted.map(src => { const img = new Image(); img.src = src; return img.decode ? img.decode().catch(() => {}) : Promise.resolve(); }));
     const ready = Promise.all([S.scenery.render($('#scenery')), fonts, loaded, photos]);
     intro.finish(ready);
   }

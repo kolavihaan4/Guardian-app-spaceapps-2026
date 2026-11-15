@@ -49,8 +49,8 @@
         flip.style.transform = '';
         const r = slot.getBoundingClientRect();
         const vw = window.innerWidth, vh = window.innerHeight;
-        // the mark is 1.4:1 (the orbit's own bounds); size is its width on the loader
-        const size = Math.max(210, Math.min(340, vw * 0.82, vh * 0.42 * 1.4));
+        // the mark is 1.5:1 (the emblem plus its orbit); size is its width on the loader
+        const size = Math.max(240, Math.min(440, vw * 0.88, vh * 0.48 * 1.5));
         const s = size / r.width;
         const height = size * r.height / r.width;
         const dx = vw / 2 - (r.left + r.width / 2);
@@ -61,6 +61,10 @@
       }
       place();
       window.addEventListener('resize', place);
+      // web fonts arriving can reflow the header and move the slot: keep the mark centred until the reveal
+      const ro = 'ResizeObserver' in window ? new ResizeObserver(() => place()) : null;
+      if (ro) { ro.observe(topbar); ro.observe(slot.parentElement); }
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => place());
       flip.classList.add('is-entering');
       // the orbit always plays (requested); reduced motion only swaps the big fly-in for a fade
       mark.cruise();
@@ -74,6 +78,7 @@
         place();
         placing = false;
         window.removeEventListener('resize', place);
+        if (ro) ro.disconnect();
         if (reduce) await quiet(); else await cinematic();
         done();
       }
