@@ -3,223 +3,458 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AstroVitals — Daily Crew Health, Ultrasound & Pupillometry Tracker</title>
+  <title>AstroVitals // Mission Control Crew Telemetry & Neuro-Ocular Console</title>
   <style>
     :root {
-      --bg: #070b14;
-      --panel: #0f1626;
-      --panel-alt: #141d31;
-      --border: #23304d;
-      --text: #e6edf7;
-      --muted: #8fa3c4;
+      --bg: #04070f;
+      --bg-glow: #0b162c;
+      --panel: rgba(13, 21, 38, 0.86);
+      --panel-alt: rgba(19, 30, 54, 0.9);
+      --border: rgba(56, 189, 248, 0.22);
+      --border-subtle: rgba(148, 163, 184, 0.14);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
       --accent: #38bdf8;
-      --ok: #22c55e;
+      --accent-glow: rgba(56, 189, 248, 0.28);
+      --ok: #10b981;
+      --ok-glow: rgba(16, 185, 129, 0.22);
       --warn: #f59e0b;
+      --warn-glow: rgba(245, 158, 11, 0.24);
       --danger: #ef4444;
+      --danger-glow: rgba(239, 68, 68, 0.28);
       --purple: #a78bfa;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(56, 189, 248, 0.12), transparent 38%),
+        radial-gradient(circle at 85% 15%, rgba(167, 139, 250, 0.09), transparent 40%),
+        linear-gradient(180deg, var(--bg-glow) 0%, var(--bg) 100%);
       color: var(--text);
+      min-height: 100vh;
       line-height: 1.5;
       padding: 20px;
     }
-    .container { max-width: 1220px; margin: 0 auto; }
+
+    .container { max-width: 1280px; margin: 0 auto; }
+
+    /* Top Mission Control Bar */
     header {
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
-      gap: 14px;
-      padding-bottom: 18px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 20px;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      margin-bottom: 18px;
     }
-    .title-block h1 { font-size: 1.45rem; letter-spacing: 0.3px; }
-    .title-block p { color: var(--muted); font-size: 0.88rem; }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .pulse-orb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--ok);
+      box-shadow: 0 0 14px var(--ok);
+      animation: pulse 2s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.25); opacity: 0.65; }
+    }
+
+    .title-block h1 {
+      font-size: 1.32rem;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tag-chip {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.14);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    .title-block p {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-top: 2px;
+    }
+
     .controls-bar {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
       align-items: center;
     }
+
     select, button {
       background: var(--panel-alt);
       color: var(--text);
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-subtle);
       border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 0.88rem;
+      padding: 9px 13px;
+      font-size: 0.84rem;
       cursor: pointer;
+      transition: all 0.18s ease;
     }
-    select:hover, button:hover { border-color: var(--accent); }
+
+    select:hover, button:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.18);
+    }
+
     .btn-primary {
-      background: #0ea5e9;
-      color: #031525;
-      font-weight: 600;
-      border-color: #38bdf8;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      color: #03111f;
+      font-weight: 700;
+      border: none;
+      box-shadow: 0 4px 16px rgba(56, 189, 248, 0.3);
     }
-    .btn-primary:hover { background: #38bdf8; }
+
+    .btn-primary:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    /* Timeline Pills */
     .day-pills {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
+
     .day-pill {
       padding: 8px 14px;
-      border-radius: 999px;
+      border-radius: 8px;
       background: var(--panel);
-      border: 1px solid var(--border);
-      font-size: 0.85rem;
-      font-weight: 500;
+      border: 1px solid var(--border-subtle);
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--muted);
     }
+
     .day-pill.active {
       background: rgba(56, 189, 248, 0.16);
       border-color: var(--accent);
-      color: var(--accent);
-      font-weight: 700;
+      color: #ffffff;
+      box-shadow: 0 0 16px var(--accent-glow);
     }
+
+    .day-pill.pill-warn { border-bottom: 2px solid var(--warn); }
+    .day-pill.pill-danger { border-bottom: 2px solid var(--danger); }
     .day-pill.custom-pill.active {
-      background: rgba(167, 139, 250, 0.18);
+      background: rgba(167, 139, 250, 0.2);
       border-color: var(--purple);
-      color: var(--purple);
+      color: #ede9fe;
     }
+
+    /* Status Alert Banner */
     .banner {
-      padding: 14px 18px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-      border-left: 5px solid var(--ok);
-      background: var(--panel);
+      padding: 16px 20px;
+      border-radius: 12px;
+      margin-bottom: 18px;
+      border: 1px solid var(--ok-glow);
+      border-left: 6px solid var(--ok);
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.12) 0%, var(--panel) 60%);
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
       gap: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
-    .banner.warn { border-left-color: var(--warn); }
-    .banner.danger { border-left-color: var(--danger); background: rgba(239, 68, 68, 0.08); }
+
+    .banner.warn {
+      border-color: var(--warn-glow);
+      border-left-color: var(--warn);
+      background: linear-gradient(90deg, rgba(245, 158, 11, 0.14) 0%, var(--panel) 60%);
+    }
+
+    .banner.danger {
+      border-color: var(--danger-glow);
+      border-left-color: var(--danger);
+      background: linear-gradient(90deg, rgba(239, 68, 68, 0.18) 0%, var(--panel) 60%);
+    }
+
     .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 999px;
-      font-size: 0.76rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-size: 0.74rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
     }
-    .badge.ok { background: rgba(34, 197, 94, 0.15); color: var(--ok); }
-    .badge.warn { background: rgba(245, 158, 11, 0.15); color: var(--warn); }
-    .badge.danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-    .badge.info { background: rgba(56, 189, 248, 0.15); color: var(--accent); }
 
+    .badge.ok { background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); }
+    .badge.warn { background: rgba(245, 158, 11, 0.16); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); }
+    .badge.danger { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.45); }
+    .badge.info { background: rgba(56, 189, 248, 0.15); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.35); }
+
+    /* Vitals Grid */
     .vitals-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
       gap: 14px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
+
     .card {
       background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 16px 18px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+      position: relative;
+      overflow: hidden;
     }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.45), transparent);
+    }
+
     .card h3 {
-      font-size: 0.8rem;
+      font-size: 0.74rem;
+      font-family: var(--mono);
       text-transform: uppercase;
-      letter-spacing: 0.6px;
+      letter-spacing: 0.8px;
       color: var(--muted);
       margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    .metric-val { font-size: 1.75rem; font-weight: 700; }
-    .metric-sub { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
 
+    .metric-val {
+      font-family: var(--mono);
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .metric-sub {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .sparkline-wrap {
+      margin-top: 10px;
+      height: 34px;
+      width: 100%;
+    }
+
+    /* Neuro-Ocular Split Panels */
     .neuro-ocular-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
       gap: 16px;
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
+
     .panel-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--border);
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-subtle);
     }
-    .panel-header h2 { font-size: 1.02rem; }
+
+    .panel-header h2 {
+      font-size: 0.98rem;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
     .sub-metrics {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
+
     .sub-box {
       background: var(--panel-alt);
-      padding: 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
+      padding: 13px;
+      border-radius: 10px;
+      border: 1px solid var(--border-subtle);
     }
+
     .sub-box label {
       display: block;
-      font-size: 0.76rem;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+
+    .sub-box .val {
+      font-family: var(--mono);
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    /* Visual Pupil Gauge */
+    .pupil-visual {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      background: rgba(6, 11, 23, 0.7);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 10px;
+      margin-top: 12px;
+    }
+
+    .eye-unit {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--mono);
+      font-size: 0.78rem;
+    }
+
+    .iris-ring {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.25), rgba(15, 23, 42, 0.95));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pupil-dot {
+      border-radius: 50%;
+      background: #02040a;
+      border: 1.5px solid #e2e8f0;
+      transition: all 0.25s ease;
+    }
+
+    /* Interactive Demo Simulator Bar */
+    .sim-bar {
+      background: var(--panel);
+      border: 1px dashed rgba(56, 189, 248, 0.35);
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      align-items: center;
+    }
+
+    .slider-group label {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 0.74rem;
       color: var(--muted);
       margin-bottom: 4px;
     }
-    .sub-box .val { font-size: 1.2rem; font-weight: 700; }
 
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Triage Reasoning Matrix */
     .triage-box {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 18px;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
+
     .triage-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
       gap: 14px;
       margin-top: 12px;
     }
+
     .triage-item {
       background: var(--panel-alt);
-      border-radius: 8px;
-      padding: 12px;
-      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      border: 1px solid var(--border-subtle);
     }
+
     .triage-item h4 {
-      font-size: 0.8rem;
+      font-family: var(--mono);
+      font-size: 0.75rem;
       color: var(--accent);
       text-transform: uppercase;
-      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
     }
-    .triage-item ul { padding-left: 18px; font-size: 0.88rem; }
-    .triage-item p { font-size: 0.88rem; }
+
+    .triage-item ul { padding-left: 18px; font-size: 0.86rem; color: #cbd5e1; }
+    .triage-item li { margin-bottom: 4px; }
+    .triage-item p { font-size: 0.86rem; color: #cbd5e1; }
 
     .disclaimer {
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       color: var(--muted);
       text-align: center;
-      padding-top: 10px;
+      padding-top: 8px;
     }
 
-    /* Modal Styles */
+    /* Modal */
     .modal-backdrop {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(3, 7, 18, 0.82);
+      background: rgba(2, 6, 16, 0.85);
+      backdrop-filter: blur(6px);
       z-index: 50;
       align-items: center;
       justify-content: center;
       padding: 16px;
     }
+
     .modal-backdrop.open { display: flex; }
+
     .modal {
-      background: var(--panel);
+      background: #0d1526;
       border: 1px solid var(--border);
       border-radius: 14px;
       max-width: 680px;
@@ -227,38 +462,44 @@
       padding: 20px;
       max-height: 90vh;
       overflow-y: auto;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
     }
+
     .modal-head {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
     }
+
     .modal-tabs {
       display: flex;
       gap: 8px;
       margin-bottom: 12px;
     }
+
     textarea {
       width: 100%;
       min-height: 210px;
-      background: #060a12;
-      color: #a5f3fc;
-      border: 1px solid var(--border);
+      background: #050912;
+      color: #7dd3fc;
+      border: 1px solid var(--border-subtle);
       border-radius: 8px;
       padding: 12px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 0.82rem;
+      font-family: var(--mono);
+      font-size: 0.8rem;
       margin-bottom: 12px;
     }
+
     .modal-actions {
       display: flex;
       justify-content: flex-end;
       gap: 10px;
     }
+
     .error-msg {
-      color: var(--danger);
-      font-size: 0.84rem;
+      color: #f87171;
+      font-size: 0.82rem;
       margin-bottom: 10px;
       display: none;
     }
@@ -267,16 +508,19 @@
 <body>
   <div class="container">
     <header>
-      <div class="title-block">
-        <h1>AstroVitals — Crew Health, Ultrasound & Pupillometry Tracker</h1>
-        <p>Anchored strictly to personal Earth preflight baselines • Non-deterministic environmental context</p>
+      <div class="brand">
+        <div class="pulse-orb" id="headerOrb"></div>
+        <div class="title-block">
+          <h1>ASTROVITAL // CREW TELEMETRY <span class="tag-chip">FLIGHT SURGEON HUD</span></h1>
+          <p>Personal Earth preflight median anchoring • Ocular ultrasound + Pupillometry fusion</p>
+        </div>
       </div>
       <div class="controls-bar">
         <select id="locationSelect" aria-label="Mission Location">
-          <option value="mars_surface">Mars Surface (3/8g)</option>
-          <option value="deep_space_transit">Deep-Space Transit (0g)</option>
-          <option value="lunar_surface">Lunar Surface (1/6g)</option>
-          <option value="earth_preflight">Earth Preflight (1.0g)</option>
+          <option value="mars_surface">Sector: Mars Surface (3/8g)</option>
+          <option value="deep_space_transit">Sector: Deep-Space Transit (0g)</option>
+          <option value="lunar_surface">Sector: Lunar Surface (1/6g)</option>
+          <option value="earth_preflight">Sector: Earth Preflight (1.0g)</option>
         </select>
         <select id="weatherSelect" aria-label="Space Weather Context">
           <option value="quiet">Space Weather: Quiet (Kp 2)</option>
@@ -290,40 +534,571 @@
 
     <div class="banner" id="statusBanner">
       <div>
-        <strong id="bannerTitle">Mission Day 1 — Nominal Baseline</strong>
-        <div id="bannerSub" style="font-size:0.86rem; color:var(--muted);">All wearable, ultrasound, and pupillometry checks verified.</div>
+        <strong id="bannerTitle" style="font-size:1.02rem;">Mission Day 1 — Nominal Baseline</strong>
+        <div id="bannerSub" style="font-size:0.84rem; color:#cbd5e1; margin-top:2px;">All wearable, ultrasound, and pupillometry checks verified.</div>
       </div>
       <span class="badge ok" id="bannerBadge">NOMINAL</span>
     </div>
 
-    <!-- Wearable Vitals Row -->
+    <!-- Primary Wearable Telemetry Cards -->
     <div class="vitals-grid">
       <div class="card">
-        <h3>Heart Rate (Fitbit / Wearable)</h3>
+        <h3>Heart Rate <span>ECG / PPG</span></h3>
         <div class="metric-val" id="hrVal">64 bpm</div>
         <div class="metric-sub" id="hrSub">Preflight median: 62 bpm (+2 bpm)</div>
+        <svg class="sparkline-wrap" id="hrSpark" viewBox="0 0 200 34" preserveAspectRatio="none"></svg>
       </div>
+
       <div class="card">
-        <h3>Blood Oxygen (SpO₂)</h3>
+        <h3>Blood Oxygen <span>SpO₂</span></h3>
         <div class="metric-val" id="spo2Val">98%</div>
         <div class="metric-sub" id="spo2Sub">Target ≥ 95% • Sensor verified</div>
+        <svg class="sparkline-wrap" id="spo2Spark" viewBox="0 0 200 34" preserveAspectRatio="none"></svg>
       </div>
+
       <div class="card">
-        <h3>Core / Skin Temp</h3>
+        <h3>Core / Skin Temp <span>THERM</span></h3>
         <div class="metric-val" id="tempVal">36.8 °C</div>
         <div class="metric-sub" id="tempSub">Preflight median: 36.7 °C (+0.1 °C)</div>
       </div>
+
       <div class="card">
-        <h3>Sleep Duration</h3>
+        <h3>Sleep Recovery <span>CIRCADIAN</span></h3>
         <div class="metric-val" id="sleepVal">7.4 hrs</div>
         <div class="metric-sub" id="sleepSub">Source: Simulated Mission Log</div>
       </div>
     </div>
 
-    <!-- Side-by-Side Daily Ultrasound & Eye Dilation (Pupillometry) -->
+    <!-- Neuro-Ocular Fusion Row -->
     <div class="neuro-ocular-grid">
       <div class="card">
         <div class="panel-header">
           <h2>👁️ Daily Ocular Ultrasound (SANS Check)</h2>
           <span class="badge ok" id="usBadge">Probe Verified</span>
         </div>
+        <div class="sub-metrics">
+          <div class="sub-box">
+            <label>Optic Nerve Sheath (ONSD)</label>
+            <div class="val" id="onsdVal">4.7 mm</div>
+            <div class="metric-sub" id="onsdSub">Preflight: 4.6 mm (+0.1 mm)</div>
+          </div>
+          <div class="sub-box">
+            <label>Internal Jugular Vein (IJV)</label>
+            <div class="val" id="ijvVal">Normal Forward</div>
+            <div class="metric-sub" id="ijvSub">Doppler waveform clear</div>
+          </div>
+        </div>
+        <svg class="sparkline-wrap" id="onsdSpark" viewBox="0 0 260 34" preserveAspectRatio="none" style="margin-top:12px;"></svg>
+      </div>
+
+      <div class="card">
+        <div class="panel-header">
+          <h2>🔦 Eye Dilation & Pupillometry</h2>
+          <span class="badge ok" id="pupilBadge">Lux Calibrated</span>
+        </div>
+        <div class="sub-metrics">
+          <div class="sub-box">
+            <label>Pupil Diameter (L / R)</label>
+            <div class="val" id="pupilVal">3.4 / 3.5 mm</div>
+            <div class="metric-sub" id="anisocoriaSub">Anisocoria: 0.1 mm (Normal &lt; 1.0 mm)</div>
+          </div>
+          <div class="sub-box">
+            <label>Light Reflex (PLR %)</label>
+            <div class="val" id="plrVal">34%</div>
+            <div class="metric-sub" id="plrSub">Brisk symmetric response (≥ 20%)</div>
+          </div>
+        </div>
+        <div class="pupil-visual">
+          <div class="eye-unit">
+            <div class="iris-ring"><div class="pupil-dot" id="leftPupilDot" style="width:14px;height:14px;"></div></div>
+            <div><div style="color:var(--muted);font-size:0.68rem;">OS (LEFT)</div><strong id="leftPupilTag">3.4 mm</strong></div>
+          </div>
+          <div style="font-family:var(--mono);font-size:0.74rem;color:var(--muted);" id="deltaTag">Δ 0.1 mm</div>
+          <div class="eye-unit">
+            <div class="iris-ring"><div class="pupil-dot" id="rightPupilDot" style="width:14px;height:14px;"></div></div>
+            <div><div style="color:var(--muted);font-size:0.68rem;">OD (RIGHT)</div><strong id="rightPupilTag">3.5 mm</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Stage Demo Sliders -->
+    <div class="sim-bar">
+      <div style="font-family:var(--mono);font-size:0.78rem;color:var(--accent);">
+        <strong>⚡ LIVE STAGE SIMULATOR</strong>
+        <div style="color:var(--muted);font-size:0.72rem;margin-top:2px;">Drag sliders to test live triage thresholds</div>
+      </div>
+      <div class="slider-group">
+        <label><span>Heart Rate (bpm)</span><span id="simHrLabel">64 bpm</span></label>
+        <input type="range" id="simHr" min="50" max="135" value="64" />
+      </div>
+      <div class="slider-group">
+        <label><span>Ultrasound ONSD (mm)</span><span id="simOnsdLabel">4.7 mm</span></label>
+        <input type="range" id="simOnsd" min="4.2" max="6.2" step="0.1" value="4.7" />
+      </div>
+      <div class="slider-group">
+        <label><span>Right Pupil (mm)</span><span id="simPupilLabel">3.5 mm</span></label>
+        <input type="range" id="simPupil" min="2.5" max="6.0" step="0.1" value="3.5" />
+      </div>
+    </div>
+
+    <!-- Deterministic Triage Matrix -->
+    <div class="triage-box">
+      <div class="panel-header">
+        <h2>🧠 Overarching AI Triage Assessment</h2>
+        <span class="badge info" id="sourceBadge">Source: Simulated Mission Log</span>
+      </div>
+      <div class="triage-grid">
+        <div class="triage-item">
+          <h4>1. Data Quality & Artifact Guardrail</h4>
+          <p id="triageQuality"></p>
+        </div>
+        <div class="triage-item">
+          <h4>2. Personal Preflight Comparison</h4>
+          <p id="triageBaseline"></p>
+        </div>
+        <div class="triage-item">
+          <h4>3. Differential & Environmental Context</h4>
+          <ul id="triageCauses"></ul>
+        </div>
+        <div class="triage-item">
+          <h4>4. Action Plan & Flight Surgeon Status</h4>
+          <ul id="triageActions"></ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="disclaimer">
+      Not a medical device. Exploratory NASA Space Apps crew decision-support prototype only; does not diagnose or treat.
+    </div>
+  </div>
+
+  <!-- Fitbit / Custom JSON Modal -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>📡 Import Live Fitbit API or Custom Telemetry JSON</h2>
+        <button id="closeModalBtn">✕</button>
+      </div>
+      <div class="modal-tabs">
+        <button id="loadFitbitSampleBtn">Load Sample Fitbit API Payload</button>
+        <button id="loadAstroSampleBtn">Load Sample AstroVitals Payload</button>
+      </div>
+      <p style="font-size:0.82rem; color:var(--muted); margin-bottom:10px;">
+        Paste raw Fitbit Web API intraday JSON (<code>activities-heart</code>, <code>spo2</code>, <code>sleep</code>) or a full AstroVitals JSON object (including <code>daily_ultrasound</code> and <code>pupillometry</code>).
+      </p>
+      <textarea id="jsonInput" spellcheck="false"></textarea>
+      <div class="error-msg" id="modalError"></div>
+      <div class="modal-actions">
+        <button id="cancelModalBtn">Cancel</button>
+        <button class="btn-primary" id="applyJsonBtn">Run Live Triage</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const LOCATION_LABELS = {
+      earth_preflight: "Earth Preflight (1.0g)",
+      deep_space_transit: "Deep-Space Transit (0g)",
+      lunar_surface: "Lunar Surface (1/6g)",
+      mars_surface: "Mars Surface (3/8g)"
+    };
+
+    const MISSION_DAYS = [
+      {
+        day: 1, label: "Day 1 • Nominal", pillClass: "", source: "Simulated Mission Log",
+        vitals: { hr_bpm: 64, preflight_hr_median: 62, spo2_pct: 98, temp_c: 36.8, preflight_temp_median: 36.7, sleep_hours: 7.4, sensor_verified: true },
+        ultrasound: { onsd_mm: 4.7, preflight_onsd_mm: 4.6, ijv_flow_status: "normal_forward", probe_contact_verified: true },
+        pupillometry: { left_pupil_mm: 3.4, right_pupil_mm: 3.5, plr_constriction_pct: 34, lighting_lux_verified: true }
+      },
+      {
+        day: 2, label: "Day 2 • Nominal", pillClass: "", source: "Simulated Mission Log",
+        vitals: { hr_bpm: 66, preflight_hr_median: 62, spo2_pct: 98, temp_c: 36.7, preflight_temp_median: 36.7, sleep_hours: 7.1, sensor_verified: true },
+        ultrasound: { onsd_mm: 4.8, preflight_onsd_mm: 4.6, ijv_flow_status: "normal_forward", probe_contact_verified: true },
+        pupillometry: { left_pupil_mm: 3.5, right_pupil_mm: 3.5, plr_constriction_pct: 33, lighting_lux_verified: true }
+      },
+      {
+        day: 3, label: "Day 3 • Post-EVA", pillClass: "", source: "Simulated Mission Log",
+        vitals: { hr_bpm: 72, preflight_hr_median: 62, spo2_pct: 97, temp_c: 37.0, preflight_temp_median: 36.7, sleep_hours: 6.8, sensor_verified: true },
+        ultrasound: { onsd_mm: 4.9, preflight_onsd_mm: 4.6, ijv_flow_status: "normal_forward", probe_contact_verified: true },
+        pupillometry: { left_pupil_mm: 3.6, right_pupil_mm: 3.6, plr_constriction_pct: 31, lighting_lux_verified: true }
+      },
+      {
+        day: 4, label: "Day 4 • Nominal", pillClass: "", source: "Simulated Mission Log",
+        vitals: { hr_bpm: 65, preflight_hr_median: 62, spo2_pct: 98, temp_c: 36.8, preflight_temp_median: 36.7, sleep_hours: 7.6, sensor_verified: true },
+        ultrasound: { onsd_mm: 4.8, preflight_onsd_mm: 4.6, ijv_flow_status: "normal_forward", probe_contact_verified: true },
+        pupillometry: { left_pupil_mm: 3.4, right_pupil_mm: 3.4, plr_constriction_pct: 35, lighting_lux_verified: true }
+      },
+      {
+        day: 5, label: "Day 5 • Sensor Artifact", pillClass: "pill-warn", source: "Simulated Mission Log",
+        vitals: { hr_bpm: 118, preflight_hr_median: 62, spo2_pct: 88, temp_c: 36.9, preflight_temp_median: 36.7, sleep_hours: 6.9, sensor_verified: false },
+        ultrasound: { onsd_mm: 5.9, preflight_onsd_mm: 4.6, ijv_flow_status: "indeterminate", probe_contact_verified: false },
+        pupillometry: { left_pupil_mm: 4.8, right_pupil_mm: 3.6, plr_constriction_pct: 18, lighting_lux_verified: false }
+      },
+      {
+        day: 6, label: "Day 6 • Mild Fluid Shift", pillClass: "pill-warn", source: "Simulated Mission Log",
+        vitals: { hr_bpm: 76, preflight_hr_median: 62, spo2_pct: 96, temp_c: 37.1, preflight_temp_median: 36.7, sleep_hours: 6.2, sensor_verified: true },
+        ultrasound: { onsd_mm: 5.1, preflight_onsd_mm: 4.6, ijv_flow_status: "mild_stasis", probe_contact_verified: true },
+        pupillometry: { left_pupil_mm: 3.8, right_pupil_mm: 4.0, plr_constriction_pct: 26, lighting_lux_verified: true }
+      },
+      {
+        day: 7, label: "Day 7 • Escalation", pillClass: "pill-danger", source: "Simulated Mission Log",
+        vitals: { hr_bpm: 99, preflight_hr_median: 62, spo2_pct: 94, temp_c: 37.4, preflight_temp_median: 36.7, sleep_hours: 5.4, sensor_verified: true },
+        ultrasound: { onsd_mm: 5.7, preflight_onsd_mm: 4.6, ijv_flow_status: "stagnant_retrograde", probe_contact_verified: true },
+        pupillometry: { left_pupil_mm: 3.5, right_pupil_mm: 4.8, plr_constriction_pct: 14, lighting_lux_verified: true }
+      }
+    ];
+
+    const SAMPLE_FITBIT_JSON = {
+      "activities-heart": [{ "dateTime": "2026-11-15", "value": { "restingHeartRate": 62 } }],
+      "activities-heart-intraday": { "dataset": [{ "time": "08:30:00", "value": 84 }] },
+      "spo2": { "dateTime": "2026-11-15", "value": { "avg": 96.4, "min": 94.0, "max": 99.0 } },
+      "sleep": [{ "summary": { "totalMinutesAsleep": 390 } }],
+      "sensor_verified": true
+    };
+
+    const SAMPLE_ASTROVITAL_JSON = {
+      label: "Live Custom Sync",
+      source: "Fitbit Web API + Pupillometry",
+      vitals: { hr_bpm: 88, preflight_hr_median: 62, spo2_pct: 95, temp_c: 37.2, preflight_temp_median: 36.7, sleep_hours: 6.1, sensor_verified: true },
+      ultrasound: { onsd_mm: 5.2, preflight_onsd_mm: 4.6, ijv_flow_status: "mild_stasis", probe_contact_verified: true },
+      pupillometry: { left_pupil_mm: 3.6, right_pupil_mm: 4.7, plr_constriction_pct: 17, lighting_lux_verified: true }
+    };
+
+    let currentIndex = 0;
+
+    function drawSparkline(svgId, values, baseline, minVal, maxVal, strokeColor) {
+      const svg = document.getElementById(svgId);
+      if (!svg) return;
+      const w = svg.viewBox.baseVal.width || 200;
+      const h = svg.viewBox.baseVal.height || 34;
+      const normY = v => h - 4 - ((Math.max(minVal, Math.min(maxVal, v)) - minVal) / (maxVal - minVal)) * (h - 8);
+      const step = w / Math.max(1, values.length - 1);
+      const pts = values.map((v, i) => `${(i * step).toFixed(1)},${normY(v).toFixed(1)}`).join(" ");
+      const baseY = normY(baseline).toFixed(1);
+      const lastX = ((values.length - 1) * step).toFixed(1);
+      const lastY = normY(values[values.length - 1]).toFixed(1);
+
+      svg.innerHTML = `
+        <line x1="0" y1="${baseY}" x2="${w}" y2="${baseY}" stroke="rgba(148,163,184,0.3)" stroke-dasharray="3,3" stroke-width="1"/>
+        <polyline fill="none" stroke="${strokeColor}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${pts}"/>
+        <circle cx="${lastX}" cy="${lastY}" r="3.5" fill="${strokeColor}"/>
+      `;
+    }
+
+    function normalizeImportedJson(raw) {
+      if (raw["activities-heart"] || raw["activities-heart-intraday"] || raw["spo2"]) {
+        const intraday = raw["activities-heart-intraday"]?.dataset;
+        const latestHr = Array.isArray(intraday) && intraday.length
+          ? intraday[intraday.length - 1].value
+          : raw["activities-heart"]?.[0]?.value?.restingHeartRate ?? 70;
+        const restingHr = raw["activities-heart"]?.[0]?.value?.restingHeartRate ?? 62;
+        const spo2Val = raw["spo2"]?.value?.avg ?? 98;
+        const minsAsleep = raw["sleep"]?.[0]?.summary?.totalMinutesAsleep ?? 420;
+
+        return {
+          day: "Live", label: "Fitbit Live Sync", pillClass: "custom-pill", source: "Fitbit Web API",
+          vitals: {
+            hr_bpm: Number(latestHr), preflight_hr_median: Number(restingHr),
+            spo2_pct: Math.round(Number(spo2Val)), temp_c: 36.9, preflight_temp_median: 36.7,
+            sleep_hours: +(minsAsleep / 60).toFixed(1), sensor_verified: raw.sensor_verified !== false
+          },
+          ultrasound: raw.daily_ultrasound || raw.ultrasound || {
+            onsd_mm: 4.8, preflight_onsd_mm: 4.6, ijv_flow_status: "normal_forward", probe_contact_verified: true
+          },
+          pupillometry: raw.pupillometry || {
+            left_pupil_mm: 3.5, right_pupil_mm: 3.6, plr_constriction_pct: 32, lighting_lux_verified: true
+          }
+        };
+      }
+
+      if (raw.vitals && typeof raw.vitals.hr_bpm === "number") {
+        return {
+          day: "Live", label: raw.label || "Custom JSON Sync", pillClass: "custom-pill", source: raw.source || "Custom JSON Import",
+          vitals: {
+            hr_bpm: raw.vitals.hr_bpm, preflight_hr_median: raw.vitals.preflight_hr_median ?? 62,
+            spo2_pct: raw.vitals.spo2_pct ?? 98, temp_c: raw.vitals.temp_c ?? 36.8,
+            preflight_temp_median: raw.vitals.preflight_temp_median ?? 36.7,
+            sleep_hours: raw.vitals.sleep_hours ?? 7.0, sensor_verified: raw.vitals.sensor_verified !== false
+          },
+          ultrasound: raw.daily_ultrasound || raw.ultrasound || {
+            onsd_mm: 4.7, preflight_onsd_mm: 4.6, ijv_flow_status: "normal_forward", probe_contact_verified: true
+          },
+          pupillometry: raw.pupillometry || {
+            left_pupil_mm: 3.5, right_pupil_mm: 3.5, plr_constriction_pct: 33, lighting_lux_verified: true
+          }
+        };
+      }
+
+      throw new Error("Unrecognized JSON format. Include 'vitals.hr_bpm' or Fitbit 'activities-heart' fields.");
+    }
+
+    function renderPills() {
+      const container = document.getElementById("dayPills");
+      container.innerHTML = "";
+      MISSION_DAYS.forEach((item, idx) => {
+        const btn = document.createElement("button");
+        btn.className = `day-pill ${item.pillClass || ""}` + (idx === currentIndex ? " active" : "");
+        btn.textContent = item.label;
+        btn.onclick = () => {
+          currentIndex = idx;
+          syncSlidersToRecord(MISSION_DAYS[currentIndex]);
+          renderPills();
+          renderDashboard();
+        };
+        container.appendChild(btn);
+      });
+    }
+
+    function syncSlidersToRecord(rec) {
+      document.getElementById("simHr").value = rec.vitals.hr_bpm;
+      document.getElementById("simHrLabel").textContent = `${rec.vitals.hr_bpm} bpm`;
+      document.getElementById("simOnsd").value = rec.ultrasound.onsd_mm;
+      document.getElementById("simOnsdLabel").textContent = `${rec.ultrasound.onsd_mm.toFixed(1)} mm`;
+      document.getElementById("simPupil").value = rec.pupillometry.right_pupil_mm;
+      document.getElementById("simPupilLabel").textContent = `${rec.pupillometry.right_pupil_mm.toFixed(1)} mm`;
+    }
+
+    function renderDashboard() {
+      const record = MISSION_DAYS[currentIndex];
+      const loc = document.getElementById("locationSelect").value;
+      const weather = document.getElementById("weatherSelect").value;
+      const locLabel = LOCATION_LABELS[loc];
+
+      const { vitals, ultrasound, pupillometry } = record;
+      const hrDelta = vitals.hr_bpm - vitals.preflight_hr_median;
+      const tempDelta = +(vitals.temp_c - vitals.preflight_temp_median).toFixed(1);
+      const onsdDelta = +(ultrasound.onsd_mm - ultrasound.preflight_onsd_mm).toFixed(2);
+      const anisocoria = +Math.abs(pupillometry.left_pupil_mm - pupillometry.right_pupil_mm).toFixed(2);
+
+      document.getElementById("hrVal").textContent = `${vitals.hr_bpm} bpm`;
+      document.getElementById("hrSub").textContent = `Preflight median: ${vitals.preflight_hr_median} bpm (${hrDelta >= 0 ? "+" : ""}${hrDelta} bpm)`;
+
+      document.getElementById("spo2Val").textContent = `${vitals.spo2_pct}%`;
+      document.getElementById("spo2Sub").textContent = vitals.sensor_verified ? "Target ≥ 95% • Sensor verified" : "⚠️ Unverified strap fit";
+
+      document.getElementById("tempVal").textContent = `${vitals.temp_c.toFixed(1)} °C`;
+      document.getElementById("tempSub").textContent = `Preflight median: ${vitals.preflight_temp_median.toFixed(1)} °C (${tempDelta >= 0 ? "+" : ""}${tempDelta} °C)`;
+
+      document.getElementById("sleepVal").textContent = `${vitals.sleep_hours} hrs`;
+      document.getElementById("sleepSub").textContent = `Source: ${record.source}`;
+      document.getElementById("sourceBadge").textContent = `Source: ${record.source}`;
+
+      // Draw sparklines up to current day
+      const slice = MISSION_DAYS.slice(0, currentIndex + 1);
+      drawSparkline("hrSpark", slice.map(d => d.vitals.hr_bpm), vitals.preflight_hr_median, 55, 125, "#38bdf8");
+      drawSparkline("spo2Spark", slice.map(d => d.vitals.spo2_pct), 95, 86, 100, "#10b981");
+      drawSparkline("onsdSpark", slice.map(d => d.ultrasound.onsd_mm), ultrasound.preflight_onsd_mm, 4.4, 6.1, "#a78bfa");
+
+      // Ultrasound Card
+      document.getElementById("onsdVal").textContent = `${ultrasound.onsd_mm.toFixed(1)} mm`;
+      document.getElementById("onsdSub").textContent = `Preflight: ${ultrasound.preflight_onsd_mm.toFixed(1)} mm (${onsdDelta >= 0 ? "+" : ""}${onsdDelta} mm)`;
+      const ijvMap = {
+        normal_forward: "Normal Forward",
+        mild_stasis: "Mild Stasis",
+        stagnant_retrograde: "Stagnant / Retrograde",
+        indeterminate: "Indeterminate"
+      };
+      document.getElementById("ijvVal").textContent = ijvMap[ultrasound.ijv_flow_status] || ultrasound.ijv_flow_status;
+      document.getElementById("ijvSub").textContent = ultrasound.probe_contact_verified ? "Acoustic window verified" : "⚠️ Re-seat probe before reading";
+      const usBadge = document.getElementById("usBadge");
+      usBadge.textContent = ultrasound.probe_contact_verified ? "Probe Verified" : "Unverified Probe";
+      usBadge.className = "badge " + (ultrasound.probe_contact_verified ? "ok" : "warn");
+
+      // Pupillometry Card + Visual Rings
+      document.getElementById("pupilVal").textContent = `${pupillometry.left_pupil_mm.toFixed(1)} / ${pupillometry.right_pupil_mm.toFixed(1)} mm`;
+      document.getElementById("anisocoriaSub").textContent = `Anisocoria: ${anisocoria.toFixed(1)} mm (${anisocoria >= 1.0 ? "⚠️ ≥ 1.0 mm asymmetry" : "Normal < 1.0 mm"})`;
+      document.getElementById("plrVal").textContent = `${pupillometry.plr_constriction_pct}%`;
+      document.getElementById("plrSub").textContent = pupillometry.plr_constriction_pct >= 20 ? "Brisk symmetric constriction (≥ 20%)" : "⚠️ Sluggish constriction (< 20%)";
+
+      const scalePx = mm => Math.round(Math.max(8, Math.min(28, mm * 4.4)));
+      document.getElementById("leftPupilDot").style.width = `${scalePx(pupillometry.left_pupil_mm)}px`;
+      document.getElementById("leftPupilDot").style.height = `${scalePx(pupillometry.left_pupil_mm)}px`;
+      document.getElementById("rightPupilDot").style.width = `${scalePx(pupillometry.right_pupil_mm)}px`;
+      document.getElementById("rightPupilDot").style.height = `${scalePx(pupillometry.right_pupil_mm)}px`;
+      document.getElementById("leftPupilTag").textContent = `${pupillometry.left_pupil_mm.toFixed(1)} mm`;
+      document.getElementById("rightPupilTag").textContent = `${pupillometry.right_pupil_mm.toFixed(1)} mm`;
+      document.getElementById("deltaTag").textContent = `Δ ${anisocoria.toFixed(1)} mm`;
+
+      const pupilBadge = document.getElementById("pupilBadge");
+      pupilBadge.textContent = pupillometry.lighting_lux_verified ? "Lux Calibrated" : "Unverified Ambient Lux";
+      pupilBadge.className = "badge " + (pupillometry.lighting_lux_verified ? "ok" : "warn");
+
+      // Triage Decision
+      const unverifiedAny = !vitals.sensor_verified || !ultrasound.probe_contact_verified || !pupillometry.lighting_lux_verified;
+      const vitalsEscalation = vitals.sensor_verified && (hrDelta >= 35 || vitals.spo2_pct <= 91 || vitals.temp_c >= 38.0);
+      const ultrasoundEscalation = ultrasound.probe_contact_verified && (
+        ultrasound.onsd_mm >= 5.5 || onsdDelta >= 0.8 || ultrasound.ijv_flow_status === "stagnant_retrograde"
+      );
+      const pupilEscalation = pupillometry.lighting_lux_verified && (
+        anisocoria >= 1.0 || pupillometry.plr_constriction_pct < 15
+      );
+
+      const escalate = vitalsEscalation || ultrasoundEscalation || pupilEscalation;
+      const mildWatch = !escalate && !unverifiedAny && (
+        onsdDelta >= 0.4 || ultrasound.ijv_flow_status === "mild_stasis" || hrDelta >= 12 || pupillometry.plr_constriction_pct < 20
+      );
+
+      const banner = document.getElementById("statusBanner");
+      const badge = document.getElementById("bannerBadge");
+      const bTitle = document.getElementById("bannerTitle");
+      const bSub = document.getElementById("bannerSub");
+      const orb = document.getElementById("headerOrb");
+
+      if (unverifiedAny) {
+        banner.className = "banner warn";
+        badge.className = "badge warn";
+        badge.textContent = "ARTIFACT BLOCKED";
+        orb.style.background = "var(--warn)";
+        orb.style.boxShadow = "0 0 14px var(--warn)";
+        bTitle.textContent = `${record.label} — Unverified Sensor / Calibration Hold`;
+        bSub.textContent = "Escalation suppressed: confirm wearable strap contact, ultrasound acoustic window, and ambient lux calibration first.";
+      } else if (escalate) {
+        banner.className = "banner danger";
+        badge.className = "badge danger";
+        badge.textContent = "FLIGHT SURGEON ESCALATION";
+        orb.style.background = "var(--danger)";
+        orb.style.boxShadow = "0 0 14px var(--danger)";
+        bTitle.textContent = `${record.label} — Verified Neuro-Ocular / Vital Red Flag`;
+        bSub.textContent = "Verified deviation beyond personal Earth preflight baseline. Initiate Flight Surgeon telemetry package.";
+      } else if (mildWatch) {
+        banner.className = "banner warn";
+        badge.className = "badge warn";
+        badge.textContent = "MONITOR & RE-TEST";
+        orb.style.background = "var(--warn)";
+        orb.style.boxShadow = "0 0 14px var(--warn)";
+        bTitle.textContent = `${record.label} — Mild Baseline Drift`;
+        bSub.textContent = "Sub-threshold cephalad fluid or post-activity drift detected. Repeat ultrasound & pupillometry after rest.";
+      } else {
+        banner.className = "banner";
+        badge.className = "badge ok";
+        badge.textContent = "NOMINAL";
+        orb.style.background = "var(--ok)";
+        orb.style.boxShadow = "0 0 14px var(--ok)";
+        bTitle.textContent = `${record.label} — Within Personal Preflight Baseline`;
+        bSub.textContent = `All verified vitals, ocular ultrasound, and pupillometry readings nominal in ${locLabel}.`;
+      }
+
+      document.getElementById("triageQuality").textContent = unverifiedAny
+        ? `Hold triggered: Wearable=${vitals.sensor_verified ? "OK" : "Unverified"}, Ultrasound Probe=${ultrasound.probe_contact_verified ? "OK" : "Unverified"}, Pupillometry Lux=${pupillometry.lighting_lux_verified ? "OK" : "Unverified"}. Re-acquire clean signals before clinical escalation.`
+        : `Wearable strap, ultrasound probe placement, and pupillometry ambient lux all verified in ${locLabel}.`;
+
+      document.getElementById("triageBaseline").textContent =
+        `HR ${vitals.hr_bpm} bpm (${hrDelta >= 0 ? "+" : ""}${hrDelta} vs preflight ${vitals.preflight_hr_median}); SpO₂ ${vitals.spo2_pct}%; ONSD ${ultrasound.onsd_mm.toFixed(1)} mm (${onsdDelta >= 0 ? "+" : ""}${onsdDelta} vs ${ultrasound.preflight_onsd_mm} mm); Anisocoria ${anisocoria.toFixed(1)} mm, PLR ${pupillometry.plr_constriction_pct}%.`;
+
+      const causesEl = document.getElementById("triageCauses");
+      causesEl.innerHTML = "";
+      const causes = [
+        `Cephalad fluid shift in ${locLabel}, recent EVA/resistive workout, or cabin CO₂/hydration variance`,
+        unverifiedAny ? "Sensor motion artifact, acoustic coupling loss, or uncalibrated cabin lighting" : "True neuro-ocular pressure / autonomic shift requiring paired ONSD + pupillometry correlation"
+      ];
+      if (weather === "storm") {
+        causes.push("Elevated geomagnetic/solar activity (Kp 7 / SEP) logged as environmental context — correlate with crew dosimeter without assuming deterministic vital-sign offsets.");
+      }
+      causes.forEach(c => {
+        const li = document.createElement("li");
+        li.textContent = c;
+        causesEl.appendChild(li);
+      });
+
+      const actionsEl = document.getElementById("triageActions");
+      actionsEl.innerHTML = "";
+      const actions = unverifiedAny
+        ? [
+            "Re-seat wearable strap and re-apply ultrasound gel over closed eyelid",
+            "Standardize cabin lighting lux and repeat 3-second pupillometry scan",
+            "Re-run triage once all three quality checks read Verified"
+          ]
+        : escalate
+        ? [
+            "Transmit verified ONSD, IJV Doppler, and pupillometry log to Flight Surgeon",
+            "Check cabin ppCO₂, hydration intake, and visual acuity chart (Amsler grid)",
+            "Avoid high-strain resistive exercise until ground medical review completes"
+          ]
+        : [
+            "Continue routine daily wearable, ocular ultrasound, and pupillometry logging",
+            "Maintain standard hydration and post-EVA recovery rest window"
+          ];
+      actions.forEach(a => {
+        const li = document.createElement("li");
+        li.textContent = a;
+        actionsEl.appendChild(li);
+      });
+    }
+
+    // Live Stage Sliders Wiring
+    document.getElementById("simHr").oninput = e => {
+      const val = Number(e.target.value);
+      document.getElementById("simHrLabel").textContent = `${val} bpm`;
+      MISSION_DAYS[currentIndex].vitals.hr_bpm = val;
+      MISSION_DAYS[currentIndex].vitals.sensor_verified = true;
+      renderDashboard();
+    };
+    document.getElementById("simOnsd").oninput = e => {
+      const val = Number(e.target.value);
+      document.getElementById("simOnsdLabel").textContent = `${val.toFixed(1)} mm`;
+      MISSION_DAYS[currentIndex].ultrasound.onsd_mm = val;
+      MISSION_DAYS[currentIndex].ultrasound.probe_contact_verified = true;
+      renderDashboard();
+    };
+    document.getElementById("simPupil").oninput = e => {
+      const val = Number(e.target.value);
+      document.getElementById("simPupilLabel").textContent = `${val.toFixed(1)} mm`;
+      MISSION_DAYS[currentIndex].pupillometry.right_pupil_mm = val;
+      MISSION_DAYS[currentIndex].pupillometry.lighting_lux_verified = true;
+      renderDashboard();
+    };
+
+    // Modal Controls
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const jsonInput = document.getElementById("jsonInput");
+    const modalError = document.getElementById("modalError");
+
+    document.getElementById("openModalBtn").onclick = () => {
+      modalError.style.display = "none";
+      if (!jsonInput.value.trim()) jsonInput.value = JSON.stringify(SAMPLE_FITBIT_JSON, null, 2);
+      modalBackdrop.classList.add("open");
+    };
+    document.getElementById("closeModalBtn").onclick = () => modalBackdrop.classList.remove("open");
+    document.getElementById("cancelModalBtn").onclick = () => modalBackdrop.classList.remove("open");
+    document.getElementById("loadFitbitSampleBtn").onclick = () => {
+      modalError.style.display = "none";
+      jsonInput.value = JSON.stringify(SAMPLE_FITBIT_JSON, null, 2);
+    };
+    document.getElementById("loadAstroSampleBtn").onclick = () => {
+      modalError.style.display = "none";
+      jsonInput.value = JSON.stringify(SAMPLE_ASTROVITAL_JSON, null, 2);
+    };
+
+    document.getElementById("applyJsonBtn").onclick = () => {
+      try {
+        const parsed = JSON.parse(jsonInput.value);
+        const normalized = normalizeImportedJson(parsed);
+        const existingLiveIdx = MISSION_DAYS.findIndex(d => d.day === "Live");
+        if (existingLiveIdx >= 0) {
+          MISSION_DAYS[existingLiveIdx] = normalized;
+          currentIndex = existingLiveIdx;
+        } else {
+          MISSION_DAYS.push(normalized);
+          currentIndex = MISSION_DAYS.length - 1;
+        }
+        modalError.style.display = "none";
+        modalBackdrop.classList.remove("open");
+        syncSlidersToRecord(normalized);
+        renderPills();
+        renderDashboard();
+      } catch (err) {
+        modalError.textContent = err.message || "Invalid JSON syntax.";
+        modalError.style.display = "block";
+      }
+    };
+
+    document.getElementById("locationSelect").onchange = renderDashboard;
+    document.getElementById("weatherSelect").onchange = renderDashboard;
+
+    syncSlidersToRecord(MISSION_DAYS[0]);
+    renderPills();
+    renderDashboard();
+  </script>
+</body>
+</html>
