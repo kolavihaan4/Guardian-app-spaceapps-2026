@@ -687,7 +687,7 @@ NODE_ENV=production APP_ORIGIN=https://your.domain TRUST_PROXY=1 npm start
 ```
 
 This serves the API and the app from one origin. It must sit behind HTTPS: the server refuses to
-start in production with a non-`https://` `APP_ORIGIN`, because session cookies are `Secure`.
+start in production with a non-`https://` `APP_ORIGIN`.
 
 ### Scripts
 
@@ -717,7 +717,8 @@ Every option is documented in [`.env.example`](.env.example).
 | `APP_ORIGIN` | `http://localhost:5173` | the only origin allowed to make state-changing requests |
 | `DATABASE_PATH` | `./data/astrovitals.sqlite` | SQLite file (git-ignored) |
 | `RETENTION_DAYS` | `90` | health data older than this is purged hourly |
-| `SESSION_TTL_HOURS` | `12` | session lifetime |
+| `SUPABASE_URL` | — **required** | the Supabase project that signs people in (`https://<ref>.supabase.co`) |
+| `SUPABASE_PUBLISHABLE_KEY` | — **required** | that project's publishable key (public by design; a secret key is refused) |
 | `TRUST_PROXY` | `0` | set `1` behind a reverse proxy |
 | `NASA_API_KEY` | `DEMO_KEY` | only the legacy APOD fallback uses it ([get one free](https://api.nasa.gov/)) |
 | `DEFAULT_LATITUDE` / `LONGITUDE` | `29.5502` / `-95.097` | default POWER location (NASA Johnson Space Center) |
@@ -733,7 +734,7 @@ Full reference: [`docs/API.md`](docs/API.md).
 
 | Group | Endpoints |
 |---|---|
-| **Auth** | `POST /api/auth/register` · `POST /api/auth/login` · `POST /api/auth/logout` |
+| **Auth** | none here: Supabase Auth, from the page; the API takes `Authorization: Bearer <access token>` |
 | **Account** | `GET /api/me` · `PATCH /api/me/settings` · `GET /api/me/export` · `DELETE /api/me/data` · `DELETE /api/me` |
 | **Vitals** | `GET /api/vitals?from&to` (max 90 days) |
 | **Providers** | `GET /api/providers` · `POST /:id/connect` · `GET /:id/callback` · `POST /:id/sync` · `DELETE /:id` |
@@ -869,17 +870,17 @@ Open `index.html` in Chrome, Edge or Firefox. No install and no build step. Card
 ### The opening
 
 - While the app loads, a planet sits in the centre of a deep-blue screen with a ship orbiting it (it passes behind the planet and leaves a trail).
-- The ship circles for at least 5 seconds (`ORBIT_MS` in `js/loader.js`).
+- The ship circles for at least 3 seconds (`ORBIT_MS` in `js/loader.js`).
 - When the app is ready, the ship finishes its lap and lands, the blue opens from the centre into the misty dashboard, and the same planet-and-ship element shrinks and flies into the header, where it becomes the logo (about 1.7 s).
 - The logo goes to the Dashboard from any page. On the Dashboard it scrolls to the top; it never replays the opening. Hovering it makes the ship slip along its orbit.
-- With **reduced motion** turned on (in Windows: Settings → Accessibility → Visual effects → Animation effects **off**), the ship still circles for its 5 seconds, but instead of flying into the header the opening ends in a short cross-fade.
+- With **reduced motion** turned on (in Windows: Settings → Accessibility → Visual effects → Animation effects **off**), the ship still circles for its 3 seconds, but instead of flying into the header the opening ends in a short cross-fade.
 - **Settings → Opening animation** turns the opening off; **Replay opening** plays it again.
 
 ### Choosing an environment
 
 - Straight after the opening, a first visit shows **Where is your crew?**: the International Space Station, Mars, the Moon and a Spacecraft in transit, each a card with a photo above its name, a short description and a few facts. The whole card is the button; the chosen card gets a teal ring and a check.
-- Nothing else (dashboard, nav, search) is reachable until one is chosen. **Continue to dashboard** saves it in the browser.
-- On the next visit the saved environment loads straight away and the picker is skipped.
+- Nothing else (dashboard, nav, search) is reachable until one is chosen. **Continue to dashboard** keeps it for this visit (this browser tab), across the home site and the health app.
+- A signed-in user’s choice is also saved for their account in this browser: on the next visit it loads straight away and the picker is skipped. A signed-out visitor is asked on every visit and nothing about the location stays in the browser afterwards. Signing out clears the visit’s choice; deleting the account or its data removes the saved one.
 - Change it any time from the environment pill in the header, the name in the welcome panel, or **Settings → Mission environment**. New cards are stamped with the environment they were made in.
 
 Photos (public domain, via Wikimedia Commons): ISS after STS-132 undocking (NASA), *Getting to Know Mount Sharp*, PIA16099 (NASA/JPL-Caltech/MSSS), Buzz Aldrin on Apollo 11 (NASA), Orion with the Moon and Earth on Artemis I, art001e000673 (NASA). Stored in `assets/env/`.
@@ -892,7 +893,8 @@ Photos (public domain, via Wikimedia Commons): ISS after STS-132 undocking (NASA
 | `js/loader.js` | The opening: hold until ready, radial reveal, flying the mark into the header, reduced-motion path |
 | `js/scenery.js` | The misty mountains and pines, drawn as one SVG at start-up |
 | `js/app.js` | Routes, dashboard, My cards, Collections, Card library, Settings, modals, search (Ctrl K) |
-| `js/store.js` | Saved state |
+| `js/store.js` | Saved state (everything but the crew’s location) |
+| `js/env.js` | Where the crew’s location is kept: this visit for everyone, saved per account for a signed-in user. Shared with the health app |
 | `css/app.css` | Everything visual |
 
 ### Test it
@@ -901,4 +903,4 @@ Photos (public domain, via Wikimedia Commons): ISS after STS-132 undocking (NASA
 node tools/check.mjs
 ```
 
-Starts a headless Chrome or Edge and runs 75 checks, including the environment picker (order, photos loaded and above each name, one radius, even spacing, gate, selection, saving, restoring on reopen, changing, cancel, phone and tablet layouts) and: the loader covers the screen with the mark in the exact centre; the ship orbits while loading; clicks do nothing until the app is ready; the reveal takes 1.5–2 s; the mark lands exactly in the header slot as the same element; logo navigation; the add-card flow; every route; search; desktop, wide, tablet, phone and 320 px widths with no sideways scroll; reduced motion; the opening switched off; and no script errors. Screenshots of each stage go to `tools/shots/`.
+Serves the site at `/home/` on a local port with a stand-in for the health assistant’s `/api/me`, starts a headless Chrome or Edge and runs 103 checks, including the environment picker (order, photos loaded and above each name, one radius, even spacing, gate, selection, changing, cancel, phone and tablet layouts), where the location is kept (signed out: this visit only, asked again in a new tab, nothing left in localStorage; signed in: saved per account and restored; a second account is not handed the first one’s; a location left by the old rule is removed) and: the loader covers the screen with the mark in the exact centre; the ship orbits while loading; clicks do nothing until the app is ready; the reveal takes 1.5–2 s; the mark lands exactly in the header slot as the same element; logo navigation; the add-card flow; every route; search; desktop, wide, tablet, phone and 320 px widths with no sideways scroll; reduced motion; the opening switched off; and no script errors. Screenshots of each stage go to `tools/shots/`.

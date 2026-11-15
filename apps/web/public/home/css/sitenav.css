@@ -29,5 +29,112 @@
   .nav__panel { position: static; display: flex; padding: 0; border: 0; background: none; box-shadow: none; animation: none; }
   .nav__item { height: 38px; }
 }
-/* eight entries and the buttons share one row at laptop widths */
+/* the entries and the buttons share one row at laptop widths */
 @media (min-width: 1101px) { .topbar .nav__link { padding: 0 8px; gap: 5px; } }
+
+/* hover in the top bar: one glass highlight that glides from title to title, instead of each lighting up on its own */
+.nav-glide {
+  position: absolute; left: 0; top: 0; z-index: -1; border-radius: 10px; pointer-events: none; opacity: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.36));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 0 0 1px rgba(255, 255, 255, 0.5), 0 4px 12px -6px rgba(28, 49, 70, 0.3);
+  transition: transform 0.4s cubic-bezier(0.3, 1.3, 0.5, 1), width 0.4s cubic-bezier(0.3, 1.3, 0.5, 1), height 0.4s ease, opacity 0.22s ease;
+}
+.nav-glide.is-on { opacity: 1; }
+.has-glide .topbar .nav__link:hover, .has-glide .topbar .land-nav__link:hover { background: transparent; }
+@media (prefers-reduced-motion: reduce) { .nav-glide { transition: opacity 0.22s ease; } }
+
+/* The sky behind every page. Three small things move in it: a craft that crosses, a capsule that comes
+   down under its parachutes, and a Saturn V that lifts off. js/scenery.js makes the elements inside the
+   backdrop (#scenery) on the home site and in the health app alike; they are hidden under reduced motion. */
+/* a small craft crosses the sky behind the page, then is gone for a while */
+.sky-pass { position: absolute; left: 0; top: 0; width: 10px; height: 4px; border-radius: 2px 3px 3px 2px; background: #2c4a6e; opacity: 0; pointer-events: none; will-change: transform; }
+.sky-pass::before { content: ''; position: absolute; right: 9px; top: 1.5px; width: 130px; height: 1px; background: linear-gradient(90deg, rgba(44, 74, 110, 0), rgba(44, 74, 110, 0.55)); }
+.sky-pass::after { content: ''; position: absolute; left: 3px; top: -3px; width: 3px; height: 10px; border-radius: 1px; background: #5d7fa6; }
+.sky-pass { animation: sky-pass 34s linear 4s infinite; }
+@keyframes sky-pass {
+  0% { transform: translate(-8vw, 30vh) rotate(-7deg); opacity: 0; }
+  2%, 24% { opacity: 0.7; }
+  27%, 100% { transform: translate(108vw, 5vh) rotate(-7deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .sky-pass { display: none; } }
+
+/* now and then a capsule comes down under three parachutes, swaying, and lands on the lake with a ripple */
+.sky-chute { position: absolute; left: 0; top: 0; width: 40px; height: 52px; opacity: 0; pointer-events: none; will-change: transform; }
+.sky-chute svg { display: block; width: 100%; height: 100%; overflow: visible; transform-origin: 50% 0; }
+.sky-chute::after { content: ''; position: absolute; left: 50%; top: 96%; width: 12px; height: 4px; margin-left: -6px; border: 1px solid rgba(255, 255, 255, 0.95); border-radius: 50%; opacity: 0; }
+.sky-chute { animation: chute-fall 52s linear 14s infinite; }
+.sky-chute svg { animation: chute-sway 3.4s ease-in-out infinite alternate, chute-fade 52s linear 14s infinite; }
+.sky-chute::after { animation: chute-ripple 52s linear 14s infinite; }
+@keyframes chute-fall { 0% { transform: translate(80vw, -12vh); opacity: 0; } 2% { opacity: 0.95; } 30% { transform: translate(76vw, 60vh); } 35% { transform: translate(76vw, 60vh); opacity: 0.95; } 36%, 100% { transform: translate(76vw, 60vh); opacity: 0; } }
+@keyframes chute-sway { from { transform: rotate(-7deg); } to { transform: rotate(7deg); } }
+@keyframes chute-fade { 0%, 29.6% { opacity: 1; } 31%, 100% { opacity: 0; } }
+@keyframes chute-ripple { 0%, 29.8% { transform: scale(1); opacity: 0; } 30% { transform: scale(1); opacity: 0.9; } 35%, 100% { transform: scale(9, 5); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .sky-chute { display: none; } }
+
+/* every fifteen seconds a small Saturn V lifts off from the far shore and climbs out of sight */
+.sky-rocket { position: absolute; left: 0; top: 0; width: 13px; height: 72px; opacity: 0; pointer-events: none; will-change: transform; }
+.sky-rocket svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.sky-rocket__flame { transform-origin: 50% 72%; transform-box: fill-box; }
+.sky-rocket::before { content: ''; position: absolute; left: 50%; top: 70%; width: 5px; margin-left: -2.5px; height: 0; border-radius: 3px; background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0)); }   /* the smoke it leaves behind */
+.sky-rocket::after { content: ''; position: absolute; left: 50%; top: 70%; width: 26px; height: 9px; margin-left: -13px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0)); opacity: 0; }   /* the cloud at the pad */
+.sky-rocket { animation: rocket-climb 15s cubic-bezier(0.55, 0, 0.9, 0.45) 6s infinite; }
+.sky-rocket .sky-rocket__flame { animation: rocket-flame 0.14s ease-in-out infinite alternate; }
+.sky-rocket::before { animation: rocket-smoke 15s linear 6s infinite; }
+.sky-rocket::after { animation: rocket-pad 15s linear 6s infinite; }
+@keyframes rocket-climb {
+  0% { transform: translate(62vw, 62vh) rotate(0deg); opacity: 0; }
+  3%, 9% { transform: translate(62vw, 62vh) rotate(0deg); opacity: 1; }
+  52% { transform: translate(65vw, -24vh) rotate(5deg); opacity: 1; }
+  54%, 100% { transform: translate(65vw, -24vh) rotate(5deg); opacity: 0; }
+}
+@keyframes rocket-flame { from { transform: scaleY(0.8); opacity: 0.9; } to { transform: scaleY(1.15); opacity: 1; } }
+@keyframes rocket-smoke { 0%, 9% { height: 0; opacity: 0; } 20% { height: 12vh; opacity: 0.8; } 45% { height: 30vh; opacity: 0.5; } 54%, 100% { height: 30vh; opacity: 0; } }
+@keyframes rocket-pad { 0%, 3% { transform: scale(0.4); opacity: 0; } 9% { transform: scale(1.4); opacity: 0.9; } 20%, 100% { transform: scale(2.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .sky-rocket { display: none; } }
+
+/* The account button at the end of the bar (js/sitenav.js): "Sign in or sign up" until someone is signed
+   in, then a chip with their email and a small menu. Where the bar is narrow: "Sign in", and the first
+   letter of the email in a circle. */
+.acct { position: relative; display: inline-flex; margin-left: 4px; }
+.acct:empty { display: none; }
+.acct__in {
+  display: inline-flex; align-items: center; justify-content: center; height: 38px; padding: 0 15px; border-radius: 9px; border: 1px solid transparent;
+  background: #4d7870; color: #fff; font: 600 13.5px/1 'Inter', system-ui, sans-serif; text-decoration: none; white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 1px 2px rgba(28, 49, 70, 0.14), 0 8px 18px -8px rgba(63, 102, 95, 0.6);
+  transition: transform 0.16s ease, background-color 0.2s, box-shadow 0.2s;
+}
+.acct__in:hover { background: #3f665f; transform: translateY(-1px); }
+.acct__in .sm { display: none; }
+.acct__menu { position: relative; }
+.acct__chip {
+  display: inline-flex; align-items: center; gap: 8px; height: 38px; max-width: 232px; padding: 0 10px 0 5px; border-radius: 99px; list-style: none; cursor: pointer; user-select: none;
+  border: 1px solid rgba(28, 49, 70, 0.1); background: rgba(255, 255, 255, 0.72); color: #1c3146; font: 600 12.5px/1 'Inter', system-ui, sans-serif; white-space: nowrap;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+.acct__chip::-webkit-details-marker { display: none; }
+.acct__chip:hover, .acct__menu[open] > .acct__chip { background: #fff; box-shadow: 0 4px 12px -4px rgba(28, 49, 70, 0.18); }
+.acct__initial { flex: none; display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #4d7870; color: #fff; font-size: 13px; }
+.acct__email { min-width: 0; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+.acct__chip .i { flex: none; width: 13px; height: 13px; opacity: 0.7; transition: transform 0.2s ease; }
+.acct__menu[open] > .acct__chip .i { transform: rotate(180deg); }
+.acct__panel {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 60; min-width: 216px; padding: 6px; display: grid; gap: 2px; border-radius: 12px;
+  background: rgba(250, 252, 253, 0.97); border: 1px solid rgba(28, 49, 70, 0.08);
+  box-shadow: 0 1px 2px rgba(28, 49, 70, 0.06), 0 16px 32px -12px rgba(28, 49, 70, 0.28); animation: nav-panel-in 0.16s ease both;
+}
+.acct__panel .nav__item { width: 100%; border: 0; background: none; font-family: inherit; text-align: left; cursor: pointer; }
+.acct__panel .nav__item:hover { background: rgba(28, 49, 70, 0.06); }
+.acct__panel .nav__item .i { width: 16px; height: 16px; }
+@media (max-width: 520px) {
+  .acct { margin-left: 2px; }
+  .acct__in { height: 40px; padding: 0 12px; }
+  .acct__in .lg { display: none; }
+  .acct__in .sm { display: inline; }
+  .acct__chip { height: 40px; padding: 0 5px; }
+  .acct__email, .acct__chip .i { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .acct__in, .acct__chip, .acct__chip .i { transition: none; }
+  .acct__in:hover { transform: none; }
+  .acct__panel { animation: none; }
+}

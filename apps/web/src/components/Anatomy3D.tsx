@@ -1,3 +1,4 @@
+import { REGION_COPY } from '../lib/triageCopy'
 import { BODY_REGIONS, type BodyRegionId } from '@astrovitals/shared'
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
@@ -456,10 +457,10 @@ export default function Anatomy3D({ sex, selected, zonePain, selectedZone, onZon
         ref={mountRef}
         className={`body-3d-canvas tall ${zoom > 0 ? 'zoomed' : ''}`}
         role="img"
-        aria-label={`Rotatable 3D ${sex} body with muscles and skeleton. Selected region: ${selectedZone ? zoneLabel(selectedZone) : BODY_REGIONS[selected].name}. Use the region buttons below to choose a region with the keyboard.`}
+        aria-label={`Rotatable 3D ${sex} body with muscles and skeleton. Selected region: ${selectedZone ? zoneLabel(selectedZone) : REGION_COPY[selected].name}. Use the region buttons below to choose a region with the keyboard.`}
       />
       <p className="body-3d-hint" aria-live="polite">
-        {!ready ? 'Loading 3D body…' : hovered ? (hovered.label ? `${hovered.label} · ${BODY_REGIONS[hovered.region].name}` : BODY_REGIONS[hovered.region].name) : 'Drag to turn · click a body part'}
+        {!ready ? 'Loading 3D body…' : hovered ? (hovered.label ? `${hovered.label} · ${REGION_COPY[hovered.region].name}` : REGION_COPY[hovered.region].name) : 'Drag to turn · click a body part'}
       </p>
       <label className="body-part-picker">Select a body part
         <select value={selectedZone ?? ''} onChange={(e) => {

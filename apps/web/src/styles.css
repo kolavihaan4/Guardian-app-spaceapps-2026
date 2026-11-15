@@ -10,15 +10,15 @@
   --accent-dark: #3f665f;
   --accent-rgb: 77, 120, 112;
   --accent-ink: #ffffff;
-  --canvas: #dfe7ee;
+  --canvas: #dde4e9;
   --glass: rgba(247, 250, 254, 0.82);
   --lavender: #8b7bab;
   --page: var(--canvas);
   --surface-1: rgba(255, 255, 255, 0.72);
   --surface-2: rgba(255, 255, 255, 0.5);
   --text-primary: var(--ink-strong);
-  --text-secondary: #4d6577;
-  --text-muted: #566c7c;
+  --text-secondary: #3b5266;
+  --text-muted: #44586a;
   --grid: rgba(97, 126, 147, 0.18);
   --axis: rgba(97, 126, 147, 0.42);
   --border: rgba(97, 126, 147, 0.2);
@@ -666,3 +666,18 @@ a.button { text-decoration: none; display: inline-flex; align-items: center; }
 .us-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .us-actions small { flex: 1; min-width: 200px; }
 @media (max-width: 420px) { .us-slots { grid-template-columns: minmax(0, 1fr); } }
+
+/* Triage page interactions */
+.triage-page .card, .triage-page .quest-card, .triage-page .subcard { transition: box-shadow .2s ease, border-color .2s ease, transform .2s ease; }
+.triage-page .quest-card { padding: 18px; border-radius: 14px; }
+.triage-page .quest-card p { line-height: 1.6; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .triage-page .quest-card:hover, .triage-page .env-grid button:hover, .triage-page .tool-chip:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(44,76,102,.12); }
+}
+@media (prefers-reduced-motion: reduce) { .triage-page .card, .triage-page .quest-card, .triage-page .subcard { transition: none; } }
+
+/* Small loading indicator; page content stays visible during refreshes. */
+.simple-loading { display:flex; align-items:center; justify-content:center; gap:10px; min-height:100px; font-size:14px; color:var(--text-secondary); }
+.simple-loading-dot { width:8px; height:8px; border-radius:50%; background:var(--accent); animation:loading-breathe 1s ease-in-out infinite alternate; }
+@keyframes loading-breathe { to { opacity:.25; } }
+@media(prefers-reduced-motion:reduce) { .simple-loading-dot {animation:none} }

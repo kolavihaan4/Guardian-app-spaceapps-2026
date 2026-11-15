@@ -15,6 +15,7 @@ import type {
   TriageRequest,
   VitalsResponse,
 } from '@astrovitals/shared'
+import { auth } from './auth'
 
 export class ApiError extends Error {
   constructor(
@@ -26,12 +27,13 @@ export class ApiError extends Error {
   }
 }
 
-/** Same-origin calls only; the session lives in an httpOnly cookie the page cannot read. */
+/** Same-origin calls only. A signed-in person's Supabase access token goes with each as a bearer token. */
 async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = await auth.token()
   const res = await fetch(path, {
     credentials: 'same-origin',
     ...init,
-    headers: { accept: 'application/json', ...(init.body && typeof init.body === 'string' ? { 'content-type': 'application/json' } : {}), ...init.headers },
+    headers: { accept: 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}), ...(init.body && typeof init.body === 'string' ? { 'content-type': 'application/json' } : {}), ...init.headers },
   })
   const text = await res.text()
   const body = text ? (JSON.parse(text) as unknown) : null
@@ -45,10 +47,9 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
 const json = (method: string, body?: unknown): RequestInit => ({ method, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) })
 
 export const api = {
-  register: (email: string, password: string) => call<{ ok: true }>('/api/auth/register', json('POST', { email, password })),
-  login: (email: string, password: string) => call<{ ok: true }>('/api/auth/login', json('POST', { email, password })),
-  logout: () => call<{ ok: true }>('/api/auth/logout', json('POST')),
-  me: () => call<MeResponse>('/api/me'),
+  /** Who is signed in comes from the Supabase session; the server is asked only when there is one. */
+  me: () => auth.user().then((u) => (u ? call<MeResponse>('/api/me') : Promise.reject(new ApiError(401, 'unauthenticated', 'Not signed in.')))),
+  exportData: () => call<Record<string, unknown>>('/api/me/export'),
   setDemoMode: (demoMode: boolean) => call<{ ok: true }>('/api/me/settings', json('PATCH', { demoMode })),
   deleteHealthData: () => call<{ ok: true }>('/api/me/data', json('DELETE')),
   deleteAccount: () => call<{ ok: true }>('/api/me', json('DELETE', { confirm: 'DELETE' })),

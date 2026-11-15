@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { loadConfig } from '../src/config.ts'
-import { hashPassword, hmac, pkceChallenge, SecretBox, verifyPassword } from '../src/lib/crypto.ts'
+import { hmac, pkceChallenge, SecretBox } from '../src/lib/crypto.ts'
 
 const key = () => randomBytes(32).toString('base64')
 
@@ -36,15 +36,7 @@ describe('SecretBox (AES-256-GCM)', () => {
   })
 })
 
-describe('passwords, HMAC, PKCE', () => {
-  it('hashes with scrypt and verifies', async () => {
-    const h = await hashPassword('correct horse battery')
-    expect(h.startsWith('scrypt$')).toBe(true)
-    expect(await verifyPassword('correct horse battery', h)).toBe(true)
-    expect(await verifyPassword('wrong', h)).toBe(false)
-    expect(await verifyPassword('x', 'garbage')).toBe(false)
-  })
-
+describe('HMAC, PKCE', () => {
   it('computes RFC 7636 S256 challenges (appendix B vector)', () => {
     expect(pkceChallenge('dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk')).toBe('E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM')
   })
@@ -61,7 +53,14 @@ describe('config', () => {
 
   it('requires https APP_ORIGIN in production', () => {
     expect(() =>
-      loadConfig({ NODE_ENV: 'production', APP_ORIGIN: 'http://example.org', TOKEN_ENCRYPTION_KEY: key(), DEVICE_TOKEN_PEPPER: key() }),
+      loadConfig({ NODE_ENV: 'production', APP_ORIGIN: 'http://example.org', TOKEN_ENCRYPTION_KEY: key(), DEVICE_TOKEN_PEPPER: key(), SUPABASE_URL: 'https://x.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_x' }),
     ).toThrow(/https/)
+  })
+
+  it('needs the Supabase project, and refuses a secret key in place of the publishable one', () => {
+    const base = { TOKEN_ENCRYPTION_KEY: key(), DEVICE_TOKEN_PEPPER: key() }
+    expect(() => loadConfig(base)).toThrow(/SUPABASE_URL/)
+    expect(() => loadConfig({ ...base, SUPABASE_URL: 'https://x.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'sb_secret_abc' })).toThrow(/publishable/)
+    expect(loadConfig({ ...base, SUPABASE_URL: 'https://x.supabase.co', SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_x' }).SUPABASE_URL).toBe('https://x.supabase.co')
   })
 })
