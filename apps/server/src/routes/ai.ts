@@ -114,7 +114,7 @@ export const TriageResponseSchema = z.object({
 })
 
 const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://localhost:11434'
-const OLLAMA_MODEL = process.env.OLLAMA_TRIAGE_MODEL ?? 'astrovitals-triage'
+const OLLAMA_MODEL = process.env.OLLAMA_TRIAGE_MODEL ?? 'astrovitals-triage-ft-v2'
 
 export interface ComputedVitalFacts {
   /** Heart rate against the personal preflight median and, when at rest, the 60–100 bpm resting adult range. */
