@@ -858,7 +858,7 @@ The standalone, frontend-only dashboard design is available in [templates/dashbo
 
 ## Guardian front end (v2)
 
-The updated front end from the `v2` branch is a static site at the repository root: `index.html`, `css/`, `js/`, `assets/` and `tools/`. It needs no install and no build step. Its own notes follow.
+The Guardian home site from the `v2` branch is a static site in [`apps/web/public/home`](apps/web/public/home): `index.html`, `css/`, `js/`, `assets/` and `tools/`. The web app serves it at `/home/index.html` and links to it from its navigation. It needs no install and no build step. Its own notes follow; the paths in them are relative to that folder.
 
 A calm workspace for a NASA Space Apps team: capture cards (ideas, observations, questions, datasets, tasks), group them into collections, and watch the dashboard fill in.
 

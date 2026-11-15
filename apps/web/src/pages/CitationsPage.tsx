@@ -272,7 +272,7 @@ export function CitationsPage() {
         actions={<span className="badge">2026 NASA Space Apps Challenge · Apache-2.0 Licensed</span>}
       >
         <p className="muted">
-          In compliance with the NASA Space Apps Challenge Participant Terms & Conditions, every scientific dataset, space-environment API, AI model, and open-source library used in <strong>Mission Baseline</strong> is cited below with its license and operational role.
+          In compliance with the NASA Space Apps Challenge Participant Terms & Conditions, every scientific dataset, space-environment API, AI model, and open-source library used in <strong>Guardian</strong> is cited below with its license and operational role.
         </p>
       </Card>
 
@@ -284,7 +284,7 @@ export function CitationsPage() {
                 <th>Dataset / API</th>
                 <th>Agency / Provider</th>
                 <th>License</th>
-                <th>How It Is Used in Mission Baseline</th>
+                <th>How It Is Used in Guardian</th>
               </tr>
             </thead>
             <tbody>
@@ -339,7 +339,7 @@ export function CitationsPage() {
       <Card title="Medical Disclaimer & Measurement Error Transparency">
         <ul className="compact-list">
           <li>
-            <strong>Not a Medical Device:</strong> Mission Baseline is an educational and exploratory crew health decision-support prototype created for the 2026 NASA Space Apps Challenge. It never diagnoses, treats, or prescribes.
+            <strong>Not a Medical Device:</strong> Guardian is an educational and exploratory crew health decision-support prototype created for the 2026 NASA Space Apps Challenge. It never diagnoses, treats, or prescribes.
           </li>
           <li>
             <strong>Wearable Optical SpO₂ Error:</strong> Wrist-worn optical photoplethysmography (PPG) sensors serve as Earth-analog stand-ins for crew biotelemetry and may read 2% to 4% higher or lower than the true blood oxygen level (MedlinePlus); poor circulation, skin pigmentation, cold skin and nail polish also affect them (US FDA), so low readings are confirmed with a fingertip oximeter before any action.
