@@ -7,6 +7,6 @@ export * from './triage.ts'
 export * from './api.ts'
 
 export const MEDICAL_DISCLAIMER =
-  'Mission Baseline is a software and data-visualization prototype. It is not a medical device, ' +
+  'Guardian is a software and data-visualization prototype. It is not a medical device, ' +
   'does not diagnose, treat or prevent any condition, and must not be used for medical decisions. ' +
   'Flags mark possible data-quality issues, not health findings.'

@@ -52,13 +52,10 @@
   const envOf = id => ENVS.find(e => e.id === id) || null;
   const gated = () => !store.get().env;
 
-  const NAV = [
-    { key: 'dashboard', href: '#/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { key: 'cards', href: '#/cards', label: 'My cards', icon: 'cards', badge: true },
-    { key: 'collections', href: '#/collections', label: 'Collections', icon: 'layers' },
-    { key: 'library', href: '#/library', label: 'Card library', icon: 'library' },
-    { key: 'settings', href: '#/settings', label: 'Settings', icon: 'settings' }
-  ];
+  // the crew health app (triage, vitals, hazards) shares this origin; its pages sit in the same nav
+  const APP = { triage: '/#/assessment', vitals: '/#/dashboard', hazards: '/#/space' };
+  // the navigation bar is shared with the health app: js/sitenav.js
+  const NAV = window.GuardianNav.pages;
 
   /* ---------------------------------------------------------------- dates */
   const dayKey = t => { const d = new Date(t); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
@@ -129,7 +126,9 @@
       eyebrow: s.workspace, title: 'Dashboard', sub: 'Your project cards and collections in one place.',
       action: `<button class="btn btn--ghost" data-action="customize">${icon('sliders')}Customize view</button>`
     }) +
+      summary(s) +
       (v.hero ? hero(s) : '') +
+      crewHealth() +
       (v.glance ? glance(s) : '') +
       (v.activity || v.collections ? `<div class="split${both ? '' : ' split--one'}">${v.activity ? activity(s) : ''}${v.collections ? collectionsPanel(s) : ''}</div>` : '') +
       (v.recent ? recent(s) : '') +
@@ -161,6 +160,96 @@
       <p class="metric__value">${o.value == null ? '<span class="metric__dash" aria-label="No data"></span>' : o.value}</p>
       <div class="metric__foot"><span class="metric__note"><span class="dot${o.value == null ? '' : ' dot--live'}"></span>${o.note}</span>${spark(o.series)}</div>
     </article>`;
+  }
+
+  /* ------------------------------------------------------------ dashboard summary */
+  // the crew's latest readings, read from the health assistant's API on this same origin
+  const health = { state: 'idle', data: null };
+  function loadHealth() {
+    if (health.state === 'loading') return;
+    health.state = 'loading';
+    const get = url => fetch(url, { headers: { accept: 'application/json' }, credentials: 'same-origin' });
+    Promise.all([get('/api/vitals'), get('/api/nasa/radiation')]).then(async ([vitals, radiation]) => {
+      if (vitals.status === 401) { health.state = 'signedout'; return; }
+      if (!vitals.ok) { health.state = 'error'; return; }
+      const v = await vitals.json();
+      const r = radiation.ok ? (await radiation.json()).data : null;
+      const latest = type => {
+        let best = null;
+        (v.metrics || []).forEach(m => { if (m.metricType === type && (!best || m.timestamp > best.timestamp)) best = m; });
+        return best;
+      };
+      const sleep = (v.sleep || []).reduce((a, b) => (!a || b.end > a.end ? b : a), null);
+      health.data = {
+        heart: latest('heart_rate') || latest('resting_heart_rate'),
+        oxygen: latest('spo2'),
+        breathing: latest('respiratory_rate'),
+        sleepHours: sleep ? sleep.minutesAsleep / 60 : null,
+        simulated: (v.sources || []).some(x => x.simulated),
+        radiation: r
+      };
+      health.state = 'ready';
+    }).catch(() => { health.state = 'error'; }).then(() => {
+      const el = document.getElementById('summaryBody');
+      if (el) el.innerHTML = summaryBody(store.get());
+    });
+  }
+
+  function summaryBody(s) {
+    const d = health.data;
+    const stat = (label, value, note) => `<div class="summary__stat"><p class="summary__label">${label}</p><p class="summary__value">${value}</p><p class="summary__note">${note}</p></div>`;
+    const reading = (m, digits) => (m ? `${Number(m.value).toFixed(digits)}<span class="summary__unit">${esc(m.unit === 'percent' ? '%' : m.unit)}</span>` : '<span class="metric__dash" aria-label="No data"></span>');
+    const total = s.cards.length;
+    const cards = stat('Cards', total || '<span class="metric__dash" aria-label="No data"></span>', total ? `${plural(s.collections.length, 'collection')}` : 'None yet');
+    if (health.state === 'signedout') {
+      return `<div class="summary__grid">${cards}</div>
+        <p class="summary__msg">Sign in to the health assistant to see the crew’s vital signs and space weather here. <a href="${APP.triage}">Sign in</a></p>`;
+    }
+    if (health.state === 'error') {
+      return `<div class="summary__grid">${cards}</div><p class="summary__msg">The health assistant could not be reached, so vital signs are not shown.</p>`;
+    }
+    if (!d) return `<div class="summary__grid">${cards}</div><p class="summary__msg" role="status">Loading the crew’s latest readings…</p>`;
+    const storm = d.radiation ? (d.radiation.sScale > 0 ? `S${d.radiation.sScale}` : 'Quiet') : '<span class="metric__dash" aria-label="No data"></span>';
+    return `<div class="summary__grid">
+      ${stat('Heart rate', reading(d.heart, 0), 'Latest reading')}
+      ${stat('Blood oxygen', reading(d.oxygen, 1), 'Latest reading')}
+      ${stat('Breathing rate', reading(d.breathing, 1), 'Latest reading')}
+      ${stat('Sleep', d.sleepHours == null ? '<span class="metric__dash" aria-label="No data"></span>' : `${d.sleepHours.toFixed(1)}<span class="summary__unit">h</span>`, 'Last night')}
+      ${stat('Radiation', storm, d.radiation ? (d.radiation.sScale > 0 ? 'Solar radiation storm' : 'No radiation storm (NOAA)') : 'Not available')}
+      ${cards}
+    </div>
+    <div class="summary__foot">
+      ${d.simulated ? '<span class="tag">Simulated wearable data</span>' : '<span class="tag">Connected wearable data</span>'}
+      <span class="summary__links"><a class="btn btn--link" href="${APP.triage}">Run a triage check${icon('arrowRight')}</a><a class="btn btn--link" href="${APP.vitals}">Open Vitals${icon('arrowRight')}</a></span>
+    </div>`;
+  }
+
+  // "Dashboard": the environment option and a summary of where the crew stands
+  function summary(s) {
+    const env = envOf(s.env);
+    if (health.state === 'idle') loadHealth();
+    return `<div class="section-label"><h2>Dashboard</h2><span>${env ? `Summary for ${esc(env.name)}` : 'Summary'}</span></div>
+    <section class="panel summary" aria-label="Dashboard summary">
+      <div class="summary__env" role="group" aria-label="Mission environment">
+        <span class="summary__label">Environment</span>
+        <div class="chips">${ENVS.map(e => `<button class="chip" data-action="launch-env" data-env="${e.id}" aria-pressed="${e.id === s.env}">${e.short}</button>`).join('')}</div>
+      </div>
+      <div id="summaryBody">${summaryBody(s)}</div>
+    </section>`;
+  }
+
+  // the way into the crew health app: triage, vital signs and the hazards reference
+  function crewHealth() {
+    const link = o => `<a class="panel metric crew-link" href="${o.href}">
+      <div class="metric__head">${chipIcon(o.icon)}<h3 class="metric__label">${o.label}</h3><span class="metric__go" aria-hidden="true">${icon('arrowUpRight')}</span></div>
+      <p class="crew-link__text">${o.text}</p>
+    </a>`;
+    return `<div class="section-label"><h2>Crew health</h2><span>Opens the health assistant</span></div>
+    <div class="glance">
+      ${link({ icon: 'heart', label: 'Triage', href: APP.triage, text: 'Check a crew member: vital signs against cited ranges, a 3D body map and a step-by-step plan.' })}
+      ${link({ icon: 'pulse', label: 'Vitals', href: APP.vitals, text: 'Heart rate, sleep and activity over time from connected wearables.' })}
+      ${link({ icon: 'radiation', label: 'Hazards', href: APP.hazards, text: 'NASA’s hazards of spaceflight with sources, and live space weather.' })}
+    </div>`;
   }
 
   function glance(s) {
@@ -447,23 +536,13 @@
       pill.setAttribute('aria-label', `Environment: ${env.name}. Change environment`);
       if (r.key === 'environment') pill.setAttribute('aria-current', 'page'); else pill.removeAttribute('aria-current');
     }
-    NAV.forEach(n => {
-      const a = topbar.querySelector(`[data-nav="${n.key}"]`);
-      if (!a) return;
-      if (n.key === r.key) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
-      const b = a.querySelector('.badge');
-      if (b) b.textContent = s.cards.length;
-    });
+    window.GuardianNav.mark(r.key);
     if (keepSearch) { const i = $('#cardSearch'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
   }
 
   function buildTopbar() {
-    $('#nav').innerHTML = NAV.map((n, i) => `<a class="nav__link" href="${n.href}" data-nav="${n.key}" style="--d:${120 + i * 45}ms">${icon(n.icon)}<span>${n.label}</span>${n.badge ? '<span class="badge">0</span>' : ''}</a>`).join('');
-    $('#actions').innerHTML =
-      `<a class="env-pill" id="envPill" href="#/environment" title="Change environment" style="--d:320ms"></a>
-       <button class="icon-btn" data-action="search" aria-label="Search (Ctrl+K)" title="Search  Ctrl K" style="--d:360ms">${icon('search')}</button>
-       <button class="icon-btn icon-btn--help" data-action="guide" aria-label="Quick guide" title="Quick guide" style="--d:400ms">${icon('help')}</button>
-       <button class="btn btn--primary btn--add" data-action="add-card" style="--d:440ms">${icon('plus')}<span>Add card</span></button>`;
+    $('#nav').innerHTML = window.GuardianNav.navHtml();
+    $('#actions').innerHTML = window.GuardianNav.actionsHtml();
     $('.brand__word').style.setProperty('--d', '60ms');
     // the home page's own header: section links and the way in
     const land = document.createElement('div');
@@ -504,7 +583,6 @@
         <div class="home-ctas">
           <button class="btn btn--primary btn--lg" data-action="launch">${env ? `Open the ${env.short} dashboard` : 'Launch assistant'}${icon('arrowRight')}</button>
           <button class="btn btn--ghost btn--lg" data-action="scroll-to" data-target="how">How it works</button>
-          <a class="btn btn--ghost btn--lg" href="/#/assessment">Open crew health triage${icon('arrowRight')}</a>
         </div>
       </section>
 
@@ -808,7 +886,7 @@ Possible cause: short sleep before the EVA</p>
         function results(q) {
           const s = store.get(); q = q.trim().toLowerCase();
           const hit = t => !q || t.toLowerCase().includes(q);
-          const pages = NAV.filter(n => hit(n.label)).map(n => ({ kind: 'Page', label: n.label, icon: n.icon, go: () => { location.hash = n.href; } }));
+          const pages = NAV.filter(n => hit(n.label)).map(n => ({ kind: 'Page', label: n.label, icon: n.icon, go: () => { if (n.href[0] === '#') location.hash = n.href; else location.href = n.href; } }));
           const cols = s.collections.filter(c => hit(c.name + ' ' + (c.description || ''))).map(c => ({ kind: 'Collection', label: c.name, icon: 'layers', go: () => { location.hash = '#/collections/' + c.id; } }));
           const cards = newest(s.cards).filter(c => hit(c.title + ' ' + (c.notes || ''))).map(c => ({ kind: typeOf(c.type).label, label: c.title, icon: typeOf(c.type).icon, go: () => openCard(c.id) }));
           return (q ? cards.concat(cols, pages) : pages.concat(cards.slice(0, 5))).slice(0, 12);
@@ -1023,6 +1101,8 @@ Possible cause: short sleep before the EVA</p>
     const mark = (S.mark = S.createMark());
     $('#brandSlot').appendChild(mark.el);
     render();
+    // the crew health app skips its own opening once this one has played in the session
+    document.addEventListener('still:intro-done', () => { try { sessionStorage.setItem('guardian.introSeen', '1'); } catch (e) { /* storage blocked */ } }, { once: true });
     const intro = S.intro.start(mark);
     const fonts = document.fonts && document.fonts.ready ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 2500))]) : Promise.resolve();
     const loaded = document.readyState === 'complete' ? Promise.resolve() : new Promise(r => { window.addEventListener('load', r, { once: true }); setTimeout(r, 4000); });
@@ -1032,6 +1112,12 @@ Possible cause: short sleep before the EVA</p>
     const photos = Promise.all(wanted.map(src => { const img = new Image(); img.src = src; return img.decode ? img.decode().catch(() => {}) : Promise.resolve(); }));
     const ready = Promise.all([S.scenery.render($('#scenery')), fonts, loaded, photos]);
     intro.finish(ready);
+    // the health app's header has the same search, guide and add-card buttons; they are carried out here
+    const asked = window.GuardianNav.takeRequest();
+    if (asked && !gated()) {
+      const run = () => { if (asked === 'search') openSearch(); else if (asked === 'guide') openGuide(); else if (asked === 'add-card') cardForm({}); };
+      if (S.introDone) run(); else document.addEventListener('still:intro-done', run, { once: true });
+    }
   }
   boot();
 })();

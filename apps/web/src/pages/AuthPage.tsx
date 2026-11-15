@@ -28,8 +28,9 @@ export function AuthPage({ onSignedIn }: { onSignedIn: () => void }) {
   return (
     <main className="auth card">
       <Brand />
-      <h1>Mission Baseline</h1>
-      <p className="muted">Explore how astronauts’ recorded lab values changed compared with their own preflight readings, using NASA’s public Inspiration4 data. A NASA Space Apps 2026 prototype, not a diagnostic tool.</p>
+      <h1>Sign in to the crew health assistant</h1>
+      <p className="muted">Guardian watches over the crew’s health on the space station, the Moon, Mars and in deep space: triage, vital signs, lab baselines and space weather in one place. A NASA Space Apps 2026 prototype, not a diagnostic tool.</p>
+      <p className="muted"><a href="/home/index.html">Back to the home page</a></p>
       <form onSubmit={submit}>
         <label>
           Email
