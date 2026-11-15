@@ -1,0 +1,7 @@
+# The ultrasound model service. CPU-only PyTorch is enough; on Linux install it with
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+# to avoid downloading the much larger GPU build.
+torch>=2.2
+numpy>=1.26
+scipy>=1.11
+pillow>=10

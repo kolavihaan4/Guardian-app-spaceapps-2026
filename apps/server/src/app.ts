@@ -1,7 +1,8 @@
 import express, { type ErrorRequestHandler, type Express } from 'express'
 import { rateLimit } from 'express-rate-limit'
 import helmet from 'helmet'
-import { existsSync } from 'node:fs'
+import { createHash } from 'node:crypto'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { loadUser, requireAuth, requireSameOrigin } from './auth.ts'
 import type { AppContext } from './context.ts'
@@ -13,22 +14,47 @@ import { ingestRoutes } from './routes/ingest.ts'
 import { meRoutes } from './routes/me.ts'
 import { nasaRoutes } from './routes/nasa.ts'
 import { providerRoutes } from './routes/providers.ts'
+import { ultrasoundRoutes } from './routes/ultrasound.ts'
 import { vitalsRoutes } from './routes/vitals.ts'
 
-export function createApp(ctx: AppContext, opts: { staticDir?: string } = {}): Express {
+/**
+ * Content-security-policy hashes for the inline scripts in the built pages (each page decides before
+ * first paint whether to play its opening). Hashing what is actually on disk allows exactly those
+ * scripts and nothing else, and stays right when a page's script changes.
+ */
+function inlineScriptHashes(dir: string): string[] {
+  if (!existsSync(dir)) return []
+  const hashes = new Set<string>()
+  for (const name of readdirSync(dir, { recursive: true, encoding: 'utf8' })) {
+    if (!name.endsWith('.html')) continue
+    // A browser reads every line ending as a plain newline before it hashes a script, so do the same.
+    const html = readFileSync(resolve(dir, name), 'utf8').replace(/\r\n?/g, '\n')
+    for (const [, attrs, body] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
+      if (/\bsrc\s*=/i.test(attrs!) || !body) continue
+      hashes.add(`'sha256-${createHash('sha256').update(body).digest('base64')}'`)
+    }
+  }
+  return [...hashes]
+}
+
+export function createApp(ctx: AppContext, opts: { staticDir?: string; fetchImpl?: typeof fetch } = {}): Express {
   const app = express()
   app.disable('x-powered-by')
   if (ctx.cfg.TRUST_PROXY === '1') app.set('trust proxy', 1)
+  const staticDir = opts.staticDir ?? resolve(import.meta.dirname, '../../web/dist')
 
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          // APOD images (new + legacy hosts). No third-party scripts at all.
+          // Our own scripts, the pages' own inline start-up scripts (by hash), and WebAssembly for the
+          // 3D body's model decoder. No third-party scripts at all.
+          scriptSrc: ["'self'", "'wasm-unsafe-eval'", ...inlineScriptHashes(staticDir)],
+          // APOD images (new + legacy hosts).
           imgSrc: ["'self'", 'data:', 'https://assets.science.nasa.gov', 'https://science.nasa.gov', 'https://apod.nasa.gov'],
-          styleSrc: ["'self'", "'unsafe-inline'"], // chart library sets inline style attributes
-          // the page signs in and keeps its cards with Supabase directly
+          styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'], // chart library sets inline style attributes; the typefaces' stylesheet
+          fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
           connectSrc: ["'self'", new URL(ctx.cfg.SUPABASE_URL).origin],
           frameAncestors: ["'none'"],
           formAction: ["'self'"],
@@ -59,6 +85,10 @@ export function createApp(ctx: AppContext, opts: { staticDir?: string } = {}): E
   // sign-in/Origin middleware because it is not a browser endpoint.
   app.use('/api/ingest', limiter(60_000, 60), express.json({ limit: '5mb' }), ingestRoutes(ctx))
 
+  // Ultrasound frames are images, so these routes take larger bodies and a tighter limiter. Mounted
+  // before the general JSON parser, with the same cookie and Origin checks.
+  app.use('/api/ultrasound', limiter(60_000, 30), express.json({ limit: '25mb' }), loadUser(ctx), requireSameOrigin(ctx), requireAuth, ultrasoundRoutes(ctx, opts.fetchImpl))
+
   app.use('/api', limiter(60_000, 300), express.json({ limit: '100kb' }), loadUser(ctx), requireSameOrigin(ctx))
   app.use('/api/me', requireAuth, meRoutes(ctx))
   app.use('/api/providers', providerRoutes(ctx))
@@ -68,8 +98,8 @@ export function createApp(ctx: AppContext, opts: { staticDir?: string } = {}): E
   app.use('/api/ai', requireAuth, aiRoutes(ctx))
   app.use('/api', (_req, _res, next) => next(new HttpError(404, 'not_found', 'Unknown API route')))
 
-  // Production: serve the built React app from the same origin.
-  const dir = opts.staticDir ?? resolve(import.meta.dirname, '../../web/dist')
+  // Production: serve the built React app from the same origin (sign-in stays on the same origin).
+  const dir = staticDir
   if (existsSync(dir)) {
     app.use(express.static(dir, { index: false, maxAge: '1h' }))
     app.get(/^(?!\/api\/).*/, (_req, res) => res.sendFile(resolve(dir, 'index.html')))

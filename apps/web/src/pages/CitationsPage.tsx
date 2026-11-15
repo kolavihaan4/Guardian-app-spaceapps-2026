@@ -239,6 +239,18 @@ const SOFTWARE_CITATIONS = [
     usage: 'Mission environment picker on the Crew Triage page: ISS after STS-132 undocking (NASA / STS-132 crew); Buzz Aldrin on Apollo 11 (NASA, photo by Neil Armstrong); Mount Sharp, PIA16099 (NASA/JPL-Caltech/MSSS); Orion with the Moon and Earth, Artemis I flight day 13, art001e000673 (NASA). Resized to 960 px wide, otherwise unmodified.',
   },
   {
+    name: 'SegThy — neck ultrasound volumes with thyroid, carotid artery and jugular vein outlines',
+    license: 'CC BY 4.0',
+    url: 'https://doi.org/10.1371/journal.pone.0268550',
+    usage: 'Training and cross-validation data for the jugular vein ultrasound check on the Crew Triage page, and its sample frame. Kroenke et al., PLOS ONE 2022. 31 volumes from 16 healthy volunteers; the check reports vein geometry only and is not validated on astronauts or for clinical use.',
+  },
+  {
+    name: 'CAMUS — cardiac ultrasound with left-ventricle outlines (500 patients)',
+    license: 'CC BY-NC-SA 4.0',
+    url: 'https://www.creatis.insa-lyon.fr/Challenge/camus/',
+    usage: 'Training and test data for the heart ultrasound check on the Crew Triage page (left-ventricle outline and ejection fraction). Leclerc et al., IEEE Transactions on Medical Imaging 2019. No CAMUS images are included in the app. Non-commercial research use; not validated on astronauts or for clinical use.',
+  },
+  {
     name: 'open-anatomy-3d — male and female anatomy models (v0.1.0)',
     license: 'Models CC BY 4.0; code MIT',
     url: 'https://github.com/MervinR07/open-anatomy-3d',
@@ -288,6 +300,7 @@ export function CitationsPage() {
   {groups.map(group=>{const rows=group.rows.filter(c=>match(c.name+' '+('source' in c?c.source:'')));return rows.length?<Card key={group.title} title={group.title} actions={<span className="badge">{rows.length} sources</span>}><SourceList rows={rows}/></Card>:null})}
   {names.length?<Card title="More references named in your notes"><details className="citations-named" open={query.trim()?true:undefined}><summary>{names.length} named references</summary><p>These titles were supplied without exact publication links. They are kept here for reference.</p><ul>{names.map(name=><li key={name}>{name}</li>)}</ul></details></Card>:null}
   {!groups.some(g=>g.rows.some(c=>match(c.name+' '+('source' in c?c.source:''))))&&!names.length?<p role="status">No matching sources. Try another word.</p>:null}
+  <Card title="AI assistance"><p className="citations-note">Codex and Claude helped build Guardian. Qwen3-8B and the ultrasound models produce AI estimates. Synthetic examples stay separate from recorded measurements. Image credits follow their original sources; some media credits still need team confirmation.</p><a href="/si-provenance.json" target="_blank" rel="noreferrer">AI, data and media credits</a></Card>
   <p className="citations-note">Research references are not automatically training datasets. The original source sets its access and reuse rules. User vitals come from your saved cards; NASA graphs describe the environment. Guardian is an educational prototype, not a medical device.</p>
  </div>
 }

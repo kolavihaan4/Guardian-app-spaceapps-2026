@@ -121,6 +121,6 @@ export function makeTestContext(opts: { fetchImpl?: FetchLike; env?: Record<stri
     providers: createProviders({ repo, cfg, box, log, fetchImpl }),
     fetchImpl: withSupabase(fetchImpl, supabaseCalls),
   }
-  const app = createApp(ctx, { staticDir: resolve(import.meta.dirname, '__no_static__') })
+  const app = createApp(ctx, { staticDir: resolve(import.meta.dirname, '__no_static__'), fetchImpl })
   return { ctx, app, db, repo, sink, supabaseCalls }
 }
