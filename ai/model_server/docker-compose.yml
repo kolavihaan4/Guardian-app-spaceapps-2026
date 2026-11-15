@@ -25,5 +25,19 @@ services:
               count: 1
               capabilities: [gpu]
 
+  # Loads the model as soon as Ollama is up (also after a restart of the machine) and keeps it
+  # loaded, so the first triage never waits minutes for 7 GB to be read from disk.
+  keepwarm:
+    image: curlimages/curl:8.11.1
+    restart: unless-stopped
+    depends_on: [ollama]
+    command:
+      - sh
+      - -c
+      - |
+        while true; do
+          curl -fs http://ollama:11434/api/generate -d '{"model":"${MODEL_NAME:-astrovitals-triage-ft-v2}","prompt":"ok","stream":false,"think":false,"keep_alive":-1}' >/dev/null && sleep 600 || sleep 10
+        done
+
 volumes:
   ollama-data:

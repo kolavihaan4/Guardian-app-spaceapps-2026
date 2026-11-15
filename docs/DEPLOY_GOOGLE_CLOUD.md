@@ -159,7 +159,14 @@ On the website VM, add the three printed lines to `.env`:
 TRIAGE_BACKEND=ollama
 OLLAMA_URL=http://<model VM's internal address>:11434
 OLLAMA_TRIAGE_MODEL=astrovitals-triage-ft-v2
+TRIAGE_MODEL_TIMEOUT_MS=30000
 ```
+
+The last line gives the model 30 s instead of 20: on an L4 it writes about 37 tokens a second, so the
+longest answers take 20 s or more. The first load of the 7 GB model from the VM's disk takes three to
+four minutes; the `keepwarm` container in `ai/model_server/docker-compose.yml` does that load as soon
+as Ollama is up, also after a restart of the machine, and keeps the model loaded. If a zone has no L4
+capacity, VM creation fails with a resource error: try `us-central1-b` or `us-central1-c`.
 
 then run `bash scripts/deploy-vm.sh`. The Triage page's "Answered by" badge then reads
 "Qwen3-8B explanation, decisions by onboard rules".
