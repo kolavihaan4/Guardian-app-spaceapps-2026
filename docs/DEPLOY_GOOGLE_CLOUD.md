@@ -91,6 +91,86 @@ The VM is billed for every hour it exists, used or not. Stop it from the console
 need it; the disk and the reserved address still cost a little while it is stopped. Check current
 prices in the Google Cloud pricing calculator before you start.
 
+## The triage model (optional, needs a GPU)
+
+On its own the site answers triage from its rule engine. To add the fine-tuned Qwen3-8B
+explanations, the model runs on a second machine with an NVIDIA GPU, and the website machine sends
+it requests over the project's internal network. An 8B model does not fit in the website VM's
+4 GB, and on a CPU one answer takes minutes against the route's 20-second cut-off.
+
+**Cost:** a `g2-standard-4` VM with one NVIDIA L4 is about $0.70 an hour (check the pricing
+calculator). Stop it whenever it is not needed; the website keeps working and answers from the
+rule engine. A T4 (`n1-standard-4` with `nvidia-tesla-t4`, about $0.55 an hour) is cheaper but
+slower, so some answers would miss the cut-off: set `TRIAGE_MODEL_TIMEOUT_MS=40000` on the website
+machine if you use one.
+
+### 1. GPU quota
+
+New projects have a GPU quota of 0. In the console, **IAM & Admin → Quotas**, find **GPUs (all
+regions)** (`GPUS_ALL_REGIONS`) and request 1. Free-trial accounts cannot request GPU quota:
+upgrade the billing account first (the trial credit stays). Approval is usually quick, sometimes a
+day or two.
+
+### 2. Upload the model files
+
+The model is the two files from step 5 of `ai/training/README-PC.md`: `model-q4_k_m.gguf`
+(about 5 GB) and `Modelfile`. From the machine that has them:
+
+```bash
+gcloud storage cp model-q4_k_m.gguf Modelfile gs://guardian-models-1c55f5a5/triage-ft-v2/
+```
+
+### 3. Create the GPU VM
+
+```bash
+family=$(gcloud compute images list --project deeplearning-platform-release --filter="family~^common-cu.*ubuntu" --format="value(family)" | sort -u | tail -1)
+gcloud compute instances create guardian-model --zone us-central1-a --machine-type g2-standard-4 \
+  --accelerator type=nvidia-l4,count=1 --maintenance-policy TERMINATE \
+  --image-family "$family" --image-project deeplearning-platform-release \
+  --metadata install-nvidia-driver=True --boot-disk-size 60GB
+```
+
+The first boot installs the NVIDIA driver, which takes a few minutes. The VM has no web ports
+open: only machines inside the project reach it.
+
+### 4. Start the model
+
+On the model VM (**SSH** from the console):
+
+```bash
+sudo apt-get update && sudo apt-get install -y git
+git clone https://github.com/kolavihaan4/Guardian-app-spaceapps-2026.git guardian && cd guardian
+bash scripts/deploy-model-vm.sh gs://guardian-models-1c55f5a5/triage-ft-v2
+```
+
+It installs Docker and the NVIDIA container toolkit if they are missing, downloads the model,
+starts Ollama (`ai/model_server/docker-compose.yml`), registers the model and loads it onto the
+GPU. It ends by printing three lines for the website's `.env`.
+
+### 5. Point the website at it
+
+On the website VM, add the three printed lines to `.env`:
+
+```
+TRIAGE_BACKEND=ollama
+OLLAMA_URL=http://<model VM's internal address>:11434
+OLLAMA_TRIAGE_MODEL=astrovitals-triage-ft-v2
+```
+
+then run `bash scripts/deploy-vm.sh`. The Triage page's "Answered by" badge then reads
+"Qwen3-8B explanation, decisions by onboard rules".
+
+### Stopping and starting
+
+```bash
+gcloud compute instances stop guardian-model --zone us-central1-a
+gcloud compute instances start guardian-model --zone us-central1-a   # Ollama comes back by itself; allow a minute
+```
+
+While the model VM is stopped, each triage request waits about 10 seconds for it before the rule
+engine answers. If it will stay off for long, remove the three lines from the website's `.env`
+and run `bash scripts/deploy-vm.sh` again.
+
 ## Known gaps
 
 - The SQLite file is not backed up. For anything beyond a demo, snapshot the VM disk.
