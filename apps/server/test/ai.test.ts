@@ -176,7 +176,7 @@ describe('Overarching AI triage engine & Qwen3-8B schema', () => {
       TriageRequestSchema.parse({ crew_id: 'C1', vitals: { hr_bpm: 60, preflight_hr_median: 60, spo2_pct: 98 }, available_tools: ['Pulse Oximeter'] }),
     )
     expect(noBp).toEqual({
-      heart_rate: 'HR 60 bpm (+0 bpm vs personal preflight median 60 bpm, which takes priority): within the range on the resting adult range 60–100 bpm (StatPearls Vital Sign Assessment; Cleveland Clinic), Earth reference',
+      heart_rate: 'HR 60 bpm (+0 bpm vs personal preflight median 60 bpm, which takes priority): within the range on the resting adult range 60–100 bpm (StatPearls Vital Sign Assessment; Vital Sign Measurement Across the Lifespan, 2nd Canadian Edition, "What is Pulse?"), Earth reference',
       oxygen_saturation: 'SpO2 98%: within the 94–98% target range on the BTS 2017 oxygen guideline, Earth reference',
       standing_drop_meets_criterion: false,
       minimum_status: 'nominal',
