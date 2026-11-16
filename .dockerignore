@@ -1,0 +1,13 @@
+node_modules
+**/node_modules
+.git
+.env
+ai
+companion
+docs
+templates
+information(DATASETS)
+astrovitals_ai_triage_code
+**/dist
+**/data
+*.ipynb

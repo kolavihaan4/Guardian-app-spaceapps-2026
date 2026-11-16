@@ -233,6 +233,18 @@ const SOFTWARE_CITATIONS = [
     usage: 'Mission environment picker on the Crew Triage page: ISS after STS-132 undocking (NASA / STS-132 crew); Buzz Aldrin on Apollo 11 (NASA, photo by Neil Armstrong); Mount Sharp, PIA16099 (NASA/JPL-Caltech/MSSS); Orion with the Moon and Earth, Artemis I flight day 13, art001e000673 (NASA). Resized to 960 px wide, otherwise unmodified.',
   },
   {
+    name: 'SegThy — neck ultrasound volumes with thyroid, carotid artery and jugular vein outlines',
+    license: 'CC BY 4.0',
+    url: 'https://doi.org/10.1371/journal.pone.0268550',
+    usage: 'Training and cross-validation data for the jugular vein ultrasound check on the Crew Triage page, and its sample frame. Kroenke et al., PLOS ONE 2022. 31 volumes from 16 healthy volunteers; the check reports vein geometry only and is not validated on astronauts or for clinical use.',
+  },
+  {
+    name: 'CAMUS — cardiac ultrasound with left-ventricle outlines (500 patients)',
+    license: 'CC BY-NC-SA 4.0',
+    url: 'https://www.creatis.insa-lyon.fr/Challenge/camus/',
+    usage: 'Training and test data for the heart ultrasound check on the Crew Triage page (left-ventricle outline and ejection fraction). Leclerc et al., IEEE Transactions on Medical Imaging 2019. No CAMUS images are included in the app. Non-commercial research use; not validated on astronauts or for clinical use.',
+  },
+  {
     name: 'open-anatomy-3d — male and female anatomy models (v0.1.0)',
     license: 'Models CC BY 4.0; code MIT',
     url: 'https://github.com/MervinR07/open-anatomy-3d',
@@ -274,6 +286,21 @@ export function CitationsPage() {
         <p className="muted">
           In compliance with the NASA Space Apps Challenge Participant Terms & Conditions, every scientific dataset, space-environment API, AI model, and open-source library used in <strong>Guardian</strong> is cited below with its license and operational role.
         </p>
+      </Card>
+
+      <Card title="Super Intelligence (SI) use disclosure">
+        <p>
+          Codex and Claude assisted project development and documentation. Guardian also includes
+          Qwen3-8B explanations through Ollama and machine-learning models for heart and jugular
+          ultrasound analysis. Predicted outlines and derived measurements are SI outputs.
+        </p>
+        <p className="muted">
+          Synthetic training and demo scenarios are separate from cited public datasets and uploaded
+          measurements. Ultrasound prediction overlays carry a visible SI label and embedded metadata.
+          Original source images and datasets retain their source credits. Decorative image and logo
+          provenance is still awaiting team confirmation.
+        </p>
+        <a href="/si-provenance.json" target="_blank" rel="noreferrer">Code, data, and media provenance metadata</a>
       </Card>
 
       <Card title="NASA, NOAA & Space Biomedical Datasets">

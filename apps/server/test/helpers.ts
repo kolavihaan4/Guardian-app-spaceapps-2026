@@ -80,6 +80,6 @@ export function makeTestContext(opts: { fetchImpl?: FetchLike; env?: Record<stri
     nasa: new NasaService(cfg, repo, log, fetchImpl),
     providers: createProviders({ repo, cfg, box, log, fetchImpl }),
   }
-  const app = createApp(ctx, { staticDir: resolve(import.meta.dirname, '__no_static__') })
+  const app = createApp(ctx, { staticDir: resolve(import.meta.dirname, '__no_static__'), fetchImpl })
   return { ctx, app, db, repo, sink }
 }

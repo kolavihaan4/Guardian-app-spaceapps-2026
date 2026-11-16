@@ -98,3 +98,55 @@ export interface BaselineDatasetResponse {
   excluded: { id: string; reason: string }[]
   caveats: string[]
 }
+
+/** The four heart frames the ejection-fraction model needs: two- and four-chamber views, each at end-diastole (full) and end-systole (emptied). */
+export const HEART_FRAMES = ['2CH_ED', '2CH_ES', '4CH_ED', '4CH_ES'] as const
+export type HeartFrame = (typeof HEART_FRAMES)[number]
+
+/** Whether a scan can be trusted as measured, and if not, why. A data-quality check, not a health finding. */
+export interface ScanQuality {
+  accept: boolean
+  reasons: string[]
+}
+
+export interface ScanLegendEntry {
+  label: string
+  colour: string
+}
+
+/** GET /api/ultrasound/status */
+export interface UltrasoundStatus {
+  available: boolean
+}
+
+/** POST /api/ultrasound/jugular: one cross-section neck frame. Sizes are null when the vein was not found. */
+export interface JugularScanResult {
+  measurements: {
+    veinFound: boolean
+    areaMm2: number | null
+    longAxisMm: number | null
+    shortAxisMm: number | null
+    /** Short axis divided by long axis; a low value suggests the probe is pressing the vein flat. */
+    flattening: number | null
+    veinToArtery: number | null
+    arteryAreaMm2: number | null
+  }
+  quality: ScanQuality
+  summary: string
+  /** A see-through PNG (base64) the size of the uploaded image, to draw over it. */
+  overlayPng: string
+  legend: ScanLegendEntry[]
+}
+
+/** POST /api/ultrasound/heart: four frames. Numbers are null when the left ventricle could not be measured. */
+export interface HeartScanResult {
+  /** Percent of the left ventricle's blood pumped out per beat, from the fitted model. */
+  ejectionFraction: number | null
+  /** The same, from the disk-summation geometry alone. */
+  geometryEjectionFraction: number | null
+  endDiastolicVolumeMl: number | null
+  endSystolicVolumeMl: number | null
+  quality: ScanQuality
+  overlays: Record<HeartFrame, string>
+  legend: ScanLegendEntry[]
+}

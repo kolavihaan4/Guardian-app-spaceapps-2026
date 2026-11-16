@@ -1,0 +1,7 @@
+# Build context for ultrasound_service/Dockerfile: only the code and the model files are needed.
+**/__pycache__
+**/*.ipynb
+**/*.json
+!heart_ultrasound/final_model/ef_regressor.json
+*.html
+Modelfile
