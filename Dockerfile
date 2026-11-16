@@ -5,6 +5,8 @@ WORKDIR /app
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY packages ./packages
 COPY apps ./apps
+# The triage route reads its system prompt from ai/training (the large model folders are left out by .dockerignore).
+COPY ai ./ai
 RUN npm ci && npm run build
 ENV NODE_ENV=production PORT=8787
 EXPOSE 8787

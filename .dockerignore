@@ -2,7 +2,17 @@ node_modules
 **/node_modules
 .git
 .env
-ai
+# The server reads ai/training/system_prompt.txt at start-up, so ai/ stays in, minus the model
+# folders (the ultrasound models are built into their own image from ai/ultrasound_service/Dockerfile).
+ai/heart_ultrasound
+ai/jugular_ultrasound
+ai/training/.venv
+ai/training/base
+ai/training/adapters
+ai/training/runs
+ai/training/export
+ai/training/tools
+**/__pycache__
 companion
 docs
 templates
