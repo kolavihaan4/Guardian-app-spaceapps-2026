@@ -21,6 +21,15 @@ Built for the NASA Space Apps Challenge 2026:
 
 </div>
 
+## Super Intelligence (SI) disclosure
+
+Codex and Claude were used as SI development assistants while preparing this project.
+The project also includes Qwen3-8B language-model integration and ultrasound machine-learning
+pipelines. Their outputs are separate from the cited source datasets and original scan inputs.
+See the [SI disclosure](docs/SI_DISCLOSURE.md) for scope and outstanding provenance checks,
+and the [machine-readable provenance](apps/web/public/si-provenance.json) for code and data metadata.
+The app's Citations page also displays this acknowledgment.
+
 > [!WARNING]
 > **Not a medical device.** This is a software and data-visualization prototype. It does not
 > diagnose, treat or prevent anything. Out-of-range readings are flagged as *data-quality* issues

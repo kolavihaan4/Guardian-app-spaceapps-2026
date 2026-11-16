@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "disclosureType": "project-level SI provenance",
+  "developmentTools": ["Codex", "Claude"],
+  "toolEvidence": "Confirmed by project owner; exact models and historical per-file contributions not supplied.",
+  "codeAcknowledgment": "SI tools assisted project development. Codex generated the SI disclosure, metadata, app notices, and ultrasound output labeling in this change.",
+  "scope": [
+    {
+      "paths": ["apps/", "packages/", "ai/", "scripts/", "docs/", "companion/", "templates/"],
+      "kind": "project code and documentation",
+      "siContribution": "Project-level assistance; exact historical file-level attribution unverified. Third-party assets retain their own provenance."
+    },
+    {
+      "paths": ["ai/Modelfile", "ai/train_unsloth.py", "apps/server/src/routes/ai.ts"],
+      "kind": "optional language-model integration",
+      "model": "Qwen3-8B via Ollama; Unsloth fine-tuning script",
+      "output": "Model explanations when available; source field distinguishes deterministic fallback."
+    },
+    {
+      "paths": ["ai/heart_ultrasound/results/", "ai/jugular_ultrasound/results/", "ai/ultrasound_service/"],
+      "kind": "machine-learning predictions and evaluation",
+      "output": "Predicted masks, derived measurements, and evaluation predictions; not original clinical observations.",
+      "sourceDatasets": ["CAMUS", "SegThy"]
+    },
+    {
+      "paths": ["astrovitals_ai_triage_code", "ai/daily_crew_telemetry.json", "apps/server/src/wearables/providers/demo.ts"],
+      "kind": "synthetic training or demonstration data",
+      "siGenerated": null,
+      "note": "Includes programmed scenarios and simulation. Historical SI authorship is unverified; not measured astronaut telemetry."
+    }
+  ],
+  "sourceDataPolicy": "Cited NASA, NOAA, CAMUS, and SegThy source data and uploaded measurements are not labeled SI-generated.",
+  "media": {
+    "ultrasoundOverlays": "Visible SI label and embedded PNG description; applies to prediction overlay only.",
+    "environmentPhotos": "Source credits in apps/web/public/home/README.md.",
+    "anatomyModels": "Source credits in apps/web/public/models/README.md.",
+    "decorativeImagesAndLogos": "SI provenance unconfirmed.",
+    "videoAndAudio": "SI use unconfirmed, including materials outside this repository."
+  },
+  "originalIdeaProvenance": "Awaiting team confirmation",
+  "completeMediaComplianceAudit": false
+}
