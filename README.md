@@ -838,6 +838,8 @@ Do not put real users' data on a public deployment until the production items in
 
 ## 📚 Documentation
 
+[Project document (Google Docs)](https://docs.google.com/document/d/1Ayt9jG7U3B0Ac0vH1J1XPdUAVpobfBrFPonQnDJ3gls/edit?usp=sharing)
+
 | Doc | What's in it |
 |---|---|
 | [Architecture](docs/ARCHITECTURE.md) | stack, schema, provider abstraction, request flows |
