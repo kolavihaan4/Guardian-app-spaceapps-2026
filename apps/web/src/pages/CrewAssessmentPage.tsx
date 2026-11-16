@@ -1,3 +1,4 @@
+import { regionForZone, zoneLabel, type BodyZoneId } from '../components/bodyRegions'
 import {
   BODY_REGIONS,
   FIVE_NASA_HAZARDS,
@@ -19,6 +20,7 @@ import {
 } from '@astrovitals/shared'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Card, useAsync } from '../components/common'
+import { UltrasoundCard } from '../components/UltrasoundCard'
 import { environmentFromHome, saveEnvironmentForHome } from '../guardian'
 import { api } from '../lib/api'
 
@@ -212,8 +214,20 @@ export function CrewAssessmentPage() {
   const [sepEvent, setSepEvent] = useState<string>('None')
 
   // 3. Interactive Body Region & Pain Tracker
-  const [selectedRegion, setSelectedRegion] = useState<BodyRegionId>('eyes_sans')
-  const [painPoints, setPainPoints] = useState<PainPoint[]>([])
+  const [selectedRegion, updateSelectedRegion] = useState<BodyRegionId>('eyes_sans')
+  const [selectedZone, setSelectedZone] = useState<BodyZoneId | null>(null)
+  const setSelectedRegion = (region: BodyRegionId) => { setSelectedZone(null); updateSelectedRegion(region) }
+  const selectZone = (zone: BodyZoneId) => { setSelectedZone(zone); updateSelectedRegion(regionForZone(zone)) }
+  const [generalPainPoints, setGeneralPainPoints] = useState<PainPoint[]>([])
+  const [zonePain, setZonePain] = useState<Partial<Record<BodyZoneId, number>>>({})
+  const setPainPoints = (points: PainPoint[]) => { setZonePain({}); setGeneralPainPoints(points) }
+  // The API accepts broad systems; retain precise locations in each system's note.
+  const painPoints: PainPoint[] = (Object.keys(BODY_REGIONS) as BodyRegionId[]).flatMap((region) => {
+    const details = (Object.entries(zonePain) as [BodyZoneId, number][]).filter(([z, n]) => regionForZone(z) === region && n > 0)
+    const general = generalPainPoints.find((p) => p.region === region)
+    const severity = Math.max(general?.severity ?? 0, ...details.map(([, n]) => n), 0)
+    return severity ? [{ region, severity, note: [general?.note, ...details.map(([z, n]) => zoneLabel(z) + ': ' + n + '/10')].filter(Boolean).join('; ') }] : []
+  })
 
   // 4. Available Onboard Tools (Whiteboard Front End #7)
   const [availableTools, setAvailableTools] = useState<string[]>([
@@ -254,7 +268,7 @@ export function CrewAssessmentPage() {
   }
 
   const setRegionPain = (region: BodyRegionId, severity: number) => {
-    setPainPoints((prev) => {
+    setGeneralPainPoints((prev) => {
       const rest = prev.filter((p) => p.region !== region)
       return severity <= 0 ? rest : [...rest, { region, severity }]
     })
@@ -437,6 +451,7 @@ export function CrewAssessmentPage() {
   const totalXp = quests.filter((q) => q.done).reduce((sum, q) => sum + q.xp, 0)
   const maxXp = quests.reduce((sum, q) => sum + q.xp, 0)
   const readinessPct = Math.round((totalXp / maxXp) * 100)
+  const selectedPain = selectedZone ? zonePain[selectedZone] ?? 0 : getRegionPain(selectedRegion)
   const regionDetail = BODY_REGIONS[selectedRegion]
 
   return (
@@ -532,10 +547,12 @@ export function CrewAssessmentPage() {
                 <Suspense fallback={<p className="body-3d-hint">Loading 3D body…</p>}>
                   {useAnatomy ? (
                     <Anatomy3D
+                      selectedZone={selectedZone}
+                      zonePain={zonePain}
+                      onZoneSelect={selectZone}
                       sex={/^\s*(f|woman)/i.test(gender) ? 'female' : 'male'}
                       selected={selectedRegion}
-                      pain={Object.fromEntries(painPoints.filter((p) => p.severity > 0).map((p) => [p.region, p.severity]))}
-                      onSelect={setSelectedRegion}
+                      pain={Object.fromEntries(generalPainPoints.filter((p) => p.severity > 0).map((p) => [p.region, p.severity]))}
                       onUnavailable={() => setUseAnatomy(false)}
                     />
                   ) : (
@@ -680,24 +697,25 @@ export function CrewAssessmentPage() {
             <div className="body-detail stack">
               <div>
                 <span className="eyebrow">Selected Body System</span>
-                <h2>{regionDetail.name}</h2>
+                <h2>{selectedZone ? zoneLabel(selectedZone) : regionDetail.name}</h2>
+                {selectedZone && <small>Body system: {regionDetail.name}</small>}
                 <p className="muted">{regionDetail.functionSummary}</p>
               </div>
 
               <div className="pain-control">
                 <label>
                   <span>
-                    <strong>Locate & Rate Discomfort / Pain in {regionDetail.name}:</strong>{' '}
-                    <span className={`status-chip ${getRegionPain(selectedRegion) >= 7 ? 'alert' : getRegionPain(selectedRegion) >= 3 ? 'caution' : 'nominal'}`}>
-                      {getRegionPain(selectedRegion) === 0 ? '0/10 (No Pain)' : `${getRegionPain(selectedRegion)}/10 Severity`}
+                    <strong>Locate & Rate Discomfort / Pain in {selectedZone ? zoneLabel(selectedZone) : regionDetail.name}:</strong>{' '}
+                    <span className={`status-chip ${selectedPain >= 7 ? 'alert' : selectedPain >= 3 ? 'caution' : 'nominal'}`}>
+                      {selectedPain === 0 ? '0/10 (No Pain)' : `${selectedPain}/10 Severity`}
                     </span>
                   </span>
                   <input
                     type="range"
                     min={0}
                     max={10}
-                    value={getRegionPain(selectedRegion)}
-                    onChange={(e) => setRegionPain(selectedRegion, Number(e.target.value))}
+                    value={selectedPain}
+                    onChange={(e) => selectedZone ? setZonePain((prev) => ({ ...prev, [selectedZone]: Number(e.target.value) })) : setRegionPain(selectedRegion, Number(e.target.value))}
                   />
                 </label>
               </div>
@@ -715,6 +733,8 @@ export function CrewAssessmentPage() {
                 <strong>Simple Self-Check Instruction:</strong>
                 <p style={{ margin: '4px 0 0' }}>{regionDetail.selfCheckInstruction}</p>
               </div>
+
+              <UltrasoundCard region={selectedRegion} />
 
               <div className="row" style={{ gap: 6 }}>
                 <small>Linked Indicators:</small>

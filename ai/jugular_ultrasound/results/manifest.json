@@ -1,0 +1,622 @@
+[
+ {
+  "case": "001_P1_1_left",
+  "subject": "001",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/001_P1_1_left.npz",
+  "slices": 93,
+  "shape": [
+   217,
+   233
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 69,
+  "carotid_slices": 76
+ },
+ {
+  "case": "001_P1_1_right",
+  "subject": "001",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/001_P1_1_right.npz",
+  "slices": 99,
+  "shape": [
+   194,
+   238
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 64,
+  "carotid_slices": 78
+ },
+ {
+  "case": "002_P2_2_left",
+  "subject": "002",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/002_P2_2_left.npz",
+  "slices": 150,
+  "shape": [
+   243,
+   253
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 59,
+  "carotid_slices": 102
+ },
+ {
+  "case": "002_P2_2_right",
+  "subject": "002",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/002_P2_2_right.npz",
+  "slices": 157,
+  "shape": [
+   248,
+   240
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 47,
+  "carotid_slices": 115
+ },
+ {
+  "case": "003_P3_1_left",
+  "subject": "003",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/003_P3_1_left.npz",
+  "slices": 104,
+  "shape": [
+   213,
+   237
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 69,
+  "carotid_slices": 76
+ },
+ {
+  "case": "003_P3_1_right",
+  "subject": "003",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/003_P3_1_right.npz",
+  "slices": 90,
+  "shape": [
+   252,
+   273
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 76,
+  "carotid_slices": 76
+ },
+ {
+  "case": "005_P1_1_left",
+  "subject": "005",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/005_P1_1_left.npz",
+  "slices": 108,
+  "shape": [
+   196,
+   222
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 79,
+  "carotid_slices": 83
+ },
+ {
+  "case": "005_P1_1_right",
+  "subject": "005",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/005_P1_1_right.npz",
+  "slices": 127,
+  "shape": [
+   202,
+   241
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 100,
+  "carotid_slices": 106
+ },
+ {
+  "case": "006_P2_1_left",
+  "subject": "006",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/006_P2_1_left.npz",
+  "slices": 99,
+  "shape": [
+   171,
+   211
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.10999999940395355,
+   0.10999999940395355,
+   0.10999999940395355
+  ],
+  "slice_gap_mm": 0.4399999976158142,
+  "vein_slices": 85,
+  "carotid_slices": 82
+ },
+ {
+  "case": "006_P2_1_right",
+  "subject": "006",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/006_P2_1_right.npz",
+  "slices": 158,
+  "shape": [
+   214,
+   243
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.10999999940395355,
+   0.10999999940395355,
+   0.10999999940395355
+  ],
+  "slice_gap_mm": 0.4399999976158142,
+  "vein_slices": 137,
+  "carotid_slices": 140
+ },
+ {
+  "case": "007_P3_1_left",
+  "subject": "007",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/007_P3_1_left.npz",
+  "slices": 139,
+  "shape": [
+   207,
+   252
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 109,
+  "carotid_slices": 113
+ },
+ {
+  "case": "007_P3_1_right",
+  "subject": "007",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/007_P3_1_right.npz",
+  "slices": 115,
+  "shape": [
+   205,
+   296
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 68,
+  "carotid_slices": 73
+ },
+ {
+  "case": "008_P1_1_left",
+  "subject": "008",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/008_P1_1_left.npz",
+  "slices": 112,
+  "shape": [
+   207,
+   226
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 94,
+  "carotid_slices": 96
+ },
+ {
+  "case": "008_P1_1_right",
+  "subject": "008",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/008_P1_1_right.npz",
+  "slices": 114,
+  "shape": [
+   204,
+   255
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 95,
+  "carotid_slices": 99
+ },
+ {
+  "case": "011_P2_3_left",
+  "subject": "011",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/011_P2_3_left.npz",
+  "slices": 133,
+  "shape": [
+   192,
+   234
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 84,
+  "carotid_slices": 95
+ },
+ {
+  "case": "011_P2_3_right",
+  "subject": "011",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/011_P2_3_right.npz",
+  "slices": 123,
+  "shape": [
+   205,
+   227
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 82,
+  "carotid_slices": 88
+ },
+ {
+  "case": "014_P3_1_left",
+  "subject": "014",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/014_P3_1_left.npz",
+  "slices": 120,
+  "shape": [
+   212,
+   240
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 71,
+  "carotid_slices": 90
+ },
+ {
+  "case": "014_P3_1_right",
+  "subject": "014",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/014_P3_1_right.npz",
+  "slices": 94,
+  "shape": [
+   203,
+   266
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 35,
+  "carotid_slices": 56
+ },
+ {
+  "case": "015_P1_1_left",
+  "subject": "015",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/015_P1_1_left.npz",
+  "slices": 118,
+  "shape": [
+   237,
+   236
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 102,
+  "carotid_slices": 103
+ },
+ {
+  "case": "015_P1_1_right",
+  "subject": "015",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/015_P1_1_right.npz",
+  "slices": 118,
+  "shape": [
+   201,
+   244
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 105,
+  "carotid_slices": 108
+ },
+ {
+  "case": "020_P2_1_left",
+  "subject": "020",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/020_P2_1_left.npz",
+  "slices": 141,
+  "shape": [
+   231,
+   283
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 53,
+  "carotid_slices": 103
+ },
+ {
+  "case": "020_P2_1_right",
+  "subject": "020",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/020_P2_1_right.npz",
+  "slices": 133,
+  "shape": [
+   241,
+   219
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 87,
+  "carotid_slices": 95
+ },
+ {
+  "case": "021_P3_1_left",
+  "subject": "021",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/021_P3_1_left.npz",
+  "slices": 95,
+  "shape": [
+   210,
+   222
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 85,
+  "carotid_slices": 86
+ },
+ {
+  "case": "021_P3_1_right",
+  "subject": "021",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/021_P3_1_right.npz",
+  "slices": 110,
+  "shape": [
+   223,
+   256
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 91,
+  "carotid_slices": 89
+ },
+ {
+  "case": "024_P3_1_left",
+  "subject": "024",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/024_P3_1_left.npz",
+  "slices": 142,
+  "shape": [
+   230,
+   243
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 118,
+  "carotid_slices": 122
+ },
+ {
+  "case": "024_P3_1_right",
+  "subject": "024",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/024_P3_1_right.npz",
+  "slices": 136,
+  "shape": [
+   241,
+   234
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 103,
+  "carotid_slices": 110
+ },
+ {
+  "case": "026_P2_2_left",
+  "subject": "026",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/026_P2_2_left.npz",
+  "slices": 115,
+  "shape": [
+   160,
+   243
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.10999999940395355,
+   0.10999999940395355,
+   0.10999999940395355
+  ],
+  "slice_gap_mm": 0.4399999976158142,
+  "vein_slices": 63,
+  "carotid_slices": 94
+ },
+ {
+  "case": "026_P2_2_right",
+  "subject": "026",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/026_P2_2_right.npz",
+  "slices": 137,
+  "shape": [
+   212,
+   266
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.10999999940395355,
+   0.10999999940395355,
+   0.10999999940395355
+  ],
+  "slice_gap_mm": 0.4399999976158142,
+  "vein_slices": 94,
+  "carotid_slices": 105
+ },
+ {
+  "case": "028_P3_1_right",
+  "subject": "028",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/028_P3_1_right.npz",
+  "slices": 174,
+  "shape": [
+   247,
+   282
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 133,
+  "carotid_slices": 137
+ },
+ {
+  "case": "029_P2_1_left",
+  "subject": "029",
+  "side": "left",
+  "path": "/kaggle/working/jugular_work/processed/029_P2_1_left.npz",
+  "slices": 146,
+  "shape": [
+   250,
+   257
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 98,
+  "carotid_slices": 98
+ },
+ {
+  "case": "029_P2_1_right",
+  "subject": "029",
+  "side": "right",
+  "path": "/kaggle/working/jugular_work/processed/029_P2_1_right.npz",
+  "slices": 113,
+  "shape": [
+   206,
+   246
+  ],
+  "spacing_mm": 0.25,
+  "source_spacing_mm": [
+   0.11999999731779099,
+   0.11999999731779099,
+   0.11999999731779099
+  ],
+  "slice_gap_mm": 0.47999998927116394,
+  "vein_slices": 100,
+  "carotid_slices": 100
+ }
+]

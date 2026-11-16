@@ -1,0 +1,257 @@
+{
+  "title": "Official 50 CAMUS test patients: previously exposed benchmark, evaluated once by this pipeline after freezing",
+  "patients": 50,
+  "ef": {
+    "selected_ef": {
+      "n": 50,
+      "rejected": 0,
+      "mae": 4.650630256754036,
+      "mae_ci95": [
+        3.521860503579631,
+        6.058465457818923
+      ],
+      "rmse": 6.291676634112339,
+      "mean_signed_error": -0.4927985270375636
+    },
+    "geometry_ef": {
+      "n": 50,
+      "rejected": 0,
+      "mae": 8.805277598064928,
+      "mae_ci95": [
+        6.41893565746207,
+        11.40437178434506
+      ],
+      "rmse": 12.567783861666673,
+      "mean_signed_error": 2.986695687685124
+    },
+    "linear_calibration_ef": {
+      "n": 50,
+      "rejected": 0,
+      "mae": 7.83104021713457,
+      "mae_ci95": [
+        5.970477003823256,
+        9.888302021696392
+      ],
+      "rmse": 10.468268089029849,
+      "mean_signed_error": -0.6257833986339094
+    },
+    "ridge_ef": {
+      "n": 50,
+      "rejected": 0,
+      "mae": 5.498493239165767,
+      "mae_ci95": [
+        4.114541938098824,
+        7.135252142275466
+      ],
+      "rmse": 7.589261314845254,
+      "mean_signed_error": -0.35843020564859407
+    },
+    "random_forest_ef": {
+      "n": 50,
+      "rejected": 0,
+      "mae": 5.485678523477735,
+      "mae_ci95": [
+        4.112018824892902,
+        7.097666626559083
+      ],
+      "rmse": 7.429186715745372,
+      "mean_signed_error": -0.48670302219019485
+    },
+    "gradient_boosting_ef": {
+      "n": 50,
+      "rejected": 0,
+      "mae": 5.60090488802922,
+      "mae_ci95": [
+        4.147690345173466,
+        7.280268474267721
+      ],
+      "rmse": 7.733826010019455,
+      "mean_signed_error": -0.1252334395339635
+    },
+    "svr_rbf_ef": {
+      "n": 50,
+      "rejected": 0,
+      "mae": 4.650630256754036,
+      "mae_ci95": [
+        3.521860503579631,
+        6.058465457818923
+      ],
+      "rmse": 6.291676634112339,
+      "mean_signed_error": -0.4927985270375636
+    },
+    "efnet_ef": {
+      "n": 50,
+      "rejected": 0,
+      "mae": 7.485051231384277,
+      "mae_ci95": [
+        5.963529282569886,
+        9.210422257423401
+      ],
+      "rmse": 9.44716070958377,
+      "mean_signed_error": -0.6030890274047852
+    },
+    "median_ef": {
+      "n": 50,
+      "rejected": 0,
+      "mae": 9.28,
+      "mae_ci95": [
+        7.1795,
+        11.6
+      ],
+      "rmse": 12.232742946698421,
+      "mean_signed_error": 0.28
+    }
+  },
+  "ef_same_patients": {
+    "n": 50,
+    "mae": {
+      "selected_ef": 4.650630256754036,
+      "geometry_ef": 8.805277598064928,
+      "linear_calibration_ef": 7.83104021713457,
+      "ridge_ef": 5.498493239165767,
+      "random_forest_ef": 5.485678523477735,
+      "gradient_boosting_ef": 5.60090488802922,
+      "svr_rbf_ef": 4.650630256754036,
+      "efnet_ef": 7.485051231384277,
+      "median_ef": 9.28
+    }
+  },
+  "paired_mae_difference_vs_geometry": {
+    "selected_ef": {
+      "mean": -4.154647341310892,
+      "ci95": [
+        -6.153040833526677,
+        -2.229141744318541
+      ]
+    },
+    "linear_calibration_ef": {
+      "mean": -0.9742373809303595,
+      "ci95": [
+        -2.34674207281191,
+        0.4879214677255381
+      ]
+    },
+    "ridge_ef": {
+      "mean": -3.3067843588991614,
+      "ci95": [
+        -5.112604052768165,
+        -1.5805100779442496
+      ]
+    },
+    "random_forest_ef": {
+      "mean": -3.3195990745871926,
+      "ci95": [
+        -5.211574132710801,
+        -1.503764444926095
+      ]
+    },
+    "gradient_boosting_ef": {
+      "mean": -3.2043727100357096,
+      "ci95": [
+        -5.058636450250078,
+        -1.3299373092043663
+      ]
+    },
+    "svr_rbf_ef": {
+      "mean": -4.154647341310892,
+      "ci95": [
+        -6.153040833526677,
+        -2.229141744318541
+      ]
+    },
+    "efnet_ef": {
+      "mean": -1.320226366680651,
+      "ci95": [
+        -3.985662965637237,
+        1.1594587898911846
+      ]
+    },
+    "median_ef": {
+      "mean": 0.4747224019350716,
+      "ci95": [
+        -2.847936881230882,
+        3.85594224809546
+      ]
+    }
+  },
+  "segmentation": {
+    "patient_mean_dice": 0.8586067478159741,
+    "patient_mean_dice_ci95": [
+      0.8461959423122279,
+      0.8698593682997597
+    ],
+    "record_mean_dice_as_in_earlier_notebook": 0.858606747815974,
+    "dice_lv_cavity": 0.9067021361441049,
+    "dice_myocardium": 0.8182932420161603,
+    "dice_left_atrium": 0.8508248652876571,
+    "lv_boundary_error_mm": 2.593713826702822
+  },
+  "volumes_vs_simpson_on_expert_contours": {
+    "n": 50,
+    "edv_mae_ml": 18.58504881376301,
+    "esv_mae_ml": 11.107313268069104,
+    "edv_bias_ml": -0.9856091836717724,
+    "esv_bias_ml": 1.6532662760947636,
+    "note": "This CAMUS release ships reference EF only, so volume error is measured against the same Simpson code run on expert contours."
+  },
+  "latency_seconds_per_patient": 0.07880032062530518,
+  "failures": {
+    "rejected": 0,
+    "flagged": 38
+  },
+  "image_quality_subgroups_reporting_only": {
+    "Good": {
+      "n": 17,
+      "selected_ef": 4.353035394555369,
+      "geometry_ef": 5.782832197367329,
+      "linear_calibration_ef": 6.510188005225602,
+      "ridge_ef": 5.104119015632028,
+      "random_forest_ef": 5.21552834870051,
+      "gradient_boosting_ef": 4.986879126173895,
+      "svr_rbf_ef": 4.353035394555369,
+      "efnet_ef": 7.846336028155158,
+      "median_ef": 12.058823529411764,
+      "dice": 0.8730830460948322
+    },
+    "Medium": {
+      "n": 23,
+      "selected_ef": 4.488462956667882,
+      "geometry_ef": 10.037530157173187,
+      "linear_calibration_ef": 8.679698346307717,
+      "ridge_ef": 5.385657694508261,
+      "random_forest_ef": 5.277033041891391,
+      "gradient_boosting_ef": 5.416988816922616,
+      "svr_rbf_ef": 4.488462956667882,
+      "efnet_ef": 7.323654423589292,
+      "median_ef": 7.913043478260869,
+      "dice": 0.8537410134809391
+    },
+    "Poor": {
+      "n": 10,
+      "selected_ef": 5.529526312689926,
+      "geometry_ef": 11.10925389330186,
+      "linear_calibration_ef": 8.124575280281576,
+      "ridge_ef": 6.428451171885385,
+      "random_forest_ef": 6.42481842824761,
+      "gradient_boosting_ef": 7.067755646728463,
+      "svr_rbf_ef": 5.529526312689926,
+      "efnet_ef": 7.242079734802246,
+      "median_ef": 7.7,
+      "dice": 0.8451882297124957
+    }
+  },
+  "selected": {
+    "family": "svr_rbf",
+    "params": {
+      "gamma": 0.01,
+      "epsilon": 1,
+      "C": 100
+    }
+  },
+  "earlier_notebook_on_same_patients": {
+    "dice": 0.8658,
+    "efnet_mae": 8.05,
+    "train_mean_baseline_mae": 9.36,
+    "note": "copied from the earlier notebook output, not rerun"
+  }
+}
