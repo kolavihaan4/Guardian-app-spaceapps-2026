@@ -1,0 +1,8 @@
+{
+  "dataFile": "daily_crew_telemetry.json",
+  "dataType": "synthetic demonstration scenarios",
+  "description": "Programmed crew scenarios for demonstrating triage. These are not measured astronaut telemetry.",
+  "siDisclosure": "Project development used Codex and Claude. Historical SI authorship of these specific values is unverified.",
+  "siGenerated": null,
+  "provenanceManifest": "../apps/web/public/si-provenance.json"
+}

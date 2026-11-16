@@ -1,0 +1,3 @@
+# For classical_baselines.py. The version the script was run with (15 November 2026).
+# check_leakage.py needs no package.
+scikit-learn==1.9.1

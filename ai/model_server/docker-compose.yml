@@ -1,0 +1,28 @@
+# The fine-tuned triage model (Qwen3-8B as an Ollama model) on a machine with an NVIDIA GPU.
+# scripts/deploy-model-vm.sh starts it; docs/DEPLOY_GOOGLE_CLOUD.md has the whole setup.
+#
+#   BIND_IP=<the machine's internal address> MODEL_DIR=<folder with model-q4_k_m.gguf and Modelfile> docker compose up -d
+services:
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 0.0.0.0
+      # Keep the model loaded, so every answer starts at once instead of reloading 5 GB first.
+      OLLAMA_KEEP_ALIVE: -1
+    ports:
+      # Published on the internal network address only: the public internet must never reach it.
+      - "${BIND_IP:-127.0.0.1}:11434:11434"
+    volumes:
+      - ${MODEL_DIR:-./model}:/models:ro
+      - ollama-data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  ollama-data:

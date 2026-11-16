@@ -1,4 +1,8 @@
 import type {
+  HeartFrame,
+  HeartScanResult,
+  JugularScanResult,
+  UltrasoundStatus,
   ApodResponse,
   RadiationResponse,
   BaselineDatasetResponse,
@@ -47,6 +51,10 @@ async function call<T>(path: string, init: RequestInit = {}): Promise<T> {
 const json = (method: string, body?: unknown): RequestInit => ({ method, ...(body !== undefined ? { body: JSON.stringify(body) } : {}) })
 
 export const api = {
+  ultrasoundStatus: () => call<UltrasoundStatus>('/api/ultrasound/status'),
+  /** `image` and each frame are base64 PNG without a data: prefix. */
+  analyseJugular: (image: string, depthCm: number) => call<JugularScanResult>('/api/ultrasound/jugular', json('POST', { image, depthCm })),
+  analyseHeart: (frames: Record<HeartFrame, string>, depthCm: number) => call<HeartScanResult>('/api/ultrasound/heart', json('POST', { frames, depthCm })),
   /** Who is signed in comes from the Supabase session; the server is asked only when there is one. */
   me: () => auth.user().then((u) => (u ? call<MeResponse>('/api/me') : Promise.reject(new ApiError(401, 'unauthenticated', 'Not signed in.')))),
   exportData: () => call<Record<string, unknown>>('/api/me/export'),
