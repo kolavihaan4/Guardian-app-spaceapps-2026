@@ -1,0 +1,29 @@
+# LoRA fine-tune of Qwen3-8B (4-bit, Apple MLX) on the rule engine's answers.
+# Run from ai/training:  .venv/bin/python -m mlx_lm lora -c lora_config.yaml
+model: base/Qwen3-8B-4bit
+train: true
+data: data
+fine_tune_type: lora
+# the loss counts only the answer, not the request the model is given
+mask_prompt: true
+num_layers: 16
+# One example at a time with gradient checkpointing keeps the peak near 7 GB (measured on the longest
+# examples); two at a time without it ran out of memory on a 24 GB laptop. Two steps are
+# accumulated per update, and 2000 steps is one pass over the 2000 training cases.
+batch_size: 1
+grad_accumulation_steps: 2
+grad_checkpoint: true
+iters: 2000
+# Round 1 used 0.00002 and rank 8 and learned the wording but not the decisions.
+learning_rate: 0.00004
+steps_per_report: 20
+steps_per_eval: 200
+val_batches: 20
+save_every: 200
+adapter_path: adapters/v2
+max_seq_length: 2048
+seed: 7
+lora_parameters:
+  rank: 16
+  dropout: 0.0
+  scale: 20.0

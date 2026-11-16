@@ -1,6 +1,8 @@
+import '../triage.css'
+import { LOCATION_COPY, REGION_COPY, TOOL_LABELS, plainHealthText } from '../lib/triageCopy'
+import { regionForZone, zoneLabel, type BodyZoneId } from '../components/bodyRegions'
 import {
   BODY_REGIONS,
-  FIVE_NASA_HAZARDS,
   MISSION_ENVIRONMENTS,
   ONBOARD_TOOLS,
   type BodyRegionId,
@@ -19,6 +21,7 @@ import {
 } from '@astrovitals/shared'
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Card, useAsync } from '../components/common'
+import { UltrasoundCard } from '../components/UltrasoundCard'
 import { environmentFromHome, saveEnvironmentForHome } from '../guardian'
 import { api } from '../lib/api'
 
@@ -91,50 +94,50 @@ interface DailyQuest {
 const INITIAL_QUESTS: DailyQuest[] = [
   {
     id: 'q1',
-    title: '60-Min ARED Resistive Loading (Squats, Deadlifts, Heel Raises)',
-    category: 'Gravity Hazard · Bone & Muscle',
+    title: 'Strength exercise',
+    category: 'Bones and muscles',
     xp: 150,
-    instruction: 'Perform 3 sets × 10 reps on the Advanced Resistive Exercise Device to counter 1–1.5%/month bone mineral loss.',
-    done: true,
+    instruction: 'Use the onboard exercise equipment to work your muscles and support your bones. Follow your crew’s exercise plan.',
+    done: false,
   },
   {
     id: 'q2',
-    title: 'Consume 2.5L Water + Electrolyte Ration',
-    category: 'Microgravity Fluid Shift · Renal Stone Prevention',
+    title: 'Drink enough water',
+    category: 'Water',
     xp: 100,
-    instruction: 'Space out 500 mL pouches every 3 hours; adequate urine volume prevents calcium oxalate kidney stones.',
-    done: true,
+    instruction: 'Drink water throughout the day as directed by your crew’s plan.',
+    done: false,
   },
   {
     id: 'q3',
-    title: 'Log Morning Resting Vitals & Personal Baseline Check',
-    category: 'Autonomous Self-Assessment',
+    title: 'Record your morning readings',
+    category: 'Daily check-in',
     xp: 100,
-    instruction: 'Measure HR, BP, SpO2, and Temp after 5 minutes at rest before caffeine or exercise.',
-    done: true,
+    instruction: 'After resting, record your heart rate, blood pressure, blood oxygen and temperature.',
+    done: false,
   },
   {
     id: 'q4',
-    title: 'Monocular Amsler Grid & SANS Vision Check',
-    category: 'Gravity Fields · Neuro-Ocular (SANS)',
+    title: 'Check your vision',
+    category: 'Eyes and vision',
     xp: 75,
-    instruction: 'Hold Amsler chart at 30 cm, cover one eye, and check whether central grid lines appear wavy or blurred.',
+    instruction: 'Use the vision grid as instructed and check whether its lines look blurry or wavy.',
     done: false,
   },
   {
     id: 'q5',
-    title: '8-Hour Protected Sleep Window + Circadian Light Protocol',
-    category: 'Isolation & Confinement · Behavioral Health',
+    title: 'Make time for sleep',
+    category: 'Rest and wellbeing',
     xp: 100,
-    instruction: 'Switch cabin LEDs to 480nm blue-depleted warm spectrum 90 minutes before sleep station entry.',
+    instruction: 'Follow your sleep schedule and dim the lights before bed.',
     done: false,
   },
   {
     id: 'q6',
-    title: 'Inspect Sleeping Quarters Airflow & CO2 Scrubbing Level',
-    category: 'Hostile Closed Environment',
+    title: 'Check airflow in your sleeping area',
+    category: 'Cabin environment',
     xp: 50,
-    instruction: 'Confirm fan intake is unobstructed and local pCO2 remains below 3.0 mmHg to prevent morning headaches.',
+    instruction: 'Make sure air can flow freely and check the air monitor using your crew’s instructions.',
     done: false,
   },
 ]
@@ -212,8 +215,20 @@ export function CrewAssessmentPage() {
   const [sepEvent, setSepEvent] = useState<string>('None')
 
   // 3. Interactive Body Region & Pain Tracker
-  const [selectedRegion, setSelectedRegion] = useState<BodyRegionId>('eyes_sans')
-  const [painPoints, setPainPoints] = useState<PainPoint[]>([])
+  const [selectedRegion, updateSelectedRegion] = useState<BodyRegionId>('eyes_sans')
+  const [selectedZone, setSelectedZone] = useState<BodyZoneId | null>(null)
+  const setSelectedRegion = (region: BodyRegionId) => { setSelectedZone(null); updateSelectedRegion(region) }
+  const selectZone = (zone: BodyZoneId) => { setSelectedZone(zone); updateSelectedRegion(regionForZone(zone)) }
+  const [generalPainPoints, setGeneralPainPoints] = useState<PainPoint[]>([])
+  const [zonePain, setZonePain] = useState<Partial<Record<BodyZoneId, number>>>({})
+  const setPainPoints = (points: PainPoint[]) => { setZonePain({}); setGeneralPainPoints(points) }
+  // The API accepts broad systems; retain precise locations in each system's note.
+  const painPoints: PainPoint[] = (Object.keys(BODY_REGIONS) as BodyRegionId[]).flatMap((region) => {
+    const details = (Object.entries(zonePain) as [BodyZoneId, number][]).filter(([z, n]) => regionForZone(z) === region && n > 0)
+    const general = generalPainPoints.find((p) => p.region === region)
+    const severity = Math.max(general?.severity ?? 0, ...details.map(([, n]) => n), 0)
+    return severity ? [{ region, severity, note: [general?.note, ...details.map(([z, n]) => zoneLabel(z) + ': ' + n + '/10')].filter(Boolean).join('; ') }] : []
+  })
 
   // 4. Available Onboard Tools (Whiteboard Front End #7)
   const [availableTools, setAvailableTools] = useState<string[]>([
@@ -236,7 +251,6 @@ export function CrewAssessmentPage() {
 
   // 6. Gamification & Daily Healthy Life (Whiteboard #5, #21)
   const [quests, setQuests] = useState<DailyQuest[]>(INITIAL_QUESTS)
-  const [streakDays, setStreakDays] = useState<number>(14)
 
   const benchmark = useAsync(() => api.aiBenchmark(), [])
 
@@ -254,7 +268,7 @@ export function CrewAssessmentPage() {
   }
 
   const setRegionPain = (region: BodyRegionId, severity: number) => {
-    setPainPoints((prev) => {
+    setGeneralPainPoints((prev) => {
       const rest = prev.filter((p) => p.region !== region)
       return severity <= 0 ? rest : [...rest, { region, severity }]
     })
@@ -437,22 +451,27 @@ export function CrewAssessmentPage() {
   const totalXp = quests.filter((q) => q.done).reduce((sum, q) => sum + q.xp, 0)
   const maxXp = quests.reduce((sum, q) => sum + q.xp, 0)
   const readinessPct = Math.round((totalXp / maxXp) * 100)
+  const selectedPain = selectedZone ? zonePain[selectedZone] ?? 0 : getRegionPain(selectedRegion)
   const regionDetail = BODY_REGIONS[selectedRegion]
+  const bodyCopy = REGION_COPY[selectedRegion]
+  const locationCopy = LOCATION_COPY[environment]
+  const completedActivities = quests.filter((q) => q.done).length
 
   return (
-    <div className="stack" style={{ gap: 18 }}>
+    <div className="stack triage-page" style={{ gap: 24 }}>
       {/* 1. CHOOSE MISSION LOCATION / ENVIRONMENT (Whiteboard Feature #1, #6, #20) */}
       <section className="card env-banner">
         <div className="card-head">
           <div>
-            <span className="eyebrow">Step 1 · Select Current Mission Environment</span>
-            <h1 style={{ marginTop: 2 }}>Crew Autonomous Health & Triage Console</h1>
+            <span className="eyebrow">Step 1 · Choose your location</span>
+            <h1 style={{ marginTop: 2 }}>Crew health check</h1>
+            <p className="triage-lead">Choose where the crew is, mark any pain, and review the readings. We’ll help you see what needs attention.</p>
           </div>
           <span className="spacer" />
           <div className="row" style={{ gap: 6 }}>
-            <span className="badge">Comms Delay: {envInfo.commsDelay}</span>
-            <span className="badge">Gravity: {envInfo.gravity}</span>
-            <span className="badge">Radiation: {envInfo.radiationLevel}</span>
+            <span className="badge">Message delay: {envInfo.commsDelay}</span>
+            <span className="badge">Gravity: {locationCopy.gravity}</span>
+            <a className="triage-source" href="#/citations">Sources and explanations ↗</a>
           </div>
         </div>
 
@@ -474,8 +493,8 @@ export function CrewAssessmentPage() {
                 ) : (
                   <span className="env-photo env-photo-none" aria-hidden="true" />
                 )}
-                <strong>{m.shortLabel}</strong>
-                <span>{m.gravity} · Comms {m.commsDelay}</span>
+                <strong>{LOCATION_COPY[id].name}</strong>
+                <span>{LOCATION_COPY[id].gravity} · Messages: {m.commsDelay}</span>
               </button>
             )
           })}
@@ -485,29 +504,29 @@ export function CrewAssessmentPage() {
 
         <div className="env-norms">
           <div>
-            <strong>What’s the physiological norm in {envInfo.shortLabel}?</strong>
-            <p className="muted" style={{ margin: '2px 0 0' }}>{envInfo.expectedNorms}</p>
+            <strong>How {locationCopy.name.toLowerCase()} can affect the body</strong>
+            <p className="muted" style={{ margin: '2px 0 0' }}>{locationCopy.summary}</p>
           </div>
           <div className="env-deltas">
-            <span><strong>HR Shift:</strong> {envInfo.expectedDeltas.hrDeltaBpm}</span>
-            <span><strong>BP Shift:</strong> {envInfo.expectedDeltas.bpShift}</span>
-            <span><strong>SpO₂ Note:</strong> {envInfo.expectedDeltas.spo2Note}</span>
-            <span className="muted"><strong>Evidence:</strong> {envInfo.evidence}</span>
+            <span><strong>Heart rate change:</strong> {plainHealthText(envInfo.expectedDeltas.hrDeltaBpm)}</span>
+            <span><strong>Blood pressure change:</strong> {plainHealthText(envInfo.expectedDeltas.bpShift)}</span>
+            <span><strong>Blood oxygen:</strong> {plainHealthText(envInfo.expectedDeltas.spo2Note)}</span>
+            <details className="triage-details"><summary>Where this information comes from</summary><p>{plainHealthText(envInfo.evidence)}</p></details>
           </div>
         </div>
       </section>
 
       {/* DEMO SCENARIO PRESETS BAR */}
-      <div className="card row" style={{ justifyContent: 'space-between', padding: '10px 16px' }}>
+      <div className="card row triage-examples" style={{ justifyContent: 'space-between', padding: '10px 16px' }}>
         <div className="row" style={{ gap: 8 }}>
-          <strong>Quick Test Scenarios:</strong>
-          <button type="button" onClick={() => loadScenario('nominal')}>Nominal Orbit Check-in</button>
-          <button type="button" onClick={() => loadScenario('artifact')}>EVA Loose Sensor Artifact</button>
-          <button type="button" onClick={() => loadScenario('sans_drift')}>SANS Vision + Fluid Shift</button>
-          <button type="button" onClick={() => loadScenario('escalate')}>Deep Space S2 Storm Escalation</button>
+          <div><strong>Try an example</strong><p className="triage-caption">These buttons fill in sample readings so you can explore the page.</p></div>
+          <button type="button" onClick={() => loadScenario('nominal')}>Regular check-in</button>
+          <button type="button" onClick={() => loadScenario('artifact')}>Loose sensor during a spacewalk</button>
+          <button type="button" onClick={() => loadScenario('sans_drift')}>Vision changes in space</button>
+          <button type="button" onClick={() => loadScenario('escalate')}>Solar storm and support</button>
         </div>
         <button type="button" className="primary" onClick={() => void runAiTriage()} disabled={triageLoading}>
-          {triageLoading ? 'Running Qwen3-8B Triage…' : 'Run Overarching AI Triage'}
+          {triageLoading ? 'Checking the information…' : 'Start health check'}
         </button>
       </div>
 
@@ -515,14 +534,14 @@ export function CrewAssessmentPage() {
       <div className="grid two triage-columns" style={{ alignItems: 'start' }}>
         {/* LEFT COLUMN: INTERACTIVE CLICKABLE HUMAN BODY */}
         <Card
-          title="Interactive Crew Body Map — Click Region to Inspect & Log Pain"
+          title="Body map · Select where it hurts"
           actions={
             painPoints.length > 0 ? (
               <button type="button" onClick={() => setPainPoints([])} style={{ fontSize: '0.78rem', padding: '0.2rem 0.55rem' }}>
-                Clear {painPoints.length} pain flag(s)
+                Clear {painPoints.length} marked area(s)
               </button>
             ) : (
-              <span className="badge">No localized pain logged</span>
+              <span className="badge">No pain marked</span>
             )
           }
         >
@@ -532,10 +551,12 @@ export function CrewAssessmentPage() {
                 <Suspense fallback={<p className="body-3d-hint">Loading 3D body…</p>}>
                   {useAnatomy ? (
                     <Anatomy3D
+                      selectedZone={selectedZone}
+                      zonePain={zonePain}
+                      onZoneSelect={selectZone}
                       sex={/^\s*(f|woman)/i.test(gender) ? 'female' : 'male'}
                       selected={selectedRegion}
-                      pain={Object.fromEntries(painPoints.filter((p) => p.severity > 0).map((p) => [p.region, p.severity]))}
-                      onSelect={setSelectedRegion}
+                      pain={Object.fromEntries(generalPainPoints.filter((p) => p.severity > 0).map((p) => [p.region, p.severity]))}
                       onUnavailable={() => setUseAnatomy(false)}
                     />
                   ) : (
@@ -567,7 +588,7 @@ export function CrewAssessmentPage() {
                     onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('head_neuro')}
                   >
                     <circle cx="120" cy="48" r="30" />
-                    <title>Head & Neuro-Vestibular</title>
+                    <title>Head and balance</title>
                   </g>
 
                   {/* Eyes & SANS */}
@@ -582,7 +603,7 @@ export function CrewAssessmentPage() {
                     <rect x="98" y="36" width="44" height="16" rx="8" />
                     <circle cx="110" cy="44" r="3.5" fill="currentColor" />
                     <circle cx="130" cy="44" r="3.5" fill="currentColor" />
-                    <title>Eyes & Vision (SANS)</title>
+                    <title>Eyes and vision</title>
                   </g>
 
                   {/* Chest, Heart & Lungs */}
@@ -596,7 +617,7 @@ export function CrewAssessmentPage() {
                   >
                     <rect x="82" y="86" width="76" height="68" rx="14" />
                     <path d="M106 120 h10 l4 -9 l6 18 l5 -9 h12" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" />
-                    <title>Chest, Cardiovascular & Lungs</title>
+                    <title>Chest, heart and lungs</title>
                   </g>
 
                   {/* Spine & Bone (Center Pillar Overlay) */}
@@ -609,7 +630,7 @@ export function CrewAssessmentPage() {
                     onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('spine_bone')}
                   >
                     <rect x="112" y="88" width="16" height="132" rx="6" />
-                    <title>Spine & Skeletal Density</title>
+                    <title>Spine and bones</title>
                   </g>
 
                   {/* Abdomen, GI & Renal */}
@@ -622,7 +643,7 @@ export function CrewAssessmentPage() {
                     onKeyDown={(e) => e.key === 'Enter' && setSelectedRegion('abdomen_nutrition')}
                   >
                     <rect x="86" y="158" width="68" height="64" rx="12" />
-                    <title>Abdomen, Renal & Metabolism</title>
+                    <title>Stomach and kidneys</title>
                   </g>
 
                   {/* Upper Limbs (Shoulders, Arms, Hands) */}
@@ -636,7 +657,7 @@ export function CrewAssessmentPage() {
                   >
                     <rect x="48" y="90" width="28" height="135" rx="13" />
                     <rect x="164" y="90" width="28" height="135" rx="13" />
-                    <title>Shoulders, Arms & Hands (EVA / Wearable Strap)</title>
+                    <title>Shoulders, arms and hands</title>
                   </g>
 
                   {/* Lower Limbs (Hips, Legs, Calves) */}
@@ -650,7 +671,7 @@ export function CrewAssessmentPage() {
                   >
                     <rect x="86" y="228" width="30" height="172" rx="14" />
                     <rect x="124" y="228" width="30" height="172" rx="14" />
-                    <title>Legs, Hips & Antigravity Muscles</title>
+                    <title>Legs and hips</title>
                   </g>
                 </svg>
               )}
@@ -668,7 +689,7 @@ export function CrewAssessmentPage() {
                       className={`zone-btn ${selectedRegion === rId ? 'active' : ''} ${p > 0 ? 'pain' : ''}`}
                       onClick={() => setSelectedRegion(rId)}
                     >
-                      {BODY_REGIONS[rId].name.split('&')[0]}
+                      {REGION_COPY[rId].name}
                       {p > 0 ? <span className="pain-pill">{p}/10</span> : null}
                     </button>
                   )
@@ -679,47 +700,50 @@ export function CrewAssessmentPage() {
             {/* Selected Body Region Details + Pain Slider */}
             <div className="body-detail stack">
               <div>
-                <span className="eyebrow">Selected Body System</span>
-                <h2>{regionDetail.name}</h2>
-                <p className="muted">{regionDetail.functionSummary}</p>
+                <span className="eyebrow">Selected area</span>
+                <h2>{selectedZone ? zoneLabel(selectedZone) : bodyCopy.name}</h2>
+                {selectedZone && <small>Body area: {bodyCopy.name}</small>}
+                <p className="muted">{bodyCopy.summary}</p>
               </div>
 
               <div className="pain-control">
                 <label>
                   <span>
-                    <strong>Locate & Rate Discomfort / Pain in {regionDetail.name}:</strong>{' '}
-                    <span className={`status-chip ${getRegionPain(selectedRegion) >= 7 ? 'alert' : getRegionPain(selectedRegion) >= 3 ? 'caution' : 'nominal'}`}>
-                      {getRegionPain(selectedRegion) === 0 ? '0/10 (No Pain)' : `${getRegionPain(selectedRegion)}/10 Severity`}
+                    <strong>How much does it hurt in {selectedZone ? zoneLabel(selectedZone) : bodyCopy.name}:</strong>{' '}
+                    <span className={`status-chip ${selectedPain >= 7 ? 'alert' : selectedPain >= 3 ? 'caution' : 'nominal'}`}>
+                      {selectedPain === 0 ? '0/10 (No Pain)' : `${selectedPain}/10 pain`}
                     </span>
                   </span>
                   <input
                     type="range"
                     min={0}
                     max={10}
-                    value={getRegionPain(selectedRegion)}
-                    onChange={(e) => setRegionPain(selectedRegion, Number(e.target.value))}
+                    value={selectedPain}
+                    onChange={(e) => selectedZone ? setZonePain((prev) => ({ ...prev, [selectedZone]: Number(e.target.value) })) : setRegionPain(selectedRegion, Number(e.target.value))}
                   />
                 </label>
               </div>
 
               <div>
-                <h3>Spaceflight Risks in this Region</h3>
+                <h3>How spaceflight can affect this area</h3>
                 <ul className="compact-list">
-                  {regionDetail.spaceflightRisks.map((r) => (
+                  {bodyCopy.risks.map((r) => (
                     <li key={r}>{r}</li>
                   ))}
                 </ul>
               </div>
 
               <div className="instruction-box">
-                <strong>Simple Self-Check Instruction:</strong>
-                <p style={{ margin: '4px 0 0' }}>{regionDetail.selfCheckInstruction}</p>
+                <strong>Simple check:</strong>
+                <p style={{ margin: '4px 0 0' }}>{plainHealthText(regionDetail.selfCheckInstruction)}</p>
               </div>
 
+              <UltrasoundCard region={selectedRegion} />
+
               <div className="row" style={{ gap: 6 }}>
-                <small>Linked Indicators:</small>
+                <small>Related readings:</small>
                 {regionDetail.linkedIndicators.map((ind) => (
-                  <span key={ind} className="badge">{ind}</span>
+                  <span key={ind} className="badge">{plainHealthText(ind)}</span>
                 ))}
               </div>
             </div>
@@ -728,14 +752,14 @@ export function CrewAssessmentPage() {
 
         {/* RIGHT COLUMN: ASTRONAUT PROFILE, VITALS INPUT & AVAILABLE TOOLS */}
         <Card
-          title="Step 2 · Astronaut Profile, Vitals & Exam Input"
-          actions={<span className="badge">Color-Coded Status at a Glance</span>}
+          title="Step 2 · Enter crew details and readings"
+          actions={<span className="badge">Green: usual · Amber: recheck · Red: needs attention</span>}
         >
           <div className="stack" style={{ gap: 12 }}>
             {/* Astronaut Profile Row (Whiteboard 3-1: Age, Height, Weight, Gender, Previous Medical Conditions) */}
             <div className="subcard">
               <div className="row" style={{ justifyContent: 'space-between', marginBottom: 8 }}>
-                <strong>Astronaut Profile & Preflight Baseline (NASA OSD-575)</strong>
+                <strong>Crew profile and usual readings before flight</strong>
                 <div className="row" style={{ gap: 4 }}>
                   {(Object.keys(CREW_PROFILES) as CrewId[]).map((id) => (
                     <button
@@ -769,8 +793,8 @@ export function CrewAssessmentPage() {
                 </label>
               </div>
               <label style={{ marginTop: 6 }}>
-                Previous Medical Conditions / Flight History
-                <input type="text" value={conditions} onChange={(e) => setConditions(e.target.value)} />
+                Health history and previous flights
+                <input type="text" value={plainHealthText(conditions)} onChange={(e) => setConditions(e.target.value)} />
               </label>
             </div>
 
@@ -778,134 +802,134 @@ export function CrewAssessmentPage() {
             <div className="form-grid three">
               <label className={`vital-input ${hrStatus}`}>
                 <span className="row" style={{ justifyContent: 'space-between' }}>
-                  <span>Heart Rate (bpm)</span>
-                  <span className={`status-dot ${hrStatus}`} title={`Preflight baseline: ${preflightHr} bpm`} />
+                  <span>Heart rate (beats per minute)</span>
+                  <span className={`status-dot ${hrStatus}`} title={`Usual reading before flight: ${preflightHr} bpm`} />
                 </span>
                 <input type="number" value={hrBpm} onChange={(e) => setHrBpm(Number(e.target.value))} />
-                <small>Baseline median: {preflightHr} bpm ({hrBpm - preflightHr >= 0 ? `+${hrBpm - preflightHr}` : hrBpm - preflightHr})</small>
+                <small>Usual before flight: {preflightHr} beats/min. Change: {hrBpm - preflightHr >= 0 ? `+${hrBpm - preflightHr}` : hrBpm - preflightHr} beats/min.</small>
               </label>
 
               <label className={`vital-input wide ${bpStatus}`}>
                 <span className="row" style={{ justifyContent: 'space-between' }}>
-                  <span>Blood Pressure (mmHg)</span>
+                  <span>Blood pressure (mmHg)</span>
                   <span className={`status-dot ${bpStatus}`} />
                 </span>
                 <div className="row" style={{ gap: 4, flexWrap: 'nowrap' }}>
-                  <input type="number" value={bpSys} onChange={(e) => setBpSys(Number(e.target.value))} aria-label="Systolic BP" />
+                  <input type="number" value={bpSys} onChange={(e) => setBpSys(Number(e.target.value))} aria-label="Blood pressure top number" />
                   <span>/</span>
-                  <input type="number" value={bpDia} onChange={(e) => setBpDia(Number(e.target.value))} aria-label="Diastolic BP" />
+                  <input type="number" value={bpDia} onChange={(e) => setBpDia(Number(e.target.value))} aria-label="Blood pressure bottom number" />
                 </div>
-                <small>{bpCategory.label}. {BP_REFERENCE_SOURCE}, not an in-flight limit.</small>
+                <small>{bpCategory.label}. The top number measures pressure during a heartbeat; the bottom number measures pressure between beats. These are Earth reference ranges, not mission limits.</small>
                 <small>
                   {astronautAverage
-                    ? `Astronaut average, ${astronautAverage.group}: ${astronautAverage.averageSystolic}/${astronautAverage.averageDiastolic} mmHg. ${LSAH_REFERENCE_SOURCE}.`
-                    : 'No NASA LSAH astronaut average for this age and gender.'}
+                    ? `Recorded astronaut average, ${astronautAverage.group}: ${astronautAverage.averageSystolic}/${astronautAverage.averageDiastolic} mmHg. ${LSAH_REFERENCE_SOURCE}.`
+                    : 'No recorded NASA astronaut average for this age and gender.'}
                 </small>
-                <span style={{ marginTop: 6 }}>Standing BP, within 3 min (optional)</span>
+                <span style={{ marginTop: 6 }}>Blood pressure after standing, within 3 minutes (optional)</span>
                 <div className="row" style={{ gap: 4, flexWrap: 'nowrap' }}>
-                  <input type="number" value={standSys} onChange={(e) => setStandSys(e.target.value)} aria-label="Standing systolic BP" />
+                  <input type="number" value={standSys} onChange={(e) => setStandSys(e.target.value)} aria-label="Standing blood pressure top number" />
                   <span>/</span>
-                  <input type="number" value={standDia} onChange={(e) => setStandDia(e.target.value)} aria-label="Standing diastolic BP" />
+                  <input type="number" value={standDia} onChange={(e) => setStandDia(e.target.value)} aria-label="Standing blood pressure bottom number" />
                 </div>
                 <small>
                   {GRAVITY_ENVIRONMENTS.includes(environment)
-                    ? 'Compared with the resting reading: a fall of 20 systolic or 10 diastolic meets the orthostatic drop criterion.'
+                    ? 'Compared with the resting reading, a fall of 20 in the top number or 10 in the bottom number meets the reference for a blood-pressure drop after standing.'
                     : 'A standing test needs gravity, so it is not assessed in this environment.'}
                 </small>
               </label>
 
               <label className={`vital-input ${glucStatus}`}>
                 <span className="row" style={{ justifyContent: 'space-between' }}>
-                  <span>Blood Sugar (mg/dL)</span>
+                  <span>Blood sugar (mg/dL)</span>
                   <span className={`status-dot ${glucStatus}`} />
                 </span>
                 <input type="number" value={bloodSugar} onChange={(e) => setBloodSugar(Number(e.target.value))} />
-                <small>Normal fasting range: 70–99 mg/dL (ADA 2026, NIDDK). Fasting means 8 hours without food.</small>
+                <small>A usual fasting reading is 70–99 mg/dL. Fasting means no food for 8 hours. mg/dL is the unit used by this blood-sugar meter.</small>
               </label>
 
               <label className={`vital-input ${tempStatus}`}>
                 <span className="row" style={{ justifyContent: 'space-between' }}>
-                  <span>Body Temp (°C)</span>
+                  <span>Body temperature (°C)</span>
                   <span className={`status-dot ${tempStatus}`} />
                 </span>
                 <input type="number" step="0.1" value={tempC} onChange={(e) => setTempC(Number(e.target.value))} />
-                <small>Preflight baseline: {preflightTemp}°C. Usual adult oral range: 35.7–37.3 °C (Obermeyer 2017); 37.8 °C or more counts as fever (Merck Manual). Earth reference.</small>
+                <small>Usual reading before flight: {preflightTemp}°C. For adults on Earth, a usual mouth temperature is 35.7–37.3 °C. A reading of 37.8 °C or above meets the fever reference. °C means degrees Celsius.</small>
               </label>
 
               <label className={`vital-input ${spo2Status}`}>
                 <span className="row" style={{ justifyContent: 'space-between' }}>
-                  <span>O₂ Saturation SpO₂ (%)</span>
+                  <span>Blood oxygen (SpO₂ %)</span>
                   <span className={`status-dot ${spo2Status}`} />
                 </span>
                 <input type="number" value={spo2Pct} onChange={(e) => setSpo2Pct(Number(e.target.value))} />
-                <span>Usual SpO₂ for this person (optional)</span>
+                <span>This person’s usual blood oxygen (optional)</span>
                 <input type="number" value={spo2Baseline} onChange={(e) => setSpo2Baseline(e.target.value)} aria-label="Usual SpO2 baseline, optional" />
-                <small>Target range: 94–98% (BTS 2017), Earth reference; 88–92% for some lung conditions. A fall of 3 points from the usual value prompts a recheck.</small>
+                <small>Shows the percentage of blood carrying oxygen. The Earth reference target is 94–98%, or 88–92% for some lung conditions. Recheck a fall of 3 percentage points from the usual reading.</small>
               </label>
 
               <label className={`vital-input ${rrStatus}`}>
                 <span className="row" style={{ justifyContent: 'space-between' }}>
-                  <span>Respiratory Rate (br/m)</span>
+                  <span>Breathing rate (breaths per minute)</span>
                   <span className={`status-dot ${rrStatus}`} />
                 </span>
                 <input type="number" value={respRate} onChange={(e) => setRespRate(Number(e.target.value))} />
-                <small>Resting adult range: 12–20 breaths/min (KORA-FF4), Earth reference</small>
+                <small>Count breaths taken in one minute. A resting adult Earth reference is 12–20 breaths per minute.</small>
               </label>
 
               <label className={`vital-input ${sleepStatus}`}>
                 <span className="row" style={{ justifyContent: 'space-between' }}>
-                  <span>Daily Sleep (hours)</span>
+                  <span>Sleep (hours)</span>
                   <span className={`status-dot ${sleepStatus}`} />
                 </span>
                 <input type="number" step="0.5" value={sleepHours} onChange={(e) => setSleepHours(Number(e.target.value))} />
-                <small>Recommended for adults: 7 or more hours a night (AASM and SRS, via AHA 2016), Earth reference</small>
+                <small>Enter the hours slept. The adult recommendation on Earth is at least 7 hours a night.</small>
               </label>
 
               <label className={`vital-input ${mood === 'optimal' || mood === 'focused' ? 'nominal' : mood === 'fatigued' ? 'caution' : 'alert'}`}>
-                <span>Psyche / Mood Check-in</span>
+                <span>How are you feeling?</span>
                 <select value={mood} onChange={(e) => setMood(e.target.value as MoodStatus)}>
-                  <option value="optimal">Optimal / Rested</option>
-                  <option value="focused">Focused / High Workload</option>
-                  <option value="fatigued">Fatigued / Circadian Drift</option>
-                  <option value="stressed">Stressed / High Cognitive Load</option>
-                  <option value="isolated">Isolated / Confinement Strain</option>
+                  <option value="optimal">Rested</option>
+                  <option value="focused">Focused / Busy</option>
+                  <option value="fatigued">Tired / Sleep schedule disrupted</option>
+                  <option value="stressed">Stressed / Mentally busy</option>
+                  <option value="isolated">Lonely / Feeling confined</option>
                 </select>
-                <small>Stressed or isolated raises the status to caution. A reported mood never explains away a reading (Gordon and Mendes 2021).</small>
+                <small>Stress or loneliness prompts a closer look. Mood alone does not explain an unusual reading (Gordon and Mendes 2021).</small>
               </label>
 
               <label className={`vital-input ${sensorVerified ? 'nominal' : 'caution'}`}>
-                <span>Sensor Contact Status</span>
+                <span>Is the sensor fitted properly?</span>
                 <button
                   type="button"
                   onClick={() => setSensorVerified((v) => !v)}
                   style={{ textAlign: 'left', fontWeight: 600 }}
                 >
-                  {sensorVerified ? 'Sensor Snug & Verified' : 'Unverified (Possible Motion/Slip)'}
+                  {sensorVerified ? 'Yes, the sensor fits' : 'Not checked yet (it may have moved)'}
                 </button>
-                <small>Check before escalating SpO₂/HR spikes</small>
+                <small>Check the fit before reacting to unusual oxygen or heart-rate readings.</small>
               </label>
             </div>
 
             {/* Specialized Spaceflight Exams: Ultrasound & Eye Exam (SANS) */}
             <div className="form-grid two">
               <label>
-                <strong>Portable Ultrasound Finding</strong>
+                <strong>Ultrasound result</strong>
                 <select value={ultrasound} onChange={(e) => setUltrasound(e.target.value as UltrasoundFinding)}>
                   <option value="not_performed">Not performed today</option>
-                  <option value="normal">Normal ocular, cardiac & renal sweep</option>
-                  <option value="optic_nerve_sheath_elevated">Optic nerve sheath &gt; 5.8 mm (SANS indicator)</option>
-                  <option value="renal_debris_suspected">Renal shadowing / micro-calculi suspected</option>
-                  <option value="jugular_venous_stasis">Internal jugular venous stasis / sluggish flow</option>
+                  <option value="normal">No unusual findings in the eye, heart or kidney scan</option>
+                  <option value="optic_nerve_sheath_elevated">Optic nerve covering measures over 5.8 mm</option>
+                  <option value="renal_debris_suspected">Possible small kidney stones seen on scan</option>
+                  <option value="jugular_venous_stasis">Slow blood flow in a neck vein</option>
                 </select>
               </label>
               <label>
-                <strong>Eye Exam / SANS Vision Check</strong>
+                <strong>Eye and vision check</strong>
                 <select value={eyeExam} onChange={(e) => setEyeExam(e.target.value as EyeExamFinding)}>
                   <option value="not_performed">Not performed today</option>
-                  <option value="normal_20_20">20/20 acuity · Clear Amsler grid</option>
-                  <option value="mild_eye_strain">Mild display / lighting eye strain</option>
-                  <option value="hyperopia_shift">Hyperopic (near-focus) shift detected</option>
-                  <option value="amsler_grid_distortion">Amsler central grid distortion / scotoma</option>
+                  <option value="normal_20_20">Clear vision and straight lines on the vision grid</option>
+                  <option value="mild_eye_strain">Mild eye strain from screens or lighting</option>
+                  <option value="hyperopia_shift">Near vision has changed</option>
+                  <option value="amsler_grid_distortion">Lines on the vision grid look distorted or missing</option>
                 </select>
               </label>
             </div>
@@ -913,22 +937,22 @@ export function CrewAssessmentPage() {
             {/* Available Onboard Tools Selector (Whiteboard Front End #7) */}
             <div className="subcard">
               <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
-                <strong>Available Onboard Medical & Countermeasure Tools ({availableTools.length} selected)</strong>
-                <small>AI treatment & workout plans strictly use only checked tools</small>
+                <strong>Available medical and exercise tools ({availableTools.length} selected)</strong>
+                <small>The suggested plan uses only the tools selected here.</small>
               </div>
               <div className="tools-grid">
                 {ONBOARD_TOOLS.map((tool) => {
                   const active = availableTools.includes(tool)
                   return (
                     <button
-                      key={tool}
+                      key={TOOL_LABELS[tool] ?? tool}
                       type="button"
                       className={`tool-chip${active ? ' active' : ''}`}
                       aria-pressed={active}
                       onClick={() => toggleTool(tool)}
                     >
                       {active ? '✓ ' : '+ '}
-                      {tool}
+                      {TOOL_LABELS[tool] ?? tool}
                     </button>
                   )
                 })}
@@ -942,7 +966,7 @@ export function CrewAssessmentPage() {
               onClick={() => void runAiTriage()}
               disabled={triageLoading}
             >
-              {triageLoading ? 'Analyzing Vitals, Body Map & Environment…' : 'Evaluate Health Indicators & Generate Action Plan'}
+              {triageLoading ? 'Checking the readings and body map…' : 'Review readings and suggest next steps'}
             </button>
           </div>
         </Card>
@@ -953,18 +977,18 @@ export function CrewAssessmentPage() {
         <div className="card-head">
           <div className="row" style={{ gap: 10 }}>
             <span className={`status-pill ${triageResult?.triage.overall_status ?? 'nominal'}`}>
-              {triageResult?.triage.overall_status === 'alert'
-                ? 'ALERT · ESCALATE TO GROUND SUPPORT'
+              {!triageResult ? (triageLoading ? 'CHECKING YOUR READINGS…' : 'READY TO CHECK') : triageResult.triage.overall_status === 'alert'
+                ? 'ALERT · CONTACT GROUND SUPPORT'
                 : triageResult?.triage.overall_status === 'caution'
-                  ? 'CAUTION · MONITOR & VERIFY'
-                  : 'NOMINAL · WITHIN MISSION BASELINE'}
+                  ? 'CAUTION · CHECK AND MONITOR'
+                  : 'NO ALERT FROM THESE READINGS'}
             </span>
-            <h2>Crew Decision-Support</h2>
+            <h2>What to do next</h2>
             {triageResult ? <span className="badge">Answered by: {triageResult.source}</span> : null}
           </div>
           <span className="spacer" />
           <button type="button" onClick={() => setShowBenchmark((v) => !v)} style={{ fontSize: '0.8rem' }}>
-            {showBenchmark ? 'Hide LLM Benchmark' : 'View Measured Model Benchmark'}
+            {showBenchmark ? 'Hide AI performance details' : 'See AI performance details'}
           </button>
         </div>
 
@@ -975,35 +999,35 @@ export function CrewAssessmentPage() {
             {/* Ground Support Alert Banner when contact_ground_support is true */}
             {triageResult.triage.contact_ground_support ? (
               <div className="banner error pulse-border" role="alert">
-                <strong>CONTACT FLIGHT SURGEON / GROUND SUPPORT IMMEDIATELY:</strong>{' '}
-                {triageResult.triage.ground_support_reason} (Current one-way comms delay: <strong>{envInfo.commsDelay}</strong> — execute onboard action plan while telemetry packet transmits).
+                <strong>CONTACT THE CREW DOCTOR OR GROUND SUPPORT IMMEDIATELY:</strong>{' '}
+                {plainHealthText(triageResult.triage.ground_support_reason)} (A message to Earth takes: <strong>{envInfo.commsDelay}</strong>. Follow the crew’s onboard plan while waiting for a reply.)
               </div>
             ) : null}
 
             <div className="grid two">
               <div className="subcard stack">
                 <div>
-                  <h3>1. Sensor & Data-Quality Check</h3>
-                  <p>{triageResult.triage.data_quality_check}</p>
+                  <h3>1. Check the sensor and readings</h3>
+                  <p>{plainHealthText(triageResult.triage.data_quality_check)}</p>
                 </div>
                 <div>
-                  <h3>2. Personal Baseline & Location Norm Comparison</h3>
+                  <h3>2. Compare with usual readings</h3>
                   {/* The comparison is a run of separate facts joined by " · "; one per line reads far better. */}
                   <ul className="compact-list">
                     {triageResult.triage.baseline_comparison.split(' · ').map((fact) => (
-                      <li key={fact}>{fact}</li>
+                      <li key={fact}>{plainHealthText(fact)}</li>
                     ))}
                   </ul>
                 </div>
                 <div>
-                  <h3>3. Mission Environment Insight ({envInfo.shortLabel})</h3>
-                  <p>{triageResult.triage.environment_insight}</p>
+                  <h3>3. How the location may matter ({locationCopy.name})</h3>
+                  <p>{plainHealthText(triageResult.triage.environment_insight)}</p>
                 </div>
                 <div>
-                  <h3>4. Common Non-Diagnostic Spaceflight Causes</h3>
+                  <h3>4. Possible explanations to consider</h3>
                   <ul className="compact-list">
                     {triageResult.triage.common_causes.map((c) => (
-                      <li key={c}>{c}</li>
+                      <li key={c}>{plainHealthText(c)}</li>
                     ))}
                   </ul>
                 </div>
@@ -1012,57 +1036,57 @@ export function CrewAssessmentPage() {
               <div className="subcard stack">
                 {/* Interactive Confirmation Prompt (Whiteboard Feature #4: "Ask them to confirm") */}
                 <div className="confirm-box">
-                  <h3>5. Crew Confirmation Check</h3>
-                  <p style={{ fontWeight: 600 }}>{triageResult.triage.confirmation_prompt}</p>
+                  <h3>5. Confirm how the crew member feels</h3>
+                  <p style={{ fontWeight: 600 }}>{plainHealthText(triageResult.triage.confirmation_prompt)}</p>
                   <div className="row" style={{ gap: 8, marginTop: 6 }}>
                     <button
                       type="button"
                       className={crewConfirmation === 'confirmed_normal' ? 'primary' : undefined}
                       onClick={() => setCrewConfirmation('confirmed_normal')}
                     >
-                      Confirmed: Sensor Snug & Feeling Stable
+                      Sensor fits and I feel okay
                     </button>
                     <button
                       type="button"
                       className={crewConfirmation === 'symptoms_present' ? 'danger' : undefined}
                       onClick={() => setCrewConfirmation('symptoms_present')}
                     >
-                      Symptoms Persist After Sensor Check
+                      Symptoms continue after checking the sensor
                     </button>
                   </div>
                   {crewConfirmation === 'symptoms_present' ? (
                     <p style={{ color: 'var(--status-critical)', fontSize: '0.85rem', marginTop: 6 }}>
-                      Crew confirmed persistent symptoms after sensor verification → <strong>Flight Surgeon telemetry packet prioritized.</strong>
+                      Symptoms continue after checking the sensor. Follow the guidance to contact ground support.
                     </p>
                   ) : crewConfirmation === 'confirmed_normal' ? (
                     <p style={{ color: 'var(--status-good)', fontSize: '0.85rem', marginTop: 6 }}>
-                      Crew confirmed stable status & sensor placement → logged to onboard SQLite medical timeline.
+                      The crew member reports feeling okay and confirms the sensor fits.
                     </p>
                   ) : null}
                 </div>
 
                 {/* Tool-Bound Action Plan */}
                 <div>
-                  <h3>6. Action Plan (Restricted to Available Tools)</h3>
+                  <h3>6. Next steps using available tools</h3>
                   <ul className="compact-list">
                     {triageResult.triage.available_tool_action_plan.map((step) => (
-                      <li key={step}>{step}</li>
+                      <li key={step}>{plainHealthText(step)}</li>
                     ))}
                   </ul>
                 </div>
 
                 {/* Modify Workout AI (Whiteboard #3-1) */}
                 <div className="workout-ai-box">
-                  <h3>7. Modify Workout AI Countermeasure</h3>
-                  <p style={{ margin: '4px 0 0' }}>{triageResult.triage.workout_modification}</p>
+                  <h3>7. Suggested workout changes</h3>
+                  <p style={{ margin: '4px 0 0' }}>{plainHealthText(triageResult.triage.workout_modification)}</p>
                 </div>
 
                 {/* Simple Step-by-Step Instructions (Whiteboard #9) */}
                 <div>
-                  <h3>8. Simple Step-by-Step Crew Instructions</h3>
+                  <h3>8. Step-by-step instructions</h3>
                   <ul className="compact-list">
                     {triageResult.triage.simple_instructions.map((inst) => (
-                      <li key={inst}>{inst}</li>
+                      <li key={inst}>{plainHealthText(inst)}</li>
                     ))}
                   </ul>
                 </div>
@@ -1075,7 +1099,7 @@ export function CrewAssessmentPage() {
         {showBenchmark && benchmark.data ? (
           <div className="subcard" style={{ marginTop: 12 }}>
             <div className="row" style={{ justifyContent: 'space-between', marginBottom: 6 }}>
-              <strong>Onboard Local LLM Benchmark ({benchmark.data.testSuite})</strong>
+              <strong>AI performance results ({benchmark.data.testSuite})</strong>
               <span className="badge">Selected Model: {benchmark.data.primarySelected}</span>
             </div>
             <div className="table-wrap">
@@ -1083,13 +1107,13 @@ export function CrewAssessmentPage() {
                 <thead>
                   <tr>
                     <th>What answers</th>
-                    <th>Params</th>
-                    <th>Valid JSON</th>
+                    <th>Model size</th>
+                    <th>Valid response format</th>
                     <th>Refuses to Diagnose</th>
                     <th>Holds Back on Unverified Sensor</th>
                     <th>Stays Within Available Tools</th>
-                    <th>Ground Escalation Accuracy</th>
-                    <th>Median Latency</th>
+                    <th>Accuracy of ground-support alerts</th>
+                    <th>Typical response time</th>
                     <th>Evaluation Notes</th>
                   </tr>
                 </thead>
@@ -1114,19 +1138,19 @@ export function CrewAssessmentPage() {
 
       {/* 4. GAMIFICATION SYSTEM & HEALTHY DAILY MISSION ROUTINE (Whiteboard #5 & #21) */}
       <Card
-        title="Daily Countermeasure Gamification & Healthy Spaceflight Routine"
+        title="Daily healthy habits"
         actions={
           <div className="row" style={{ gap: 8 }}>
-            <span className="badge">{streakDays}-Sol Crew Health Streak</span>
-            <span className="badge">{totalXp} / {maxXp} Mission XP ({readinessPct}%)</span>
+            <span className="routine-count">{completedActivities}<small> / {quests.length} activities done</small></span>
+            <span className="badge">{totalXp} of {maxXp} activity points</span>
           </div>
         }
       >
-        <div className="xp-bar-wrap" aria-label={`Mission health readiness ${readinessPct}%`}>
+        <div className="xp-bar-wrap" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={readinessPct} aria-label={`Daily activity points ${readinessPct}%`}>
           <div className="xp-bar-fill" style={{ width: `${readinessPct}%` }} />
         </div>
         <p className="muted" style={{ fontSize: '0.86rem', marginBottom: 10 }}>
-          Long-duration astronauts maintain peak bone, cardiovascular, ocular, and behavioral health by completing daily countermeasure routines. Check off completed tasks to build your crew readiness streak:
+          Tick each activity when you finish it. You earn points as you go. This checklist tracks this visit only; points do not measure how healthy you are.
         </p>
         <div className="grid two">
           {quests.map((q) => (
@@ -1138,12 +1162,11 @@ export function CrewAssessmentPage() {
                     checked={q.done}
                     onChange={() => {
                       setQuests((prev) => prev.map((item) => (item.id === q.id ? { ...item, done: !item.done } : item)))
-                      if (!q.done) setStreakDays((s) => s)
                     }}
                   />
                   {q.title}
                 </label>
-                <span className="badge">+{q.xp} XP</span>
+                <span className="badge">{q.done ? `✓ ${q.xp} points earned` : `+${q.xp} points`}</span>
               </div>
               <small>{q.category}</small>
               <p className="muted" style={{ fontSize: '0.82rem', margin: '4px 0 0' }}>{q.instruction}</p>
@@ -1152,29 +1175,6 @@ export function CrewAssessmentPage() {
         </div>
       </Card>
 
-      {/* 5. NASA HUMAN RESEARCH PROGRAM: 5 HAZARDS OF HUMAN SPACEFLIGHT (Whiteboard #2 & NASA Prompt) */}
-      <Card title="NASA Human Research Program — The 5 Hazards of Human Spaceflight">
-        <div className="grid tiles" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(215px, 1fr))' }}>
-          {FIVE_NASA_HAZARDS.map((h) => (
-            <div key={h.id} className="subcard stack" style={{ gap: 6 }}>
-              <div className="row" style={{ justifyContent: 'space-between' }}>
-                <span className="badge">{h.code}</span>
-                <strong style={{ fontSize: '0.92rem' }}>{h.name}</strong>
-              </div>
-              <p className="muted" style={{ fontSize: '0.82rem' }}>{h.summary}</p>
-              <div>
-                <small><strong>Health Risks:</strong> {h.healthRisks.join(', ')}</small>
-              </div>
-              <div>
-                <small><strong>Tracked By:</strong> {h.keyIndicators.join(' · ')}</small>
-              </div>
-              <div style={{ borderTop: '1px solid var(--grid)', paddingTop: 6 }}>
-                <small><strong>Countermeasure:</strong> {h.countermeasure}</small>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
     </div>
   )
 }

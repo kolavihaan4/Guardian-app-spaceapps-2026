@@ -1,11 +1,17 @@
-import type { EnvironmentSeries, NASAEvent, RadiationStatus } from '@astrovitals/shared'
+import '../hazards.css'
+import type { EnvironmentSeries, NASAEvent } from '@astrovitals/shared'
 import { useMemo, useState } from 'react'
-import { Bar, BarChart, CartesianGrid, Line, LineChart, ReferenceLine, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from 'recharts'
 import { DailyLine } from '../components/charts'
 import { HazardCards } from '../components/HazardCards'
-import { Card, ErrorNote, fmtDate, fmtDateTime, Loading, NasaBadge, useAsync } from '../components/common'
+import { Card, ErrorNote, Loading, NasaBadge, useAsync } from '../components/common'
 import { api } from '../lib/api'
-import { DAY, isoDay } from '../lib/series'
+import { dailyParticleReports, hazardRange, HAZARD_HISTORY_DAYS } from '../lib/hazards'
+import { useDailyDate } from '../lib/useDailyDate'
+
+const fmtDate = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })
+const fmtDateTime = (iso: string) => new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+const displayUnit = (unit: string) => unit === 'C' ? '°C' : unit === 'kW-hr/m^2/day' ? 'kWh/m²/day' : unit
 
 export const LOCATIONS = [
   { name: 'Johnson Space Center, Houston', lat: 29.5502, lon: -95.097 },
@@ -16,18 +22,19 @@ export const LOCATIONS = [
 ]
 
 const TYPE_ROW: Record<string, number> = { SEP: 0, GST: 1, CME: 2, FLR: 3 }
+const TYPE_LABEL: Record<string, string> = { SEP: 'Fast particles', GST: 'Magnetic storm', CME: 'Solar cloud', FLR: 'Solar flare' }
 const TYPE_NAME = ['Solar energetic particles (SEP)', 'Geomagnetic storm (GST)', 'Coronal mass ejection (CME)', 'Solar flare (FLR)']
 
 function SpaceWeatherTimeline({ events }: { events: NASAEvent[] }) {
   const data = events.filter((e) => e.eventType in TYPE_ROW).map((e) => ({ t: Date.parse(e.timestamp), row: TYPE_ROW[e.eventType]!, title: e.title }))
-  if (!data.length) return <div className="empty">No DONKI events in this window.</div>
+  if (!data.length) return <div className="empty">No space-weather events were reported by NASA in this window.</div>
   return (
     <div className="chart" role="img" aria-label="Timeline of space-weather events by type">
       <ResponsiveContainer>
         <ScatterChart margin={{ top: 6, right: 12, bottom: 0, left: 0 }}>
           <CartesianGrid stroke="var(--grid)" vertical={false} />
           <XAxis dataKey="t" type="number" domain={['dataMin', 'dataMax']} scale="time" tickFormatter={(t: number) => fmtDate(new Date(t).toISOString())} stroke="var(--axis)" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} minTickGap={40} />
-          <YAxis dataKey="row" type="number" domain={[-0.5, 3.5]} ticks={[0, 1, 2, 3]} tickFormatter={(r: number) => ['SEP', 'GST', 'CME', 'FLR'][r] ?? ''} stroke="var(--axis)" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} width={44} />
+          <YAxis dataKey="row" type="number" domain={[-0.5, 3.5]} ticks={[0, 1, 2, 3]} tickFormatter={(r: number) => ['Fast particles', 'Magnetic storm', 'Solar cloud', 'Solar flare'][r] ?? ''} stroke="var(--axis)" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} width={104} />
           <ZAxis range={[64, 64]} />
           <Tooltip
             contentStyle={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }}
@@ -53,7 +60,7 @@ function KpChart({ events }: { events: NASAEvent[] }) {
     .filter((e) => e.eventType === 'GST')
     .flatMap((e) => ((e.metadata.kpIndex as { observedTime: string; kpIndex: number }[] | undefined) ?? []).map((k) => ({ t: k.observedTime, kp: k.kpIndex })))
     .sort((a, b) => a.t.localeCompare(b.t))
-  if (!rows.length) return <div className="empty">No geomagnetic storms (Kp ≥ 5) reported by DONKI in this window.</div>
+  if (!rows.length) return <div className="empty">No magnetic storms (Kp 5 or above) were reported by NASA in this window.</div>
   // Several 3-hour readings can fall on one day; label those with the time so ticks stay distinct.
   const perDay = new Map<string, number>()
   for (const r of rows) perDay.set(fmtDate(r.t), (perDay.get(fmtDate(r.t)) ?? 0) + 1)
@@ -69,72 +76,6 @@ function KpChart({ events }: { events: NASAEvent[] }) {
           <Bar dataKey="kp" fill="var(--series-1)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
         </BarChart>
       </ResponsiveContainer>
-    </div>
-  )
-}
-
-/** NOAA S-scale names (https://www.swpc.noaa.gov/noaa-scales-explanation). */
-const S_NAMES = ['No radiation storm', 'Minor', 'Moderate', 'Strong', 'Severe', 'Extreme']
-const S1_PFU = 10
-const fmtFlux = (v: number) => (v >= 10 ? v.toFixed(0) : v >= 1 ? v.toFixed(1) : String(Number(v.toPrecision(2))))
-
-function RadiationPanel({ r }: { r: RadiationStatus }) {
-  const level = r.sScale
-  const status = level === null ? 'unknown' : level >= 3 ? 'implausible' : level >= 1 ? 'out_of_range' : 'ok'
-  const label = level === null ? 'S-scale unavailable' : level === 0 ? 'S0 · No radiation storm' : `S${level} · ${S_NAMES[level] ?? r.sText} solar radiation storm`
-  const data = r.series.map((p) => ({ t: Date.parse(p.time), p10: p.flux10MeV, p100: p.flux100MeV }))
-  const values = data.flatMap((d) => [d.p10, d.p100]).filter((v): v is number => v !== null)
-  // Log axis snapped to powers of ten, always tall enough to show the S1 line.
-  const lo = 10 ** Math.floor(Math.log10(values.length ? Math.max(1e-3, Math.min(...values)) : 0.01))
-  const hi = 10 ** Math.ceil(Math.log10(Math.max(S1_PFU * 10, ...values)))
-  const ticks: number[] = []
-  for (let v = lo; v <= hi * 1.0001; v *= 10) ticks.push(v)
-  return (
-    <div className="stack">
-      <div className="row" style={{ gap: 16, flexWrap: 'wrap', alignItems: 'baseline' }}>
-        <span className={`flag ${status}`} style={{ fontSize: '1rem', fontWeight: 650 }}>
-          <span className="dot" aria-hidden />
-          {label}
-        </span>
-        <span className="muted" style={{ fontSize: '0.85rem' }}>
-          {r.flux10MeV !== null && r.observedAt
-            ? `≥10 MeV protons: ${fmtFlux(r.flux10MeV)} pfu (S1 starts at ${S1_PFU}) · ${r.satellite ? `GOES-${r.satellite} · ` : ''}${fmtDateTime(r.observedAt)}`
-            : 'No recent proton measurement.'}
-        </span>
-      </div>
-      {data.length ? (
-        <div className="row" style={{ gap: 8, fontSize: '0.75rem' }}>
-          <span className="badge"><span className="swatch" style={{ background: 'var(--series-1)' }} />≥10 MeV protons</span>
-          <span className="badge"><span className="swatch" style={{ background: 'var(--series-4)' }} />≥100 MeV protons</span>
-          <span className="muted">pfu, log scale, last 24 h</span>
-        </div>
-      ) : null}
-      {data.length ? (
-        <div className="chart small" role="img" aria-label="GOES integral proton flux over the last 24 hours, log scale, with the S1 threshold at 10 pfu">
-          <ResponsiveContainer>
-            <LineChart data={data} margin={{ top: 6, right: 12, bottom: 0, left: -8 }}>
-              <CartesianGrid stroke="var(--grid)" vertical={false} />
-              <XAxis dataKey="t" type="number" scale="time" domain={['dataMin', 'dataMax']} tickFormatter={(t: number) => new Date(t).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} stroke="var(--axis)" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} minTickGap={40} />
-              <YAxis scale="log" domain={[lo, hi]} ticks={ticks} allowDataOverflow tickFormatter={(v: number) => fmtFlux(v)} stroke="var(--axis)" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} width={52} />
-              <Tooltip contentStyle={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} labelFormatter={(t) => fmtDateTime(new Date(Number(t)).toISOString())} formatter={(v, name) => [`${fmtFlux(Number(v))} pfu`, name]} />
-              <ReferenceLine y={S1_PFU} stroke="var(--status-warning)" strokeDasharray="4 3" label={{ value: 'S1 threshold', fill: 'var(--text-secondary)', fontSize: 11, position: 'insideTopRight' }} />
-              <Line dataKey="p10" name="≥10 MeV" stroke="var(--series-1)" strokeWidth={2} dot={false} isAnimationActive={false} connectNulls={false} />
-              <Line dataKey="p100" name="≥100 MeV" stroke="var(--series-4)" strokeWidth={1.5} dot={false} isAnimationActive={false} connectNulls={false} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      ) : null}
-      <div className="row" style={{ gap: 12, flexWrap: 'wrap', fontSize: '0.8rem' }}>
-        <span className="muted">Chance of an S1+ storm (NOAA):</span>
-        {r.forecast.map((f) => (
-          <span key={f.date} className="badge">{fmtDate(f.date)} · {f.s1Probability === null ? 'n/a' : `${f.s1Probability}%`}</span>
-        ))}
-      </div>
-      <p className="muted" style={{ fontSize: '0.75rem' }}>
-        Integral proton flux measured by NOAA's GOES satellite in geostationary orbit, and NOAA's official Solar Radiation Storm scale.
-        It describes the space environment near Earth, not anyone's dose: on the ground the atmosphere and magnetic field shield people.
-        For crews outside the magnetosphere, or on a spacewalk, rising ≥10 MeV flux is the signal mission control watches.
-      </p>
     </div>
   )
 }
@@ -156,25 +97,34 @@ function EventMap({ events }: { events: NASAEvent[] }) {
           </circle>
         ))}
       </svg>
-      <p className="muted" style={{ fontSize: '0.75rem' }}>Latitude/longitude grid (equator and 30° lines); hover a point for details. EONET locations are approximate.</p>
+      <p className="muted" style={{ fontSize: '0.75rem' }}>Dots mark approximate event locations. The middle line is the equator; north is up and east is right. Hover or focus a dot for details.</p>
     </div>
   )
 }
 
-const ENV_PARAMS = ['T2M', 'RH2M', 'ALLSKY_SFC_SW_DWN', 'WS10M', 'PS', 'ALLSKY_SFC_UV_INDEX']
+const ENVIRONMENT_FIELDS = [
+  { parameter: 'T2M', title: 'Air temperature', description: 'How warm the air is, in degrees Celsius (°C).' },
+  { parameter: 'RH2M', title: 'Humidity', description: 'How much moisture is in the air. A higher percentage feels more humid.' },
+  { parameter: 'ALLSKY_SFC_SW_DWN', title: 'Sunlight at the surface', description: 'Solar energy reaching each square metre in a day (kWh/m²/day). Higher values mean more sunlight.' },
+  { parameter: 'WS10M', title: 'Wind speed', description: 'Air movement measured 10 metres above ground, in metres per second (m/s).' },
+  { parameter: 'PS', title: 'Air pressure', description: 'The weight of the air above the site, in kilopascals (kPa).' },
+  { parameter: 'ALLSKY_SFC_UV_INDEX', title: 'UV index', description: 'The strength of ultraviolet sunlight. A higher index means more potential for skin and eye damage.' },
+]
 
 function EnvironmentPanel({ series }: { series: EnvironmentSeries[] }) {
   return (
-    <div className="grid two">
-      {ENV_PARAMS.map((p) => series.find((s) => s.parameter === p)).filter(Boolean).map((s) => {
-        const missing = s!.points.filter((p) => p.value === null).length
+    <div className="hazards-environment-grid">
+      {ENVIRONMENT_FIELDS.map((field) => {
+        const s = series.find((item) => item.parameter === field.parameter)
+        const latest = s?.points.filter((point) => point.value !== null).at(-1)
+        const missing = s?.points.filter((point) => point.value === null).length ?? 0
         return (
-          <div key={s!.parameter}>
-            <h3 style={{ fontSize: '0.85rem' }}>
-              {s!.longName} <span className="muted">({s!.unit})</span>
-            </h3>
-            <DailyLine points={s!.points} unit={s!.unit} label={s!.longName} />
-            {missing ? <p className="muted" style={{ fontSize: '0.75rem' }}>{missing} day(s) not yet available from POWER (processing latency).</p> : null}
+          <div className="hazards-metric" key={field.parameter}>
+            <h3>{field.title}</h3>
+            <p className="hazards-explainer">{field.description}</p>
+            {latest ? <p className="hazards-latest"><strong>{latest.value!.toFixed(1)} <small>{displayUnit(s!.unit)}</small></strong><span>Latest available · {fmtDate(latest.date)}</span></p> : null}
+            {s ? <DailyLine points={s.points} unit={displayUnit(s.unit)} label={field.title} /> : <div className="empty">NASA has not supplied this measurement.</div>}
+            {missing ? <p className="hazards-caption">{missing} day{missing === 1 ? '' : 's'} awaiting NASA data; gaps are left empty.</p> : null}
           </div>
         )
       })}
@@ -182,126 +132,142 @@ function EnvironmentPanel({ series }: { series: EnvironmentSeries[] }) {
   )
 }
 
+function ParticleReports({ events, from, to }: { events: NASAEvent[]; from: string; to: string }) {
+  const data = dailyParticleReports(events, from, to)
+  const total = data.reduce((sum, day) => sum + day.reports, 0)
+  return (
+    <>
+      <p className="hazards-explainer">Fast particles released by the Sun are one source of space radiation. Each bar counts solar energetic particle (SEP) events reported in NASA’s DONKI catalog on that date.</p>
+      <p className="hazards-latest"><strong>{total} <small>report{total === 1 ? '' : 's'}</small></strong><span>Across the displayed dates</span></p>
+      <div className="chart small" role="img" aria-label={`Daily NASA solar particle event reports: ${total} reports from ${from} to ${to}`}>
+        <ResponsiveContainer>
+          <BarChart data={data} margin={{ top: 10, right: 12, bottom: 0, left: -14 }}>
+            <CartesianGrid stroke="var(--grid)" vertical={false} />
+            <XAxis dataKey="date" tickFormatter={fmtDate} stroke="var(--axis)" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} minTickGap={24} />
+            <YAxis allowDecimals={false} domain={[0, (max: number) => Math.max(1, max)]} stroke="var(--axis)" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} tickLine={false} width={40} />
+            <Tooltip contentStyle={{ background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} labelFormatter={(date) => fmtDate(String(date))} formatter={(v) => [`${v} report(s)`, 'Solar particle events']} />
+            <Bar dataKey="reports" fill="var(--series-1)" radius={[4, 4, 0, 0]} isAnimationActive={false} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <p className="hazards-caption">{total === 0 ? 'No solar particle events were reported in this window. ' : ''}Zero means no catalog reports for that day. This is not a radiation-dose measurement or a safety rating; other space radiation is not shown.</p>
+    </>
+  )
+}
+
 export function SpacePage() {
-  const [days, setDays] = useState(30)
+  const today = useDailyDate()
   const [loc, setLoc] = useState(0)
-  const range = useMemo(() => ({ from: isoDay(new Date(Date.now() - days * DAY)), to: isoDay(new Date()) }), [days])
-  const apod = useAsync(() => api.apod(), [])
+  const range = useMemo(() => hazardRange(today), [today])
+  const apod = useAsync(() => api.apod(), [today])
   const sw = useAsync(() => api.spaceWeather(range.from, range.to), [range])
-  const earth = useAsync(() => api.earthEvents(Math.min(days, 60)), [days])
+  const earth = useAsync(() => api.earthEvents(HAZARD_HISTORY_DAYS), [today])
   const L = LOCATIONS[loc]!
   const env = useAsync(() => api.environment(L.lat, L.lon, range.from, range.to), [L, range])
-  const rad = useAsync(() => api.radiation(), [])
+  // Do not label the previous site's readings as the newly selected location while loading.
+  const environment = env.data?.data.latitude === Math.round(L.lat * 2) / 2 && env.data?.data.longitude === Math.round(L.lon * 2) / 2 ? env.data : undefined
 
   return (
-    <div>
-      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
-        <h1>Space &amp; environment</h1>
-        <div className="row" role="group" aria-label="Time range">
-          {[7, 30, 60].map((d) => (
-            <button key={d} type="button" className={d === days ? 'primary' : ''} aria-pressed={d === days} onClick={() => setDays(d)}>
-              {d} days
-            </button>
-          ))}
+    <div className="hazards-page">
+      <header className="hazards-header">
+        <div>
+          <p className="hazards-eyebrow">NASA HUMAN RESEARCH PROGRAM</p>
+          <h1>Hazards of spaceflight</h1>
+          <p className="hazards-intro">Five challenges crews face beyond Earth, explained simply.</p>
         </div>
-      </div>
+        <a className="hazards-citations" href="#/citations">Sources &amp; citations <span aria-hidden="true">↗</span></a>
+      </header>
 
-      <section className="section" style={{ marginTop: 0, marginBottom: 16 }} aria-label="NASA hazards of human spaceflight">
-        <h2 style={{ marginBottom: 4 }}>NASA’s hazards of human spaceflight</h2>
-        <p className="page-note" style={{ marginTop: 0 }}>
-          Three of the five hazards, with the source for each fact. Radiation is shown live below, and isolation is covered by the mood notes on the Triage page. Reference information, not a diagnosis.
-        </p>
+      <section className="hazards-overview" aria-labelledby="hazards-overview-title">
+        <h2 id="hazards-overview-title">The five hazards</h2>
+        <p className="hazards-section-note">These challenges can affect one another. The cards explain the hazards; the NASA observations below add context.</p>
         <HazardCards />
       </section>
 
-      <section className="section" style={{ marginTop: 0, marginBottom: 16 }}>
-        <Card title="Radiation environment — NOAA SWPC" actions={rad.data ? <NasaBadge {...rad.data} /> : null}>
-          {rad.error ? <ErrorNote error={rad.error} retry={rad.reload} /> : null}
-          {rad.loading && !rad.data ? <Loading what="radiation data" /> : null}
-          {rad.data ? <RadiationPanel r={rad.data.data} /> : null}
-        </Card>
-      </section>
+      <section className="hazards-data" aria-labelledby="hazards-data-title">
+        <div className="hazards-section-heading">
+          <div>
+            <h2 id="hazards-data-title">NASA observations</h2>
+            <p className="hazards-section-note">A rolling two-week view, refreshed every day at midnight UTC as NASA publishes data.</p>
+          </div>
+          <span className="badge hazards-date">{fmtDate(range.from)} – {fmtDate(range.to)} · UTC</span>
+        </div>
 
-      <div className="grid two">
-        <Card title="Space weather — NASA DONKI" actions={sw.data ? <NasaBadge {...sw.data} /> : null}
+        <Card title="Solar particle events" actions={sw.data ? <NasaBadge {...sw.data} /> : null}>
+          {sw.error ? <ErrorNote error={sw.error} retry={sw.reload} /> : null}
+          {sw.loading && !sw.data ? <Loading what="NASA particle reports" /> : null}
+          {sw.data ? <ParticleReports events={sw.data.data} from={range.from} to={range.to} /> : null}
+        </Card>
+
+        <Card title="Space weather" actions={sw.data ? <NasaBadge {...sw.data} /> : null}
           table={sw.data ? (
             <table className="data"><thead><tr><th>Time (UTC)</th><th>Type</th><th>Event</th></tr></thead>
-              <tbody>{sw.data.data.map((e) => <tr key={e.id}><td>{e.timestamp.slice(0, 16)}</td><td>{e.eventType}</td><td>{e.link ? <a href={e.link} target="_blank" rel="noreferrer">{e.title}</a> : e.title}</td></tr>)}</tbody></table>
+              <tbody>{sw.data.data.map((e) => <tr key={e.id}><td>{e.timestamp.slice(0, 16)}</td><td>{TYPE_LABEL[e.eventType] ?? e.eventType}</td><td>{e.link ? <a href={e.link} target="_blank" rel="noreferrer">{e.title}</a> : e.title}</td></tr>)}</tbody></table>
           ) : undefined}
         >
+          <p className="hazards-explainer">NASA’s DONKI catalog records activity from the Sun and disturbances around Earth. These reports describe the space environment, not a crew member’s exposure.</p>
           {sw.error ? <ErrorNote error={sw.error} retry={sw.reload} /> : null}
           {sw.loading && !sw.data ? <Loading what="space weather" /> : null}
           {sw.data ? (
-            <>
-              <SpaceWeatherTimeline events={sw.data.data} />
-              <h3 style={{ marginTop: 8 }}>Kp index during geomagnetic storms</h3>
-              <KpChart events={sw.data.data} />
-              <p className="muted" style={{ fontSize: '0.78rem' }}>
-                Flares (GOES X-ray class), CMEs (speed), geomagnetic storms (Kp 0–9; G1 = Kp 5) and solar energetic particle events from NASA's CCMC.
-                For crews, SEP events matter most: they raise radiation dose outside Earth's protective magnetosphere.
-              </p>
-            </>
-          ) : null}
-        </Card>
-
-        <Card title="Astronomy Picture of the Day" actions={apod.data ? <NasaBadge {...apod.data} /> : null}>
-          {apod.error ? <ErrorNote error={apod.error} retry={apod.reload} /> : null}
-          {apod.loading && !apod.data ? <Loading what="APOD" /> : null}
-          {apod.data ? (
-            <div className="apod stack">
-              {apod.data.data.imageUrl ? <img src={apod.data.data.imageUrl} alt={apod.data.data.altText ?? apod.data.data.title} loading="lazy" referrerPolicy="no-referrer" /> : null}
-              <strong>{apod.data.data.title}</strong>
-              <span className="credit">
-                {fmtDate(apod.data.data.date)} · {apod.data.data.credit ? `Image credit & copyright: ${apod.data.data.credit}` : 'Credit: NASA'} ·{' '}
-                <a href={apod.data.data.pageUrl} target="_blank" rel="noreferrer">
-                  source
-                </a>
-              </span>
-              <p style={{ fontSize: '0.85rem' }}>{apod.data.data.explanation.slice(0, 420)}{apod.data.data.explanation.length > 420 ? '…' : ''}</p>
+            <div className="hazards-weather-grid">
+              <div>
+                <h3>When events were reported</h3>
+                <p className="hazards-explainer">Each dot is a report. Flares are bursts of light; solar clouds are eruptions of gas; fast particles can add to radiation; magnetic storms disturb Earth’s magnetic field.</p>
+                <SpaceWeatherTimeline events={sw.data.data} />
+              </div>
+              <div>
+                <h3>Magnetic storm strength</h3>
+                <p className="hazards-explainer">Kp is a 0–9 scale of disturbance in Earth’s magnetic field. Higher means more disturbance. NASA’s storm catalog lists storm readings at Kp 5 or above, rather than a continuous record.</p>
+                <KpChart events={sw.data.data} />
+              </div>
             </div>
           ) : null}
-        </Card>
-      </div>
-
-      <section className="section grid two">
-        <Card title="Earth events — NASA EONET" actions={earth.data ? <NasaBadge {...earth.data} /> : null}>
-          {earth.error ? <ErrorNote error={earth.error} retry={earth.reload} /> : null}
-          {earth.loading && !earth.data ? <Loading what="Earth events" /> : null}
-          {earth.data ? (
-            <>
-              <EventMap events={earth.data.data} />
-              <ul className="list scroll">
-                {earth.data.data.slice(0, 40).map((e) => (
-                  <li key={e.id}>
-                    <span className="badge">{String(e.metadata.categoryTitle ?? e.eventType)}</span>
-                    <a href={e.link} target="_blank" rel="noreferrer">{e.title}</a>
-                    <span className="muted">{fmtDate(e.timestamp)}{e.severity ? ` · ${e.severity.label}` : ''}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="muted" style={{ fontSize: '0.75rem' }}>EONET: "for visualization and general information purposes only"; extents are approximations.</p>
-            </>
-          ) : null}
+          <p className="hazards-caption">NASA DONKI research reports may be revised. Missing reports do not mean conditions are safe.</p>
         </Card>
 
-        <Card
-          title="Surface environment — NASA POWER"
-          actions={
-            <>
-              <select aria-label="Location" value={loc} onChange={(e) => setLoc(Number(e.target.value))}>
-                {LOCATIONS.map((l, i) => <option key={l.name} value={i}>{l.name}</option>)}
-              </select>
-              {env.data ? <NasaBadge {...env.data} /> : null}
-            </>
-          }
-        >
+        <Card title="Surface environment on Earth" actions={<>
+          <select aria-label="Location" value={loc} onChange={(e) => setLoc(Number(e.target.value))}>
+            {LOCATIONS.map((l, i) => <option key={l.name} value={i}>{l.name}</option>)}
+          </select>
+          {environment ? <NasaBadge {...environment} /> : null}
+        </>}>
+          <p className="hazards-explainer">Daily NASA POWER estimates for the selected Earth location. These help explain environmental measurements; they do not describe conditions inside a spacecraft or on the Moon or Mars.</p>
           {env.error ? <ErrorNote error={env.error} retry={env.reload} /> : null}
-          {env.loading && !env.data ? <Loading what="POWER data" /> : null}
-          {env.data ? <EnvironmentPanel series={env.data.data.series} /> : null}
-          <p className="muted" style={{ fontSize: '0.75rem' }}>
-            Grid-cell values (≈0.5° meteorology, 1° solar) for the selected site, rounded to the POWER grid. Meteorology lags 2–3 days, solar 5–7 days; the UV index product can lag months.
-          </p>
+          {env.loading && !environment ? <Loading what="NASA surface data" /> : null}
+          {environment ? <EnvironmentPanel series={environment.data.series} /> : null}
+          <p className="hazards-caption">Values represent a surrounding grid area, not a sensor at the site. Weather usually arrives 2–3 days later, sunlight 5–7 days later; UV data can take longer. Graphs keep missing days empty.</p>
         </Card>
+
+        <div className="hazards-context-grid">
+          <Card title="Natural events on Earth" actions={earth.data ? <NasaBadge {...earth.data} /> : null}>
+            <p className="hazards-explainer">Wildfires, storms and other events tracked by NASA EONET. This Earth context is separate from the five spaceflight hazards.</p>
+            {earth.error ? <ErrorNote error={earth.error} retry={earth.reload} /> : null}
+            {earth.loading && !earth.data ? <Loading what="Earth events" /> : null}
+            {earth.data ? <>
+              <EventMap events={earth.data.data} />
+              {!earth.data.data.length ? <div className="empty">No Earth events were returned for this window.</div> : null}
+              <ul className="list scroll">
+                {earth.data.data.slice(0, 40).map((e) => <li key={e.id}>
+                  <span className="badge">{String(e.metadata.categoryTitle ?? e.eventType)}</span>
+                  <a href={e.link} target="_blank" rel="noreferrer">{e.title}</a>
+                  <span className="muted">Last observed {fmtDate(typeof e.metadata.lastObserved === 'string' ? e.metadata.lastObserved : e.timestamp)}{e.severity ? ` · ${e.severity.label}` : ''}</span>
+                </li>)}
+              </ul>
+              <p className="hazards-caption">Up to 60 events requested; the first 40 are listed. Locations are approximate and intended for general information.</p>
+            </> : null}
+          </Card>
+
+          <Card title="Astronomy Picture of the Day" actions={apod.data ? <NasaBadge {...apod.data} /> : null}>
+            {apod.error ? <ErrorNote error={apod.error} retry={apod.reload} /> : null}
+            {apod.loading && !apod.data ? <Loading what="NASA’s daily picture" /> : null}
+            {apod.data ? <div className="apod stack">
+              {apod.data.data.imageUrl ? <img src={apod.data.data.imageUrl} alt={apod.data.data.altText ?? apod.data.data.title} loading="lazy" referrerPolicy="no-referrer" /> : null}
+              <strong>{apod.data.data.title}</strong>
+              <span className="credit">{fmtDate(apod.data.data.date)} · {apod.data.data.credit ? `Image credit & copyright: ${apod.data.data.credit}` : 'Credit: NASA'} · <a href={apod.data.data.pageUrl} target="_blank" rel="noreferrer">source</a></span>
+              <p>{apod.data.data.explanation.slice(0, 420)}{apod.data.data.explanation.length > 420 ? '…' : ''}</p>
+            </div> : null}
+          </Card>
+        </div>
       </section>
     </div>
   )

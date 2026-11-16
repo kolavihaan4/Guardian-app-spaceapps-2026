@@ -97,51 +97,90 @@
 
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax slice">
 <defs>
- <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef2f6"/><stop offset=".5" stop-color="#e3eaf1"/><stop offset="1" stop-color="#d6e0e9"/></linearGradient>
- <linearGradient id="peak" x1="0" y1="0" x2="0" y2="1"><stop offset=".15" stop-color="#a7bacb"/><stop offset=".42" stop-color="#c3d0dc"/><stop offset=".62" stop-color="#dde5ec"/></linearGradient>
- <linearGradient id="peak2" x1="0" y1="0" x2="0" y2="1"><stop offset=".35" stop-color="#9aafc2"/><stop offset=".6" stop-color="#c4d1dd"/><stop offset=".75" stop-color="#dce4eb"/></linearGradient>
- <linearGradient id="lav" x1="0" y1="0" x2="0" y2="1"><stop offset=".3" stop-color="#c8c5de"/><stop offset=".55" stop-color="#d9dbea"/><stop offset=".75" stop-color="#e2e7ef"/></linearGradient>
- <linearGradient id="lav2" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#b9c0d8"/><stop offset=".68" stop-color="#d4dbe7"/></linearGradient>
- <linearGradient id="band" x1="0" y1="0" x2="0" y2="1"><stop offset=".55" stop-color="#b3c2d1"/><stop offset=".78" stop-color="#d7e0e8"/></linearGradient>
- <linearGradient id="fog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f7fa" stop-opacity="0"/><stop offset=".5" stop-color="#f4f7fa" stop-opacity=".72"/><stop offset="1" stop-color="#f4f7fa" stop-opacity="0"/></linearGradient>
- <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef3f7" stop-opacity="0"/><stop offset="1" stop-color="#eef3f7" stop-opacity=".4"/></linearGradient>
- <linearGradient id="lake" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2e9f0"/><stop offset=".55" stop-color="#d3dde7"/><stop offset="1" stop-color="#c9d4df"/></linearGradient>
- <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#aebccb" stop-opacity="0"/><stop offset=".45" stop-color="#aebccb" stop-opacity=".55"/><stop offset="1" stop-color="#9eaec0" stop-opacity=".8"/></linearGradient>
- <radialGradient id="veil" cx="50%" cy="48%" r="50%"><stop offset="0" stop-color="#f3f6f9" stop-opacity=".42"/><stop offset="1" stop-color="#f3f6f9" stop-opacity="0"/></radialGradient>
+ <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e7ebee"/><stop offset=".5" stop-color="#e0e6eb"/><stop offset="1" stop-color="#d6dfe6"/></linearGradient>
+ <linearGradient id="peak" x1="0" y1="0" x2="0" y2="1"><stop offset=".15" stop-color="#b7cbe1"/><stop offset=".42" stop-color="#d2ddea"/><stop offset=".62" stop-color="#dbe2e8"/></linearGradient>
+ <linearGradient id="peak2" x1="0" y1="0" x2="0" y2="1"><stop offset=".35" stop-color="#9cb8d8"/><stop offset=".6" stop-color="#c8d5e5"/><stop offset=".75" stop-color="#dae2e7"/></linearGradient>
+ <linearGradient id="lav" x1="0" y1="0" x2="0" y2="1"><stop offset=".3" stop-color="#c1b2f0"/><stop offset=".55" stop-color="#d8cef6"/><stop offset=".75" stop-color="#dfe4ea"/></linearGradient>
+ <linearGradient id="lav2" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#b7a5ee"/><stop offset=".68" stop-color="#d4dce5"/></linearGradient>
+ <linearGradient id="band" x1="0" y1="0" x2="0" y2="1"><stop offset=".55" stop-color="#afc2d5"/><stop offset=".78" stop-color="#d7dfe6"/></linearGradient>
+ <linearGradient id="fog" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ebeff1" stop-opacity="0"/><stop offset=".5" stop-color="#ebeff1" stop-opacity=".66"/><stop offset="1" stop-color="#ebeff1" stop-opacity="0"/></linearGradient>
+ <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8ecef" stop-opacity="0"/><stop offset="1" stop-color="#e8ecef" stop-opacity=".37"/></linearGradient>
+ <linearGradient id="lake" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dfe5eb" stop-opacity="0"/><stop offset=".1" stop-color="#dfe5eb"/><stop offset=".55" stop-color="#d4dce5"/><stop offset="1" stop-color="#ccd7e0"/></linearGradient>
+ <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#86a6cb" stop-opacity="0"/><stop offset=".45" stop-color="#86a6cb" stop-opacity=".55"/><stop offset="1" stop-color="#5181b8" stop-opacity=".8"/></linearGradient>
+ <radialGradient id="veil" cx="50%" cy="48%" r="50%"><stop offset="0" stop-color="#ebeef0" stop-opacity=".39"/><stop offset="1" stop-color="#ebeef0" stop-opacity="0"/></radialGradient>
+ <linearGradient id="dRidge" gradientUnits="userSpaceOnUse" x1="0" y1="760" x2="0" y2="1000"><stop offset="0" stop-color="#92b0d3"/><stop offset="1" stop-color="#b9cbdf"/></linearGradient>
+ <linearGradient id="dFar" gradientUnits="userSpaceOnUse" x1="0" y1="660" x2="0" y2="1025"><stop offset="0" stop-color="#6e96c4"/><stop offset="1" stop-color="#9cb6d4"/></linearGradient>
+ <linearGradient id="dHor" gradientUnits="userSpaceOnUse" x1="0" y1="850" x2="0" y2="1020"><stop offset="0" stop-color="#86a6cb"/><stop offset="1" stop-color="#aac0d8"/></linearGradient>
+ <linearGradient id="dMid" gradientUnits="userSpaceOnUse" x1="0" y1="650" x2="0" y2="1220"><stop offset="0" stop-color="#477cb8"/><stop offset="1" stop-color="#6993c3"/></linearGradient>
+ <linearGradient id="dBack" gradientUnits="userSpaceOnUse" x1="0" y1="1000" x2="0" y2="1280"><stop offset="0" stop-color="#406fa5"/><stop offset="1" stop-color="#6389b4"/></linearGradient>
+ <linearGradient id="dFront" gradientUnits="userSpaceOnUse" x1="0" y1="1020" x2="0" y2="1400"><stop offset="0" stop-color="#345e8d"/><stop offset="1" stop-color="#50749c"/></linearGradient>
+ <linearGradient id="dNear" gradientUnits="userSpaceOnUse" x1="0" y1="560" x2="0" y2="1400"><stop offset="0" stop-color="#284a71"/><stop offset="1" stop-color="#335378"/></linearGradient>
  <filter id="b6" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="6"/></filter>
  <filter id="b3" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation="3"/></filter>
  <filter id="b1"><feGaussianBlur stdDeviation="1.2"/></filter>
  <filter id="b30" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="30"/></filter>
 </defs>
 <rect width="${W}" height="${H}" fill="url(#sky)"/>
-<path d="${far}" fill="url(#peak)" filter="url(#b3)"/>
+<path d="${far}" fill="url(#peak)" filter="url(#b6)"/>
 <path d="M-60 610 C 110 530 260 470 430 500 C 640 540 780 600 1020 612 C 1220 622 1360 640 1520 664 C 1800 700 2100 760 2460 800 L2460 ${H} L-60 ${H} Z" fill="url(#lav)" filter="url(#b3)"/>
 <rect x="0" y="560" width="${W}" height="300" fill="url(#fog)" filter="url(#b30)"/>
 <path d="${near}" fill="url(#peak2)" filter="url(#b3)"/>
-<path d="M-60 712 C 150 650 330 618 530 660 C 770 708 990 726 1260 724 C 1500 722 1700 750 1950 790 C 2150 812 2300 822 2460 828 L2460 ${H} L-60 ${H} Z" fill="url(#lav2)" opacity=".85" filter="url(#b6)"/>
-<path d="${leftRidge}" fill="#a9b7cb" opacity=".55" filter="url(#b6)"/>
-<g fill="#8ea1b4" opacity=".62" filter="url(#b3)">${farTrees}</g>
+<path d="M-60 712 C 150 650 330 618 530 660 C 770 708 990 726 1260 724 C 1500 722 1700 750 1950 790 C 2150 812 2300 822 2460 828 L2460 ${H} L-60 ${H} Z" fill="url(#lav2)" opacity=".93" filter="url(#b6)"/>
+<path d="${leftRidge}" fill="url(#dRidge)" opacity=".62" filter="url(#b6)"/>
+<g fill="url(#dFar)" opacity=".7" filter="url(#b3)">${farTrees}</g>
 <path d="M-60 820 C 300 770 620 800 920 812 C 1240 824 1600 790 2460 800 L2460 ${H} L-60 ${H} Z" fill="url(#band)" opacity=".7" filter="url(#b6)"/>
 <rect x="0" y="780" width="${W}" height="380" fill="url(#fog)" filter="url(#b30)"/>
-<g fill="#97a8ba" opacity=".55" filter="url(#b3)">${horizon}<rect x="-40" y="986" width="${W + 80}" height="34"/></g>
+<g fill="url(#dHor)" opacity=".6" filter="url(#b3)">${horizon}<rect x="-40" y="986" width="${W + 80}" height="34"/></g>
 <rect x="-20" y="1010" width="${W + 40}" height="390" fill="url(#lake)" filter="url(#b3)"/>
-<g fill="#93a5b8" opacity=".15" filter="url(#b6)" transform="translate(0 1012) scale(1 -0.5) translate(0 -1012)">${horizon}</g>
-<rect x="-40" y="1004" width="${W + 80}" height="14" fill="#f4f7fa" opacity=".6" filter="url(#b6)"/>
-<g fill="#7a8ea2" opacity=".78" filter="url(#b1)">${midTrees}</g>
-<rect x="0" y="1050" width="${W}" height="240" fill="url(#fog)" opacity=".55" filter="url(#b30)"/>
-<g fill="#8798ab" opacity=".5" filter="url(#b3)">${floorBack}</g>
-<rect x="0" y="1130" width="${W}" height="220" fill="url(#fog)" opacity=".45" filter="url(#b30)"/>
-<g fill="#7d8fa3" opacity=".6" filter="url(#b1)">${floorFront}</g>
+<g fill="#8da4be" opacity=".15" filter="url(#b6)" transform="translate(0 1012) scale(1 -0.5) translate(0 -1012)">${horizon}</g>
+<rect x="-40" y="1004" width="${W + 80}" height="14" fill="#ebeff1" opacity=".55" filter="url(#b6)"/>
+<g fill="url(#dMid)" opacity=".84" filter="url(#b1)">${midTrees}</g>
+<rect x="0" y="1050" width="${W}" height="240" fill="url(#fog)" opacity=".4" filter="url(#b30)"/>
+<g fill="url(#dBack)" opacity=".66" filter="url(#b3)">${floorBack}</g>
+<rect x="0" y="1130" width="${W}" height="220" fill="url(#fog)" opacity=".3" filter="url(#b30)"/>
+<g fill="url(#dFront)" opacity=".76" filter="url(#b1)">${floorFront}</g>
 <rect x="0" y="1180" width="${W}" height="220" fill="url(#ground)"/>
-<g fill="#65798d" opacity=".85">${nearTrees}</g>
+<g fill="url(#dNear)" opacity=".94">${nearTrees}</g>
 <ellipse cx="1200" cy="700" rx="980" ry="560" fill="url(#veil)"/>
 <rect x="0" y="1200" width="${W}" height="200" fill="url(#floor)"/>
 </svg>`;
   }
 
+  // Three small things move in the sky behind every page: a craft that crosses every half minute or
+  // so, a capsule and a rocket. They are styled in css/sitenav.css, which the home site and the health
+  // app both load, and hidden under reduced motion. Made once per backdrop, however often this runs.
+  function sky(el) {
+    if (!el || el.querySelector('.sky-pass')) return;
+    const pass = document.createElement('span');
+    pass.className = 'sky-pass';
+    pass.setAttribute('aria-hidden', 'true');
+    el.appendChild(pass);
+    // and, less often, a capsule comes down under its parachutes and lands on the lake
+    const chute = document.createElement('span');
+    chute.className = 'sky-chute';
+    chute.setAttribute('aria-hidden', 'true');
+    chute.innerHTML = '<svg viewBox="0 0 40 52"><g fill="#fdfdfd" stroke="#d9805a" stroke-width="0.9" stroke-linejoin="round">'
+      + '<path d="M1 15 A7 7 0 0 1 15 15 Z"/><path d="M25 15 A7 7 0 0 1 39 15 Z"/><path d="M12 11 A8 8 0 0 1 28 11 Z"/></g>'
+      + '<path d="M1 15 L18 38 M15 15 L19 38 M12 11 L19 38 M28 11 L21 38 M25 15 L21 38 M39 15 L22 38" fill="none" stroke="#2c4a6e" stroke-width="0.45" opacity="0.75"/>'
+      + '<path d="M16 38 L24 38 L27 46 Q20 49.5 13 46 Z" fill="#1f3550"/></svg>';
+    el.appendChild(chute);
+    // and every fifteen seconds a small Saturn V, the Apollo 11 rocket, lifts off from the far shore
+    const rocket = document.createElement('span');
+    rocket.className = 'sky-rocket';
+    rocket.setAttribute('aria-hidden', 'true');
+    rocket.innerHTML = '<svg viewBox="0 0 14 78"><g class="sky-rocket__flame"><path d="M3.6 56 Q7 80 10.4 56 Z" fill="#f59a3c"/><path d="M5.2 56 Q7 70 8.8 56 Z" fill="#ffe9a6"/></g>'
+      + '<path d="M7 0 V6" stroke="#55657a" stroke-width="0.5"/><path d="M5.6 9.5 L7 5.4 L8.4 9.5 Z" fill="#dfe5ec" stroke="#3a4b60" stroke-width="0.25"/>'
+      + '<g fill="#f8f9fb" stroke="#3a4b60" stroke-width="0.25"><rect x="5.3" y="9.5" width="3.4" height="8.5"/><path d="M5.3 18 L3.9 23 H10.1 L8.7 18 Z"/><rect x="3.9" y="23" width="6.2" height="13"/><rect x="3.3" y="36" width="7.4" height="19"/></g>'
+      + '<g fill="#1c2836"><rect x="5.3" y="12.5" width="3.4" height="1.3"/><rect x="3.9" y="29.5" width="6.2" height="1.8"/><rect x="3.3" y="40" width="1.9" height="8.5"/><rect x="8.8" y="40" width="1.9" height="8.5"/>'
+      + '<path d="M3.3 49.5 L1 56 H3.3 Z"/><path d="M10.7 49.5 L13 56 H10.7 Z"/><rect x="4.2" y="55" width="5.6" height="1.4"/></g></svg>';
+    el.appendChild(rocket);
+  }
+
   S.scenery = {
+    sky,
     // resolves once the picture is decoded and on screen (or failed: the CSS gradient stays)
     render(el) {
+      sky(el);
       return new Promise(resolve => {
         if (!el) return resolve();
         const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(build());
@@ -152,4 +191,6 @@
       });
     }
   };
+  // the backdrop is in the page before this script on both sites, so the sky does not wait for render()
+  sky(document.getElementById('scenery'));
 })();

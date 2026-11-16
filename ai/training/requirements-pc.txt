@@ -1,0 +1,5 @@
+# For train_cuda.py and merge_adapter.py on the PC. These are the versions the scripts were tested with.
+# PyTorch is installed separately, from the NVIDIA build index (README-PC.md, step 4).
+transformers==5.23.0
+peft==0.21.3
+accelerate==1.15.0

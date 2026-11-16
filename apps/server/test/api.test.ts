@@ -2,50 +2,62 @@ import type { MeResponse, VitalsResponse } from '@astrovitals/shared'
 import request from 'supertest'
 import { describe, expect, it } from 'vitest'
 import { runRetention } from '../src/retention.ts'
-import { fixture, fixtureJson, makeTestContext, mockFetch, ORIGIN, type MockRoute } from './helpers.ts'
+import { fixture, fixtureJson, makeTestContext, mockFetch, ORIGIN, signedIn, supabaseToken, type MockRoute } from './helpers.ts'
 
-const PASSWORD = 'correct-horse-battery'
-
-async function signedIn(app: ReturnType<typeof makeTestContext>['app'], email = 'astro@example.com') {
-  const agent = request.agent(app)
-  await agent.post('/api/auth/register').set('Origin', ORIGIN).send({ email, password: PASSWORD }).expect(201)
-  return agent
-}
-
-describe('auth and sessions', () => {
-  it('registers, reads /me, logs out, logs back in', async () => {
-    const { app } = makeTestContext()
-    const agent = await signedIn(app)
-    const me = (await agent.get('/api/me').expect(200)).body as MeResponse
+describe('sign-in through Supabase', () => {
+  it('trusts a Supabase access token: /me answers, with a local row keyed by the Supabase user id', async () => {
+    const { app, db } = makeTestContext()
+    const { token, id } = supabaseToken('astro@example.com')
+    const me = (await request(app).get('/api/me').set('Authorization', `Bearer ${token}`).expect(200)).body as MeResponse
+    expect(me.user.id).toBe(id)
     expect(me.user.email).toBe('astro@example.com')
     expect(me.user.demoMode).toBe(true)
     expect(me.providers.map((p) => p.id)).toEqual(['demo', 'google-health', 'apple-health-export', 'healthkit-companion', 'garmin'])
-    await agent.post('/api/auth/logout').set('Origin', ORIGIN).expect(200)
-    await agent.get('/api/me').expect(401)
-    await agent.post('/api/auth/login').set('Origin', ORIGIN).send({ email: 'ASTRO@example.com', password: PASSWORD }).expect(200)
-    await agent.get('/api/me').expect(200)
+    await request(app).get('/api/me').set('Authorization', `Bearer ${token}`).expect(200)
+    expect(db.prepare('SELECT id, email, password_hash FROM users').all()).toEqual([{ id, email: 'astro@example.com', password_hash: '' }])
   })
 
-  it('sets an httpOnly SameSite=Lax session cookie and stores only its HMAC', async () => {
-    const { app, db } = makeTestContext()
-    const res = await request(app).post('/api/auth/register').set('Origin', ORIGIN).send({ email: 'a@example.com', password: PASSWORD }).expect(201)
-    const cookie = String(res.headers['set-cookie'])
-    expect(cookie).toMatch(/HttpOnly/)
-    expect(cookie).toMatch(/SameSite=Lax/)
-    const token = /av_session=([^;]+)/.exec(cookie)![1]!
-    const stored = db.prepare('SELECT id_hash FROM sessions').all() as { id_hash: string }[]
-    expect(stored).toHaveLength(1)
-    expect(stored[0]!.id_hash).not.toBe(token)
-  })
-
-  it('rejects weak passwords, duplicate accounts and bad credentials without echoing input', async () => {
+  it('refuses a missing, malformed or unknown token', async () => {
     const { app } = makeTestContext()
-    const weak = await request(app).post('/api/auth/register').set('Origin', ORIGIN).send({ email: 'a@example.com', password: 'short' }).expect(400)
-    expect(JSON.stringify(weak.body)).not.toContain('short')
-    await signedIn(app, 'b@example.com')
-    await request(app).post('/api/auth/register').set('Origin', ORIGIN).send({ email: 'b@example.com', password: PASSWORD }).expect(409)
-    await request(app).post('/api/auth/login').set('Origin', ORIGIN).send({ email: 'b@example.com', password: 'wrong-password-123' }).expect(401)
-    await request(app).post('/api/auth/login').set('Origin', ORIGIN).send({ email: 'nobody@example.com', password: PASSWORD }).expect(401)
+    await request(app).get('/api/me').expect(401)
+    await request(app).get('/api/me').set('Authorization', 'Bearer short').expect(401)
+    await request(app).get('/api/me').set('Authorization', 'Basic YWJjOmRlZg==').expect(401)
+    await request(app).get('/api/me').set('Authorization', 'Bearer eyJ.not-a-token-supabase-knows').expect(401)
+  })
+
+  it('asks Supabase once a minute per token, keyed by a hash, and again for tokens it refused', async () => {
+    const { app, supabaseCalls } = makeTestContext()
+    const { token } = supabaseToken()
+    for (let i = 0; i < 3; i++) await request(app).get('/api/me').set('Authorization', `Bearer ${token}`).expect(200)
+    expect(supabaseCalls).toHaveLength(1)
+    for (let i = 0; i < 2; i++) await request(app).get('/api/me').set('Authorization', 'Bearer eyJ.unknown-token-0123456789').expect(401)
+    expect(supabaseCalls).toHaveLength(3)
+  })
+
+  it('answers 502, not 401, when Supabase cannot be reached', async () => {
+    const { app, ctx } = makeTestContext()
+    ctx.fetchImpl = (async () => {
+      throw new TypeError('fetch failed')
+    }) as typeof fetch
+    const res = await request(app).get('/api/me').set('Authorization', `Bearer ${supabaseToken().token}`).expect(502)
+    expect(JSON.stringify(res.body)).not.toMatch(/eyJ/)
+  })
+
+  it('has no password routes of its own any more', async () => {
+    const { app } = makeTestContext()
+    for (const path of ['/api/auth/register', '/api/auth/login', '/api/auth/logout']) {
+      await request(app).post(path).set('Origin', ORIGIN).send({ email: 'a@example.com', password: 'correct-horse-battery' }).expect(404)
+    }
+  })
+
+  it('keeps the same local user when Supabase reports a new email, and never lets an old account block a new one', async () => {
+    const { app, db, repo } = makeTestContext()
+    db.prepare("INSERT INTO users (id, email, password_hash, demo_mode, created_at) VALUES ('old-local', 'shared@example.com', 'scrypt$x', 1, '2026-01-01')").run()
+    const { token, id } = supabaseToken('shared@example.com')
+    const me = (await request(app).get('/api/me').set('Authorization', `Bearer ${token}`).expect(200)).body as MeResponse
+    expect(me.user).toMatchObject({ id, email: 'shared@example.com' })
+    expect(repo.userById(id)?.email).toBe(`${id}@users.invalid`)
+    expect(repo.userById('old-local')?.email).toBe('shared@example.com')
   })
 
   it('blocks cross-origin and origin-less state-changing requests (CSRF)', async () => {
@@ -315,7 +327,6 @@ describe('privacy controls', () => {
     await agent.delete('/api/me').set('Origin', ORIGIN).send({ confirm: 'nope' }).expect(400)
     await agent.delete('/api/me').set('Origin', ORIGIN).send({ confirm: 'DELETE' }).expect(200)
     expect(db.prepare('SELECT COUNT(*) AS n FROM users').get()).toEqual({ n: 0 })
-    expect(db.prepare('SELECT COUNT(*) AS n FROM sessions').get()).toEqual({ n: 0 })
   })
 
   it('rejects an Apple Health export that is cut off before </HealthData>', async () => {
@@ -340,7 +351,7 @@ describe('privacy controls', () => {
 })
 
 describe('log hygiene', () => {
-  it('never writes health values, tokens, emails, passwords or OAuth codes to the logs', async () => {
+  it('never writes health values, access tokens, emails or OAuth codes to the logs', async () => {
     const state = { revoked: [] as string[], tokenBodies: [] as string[] }
     const env = { GOOGLE_HEALTH_CLIENT_ID: 'client-123', GOOGLE_HEALTH_CLIENT_SECRET: 'shh-secret' }
     const f = mockFetch([
@@ -349,7 +360,8 @@ describe('log hygiene', () => {
     ])
     const { app, sink } = makeTestContext({ fetchImpl: f, env })
     void state
-    const agent = await signedIn(app, 'secret.person@example.com')
+    const { token } = supabaseToken('secret.person@example.com')
+    const agent = request.agent(app).set('Authorization', `Bearer ${token}`)
     await agent.post('/api/providers/apple-health-export/import?days=90').set('Origin', ORIGIN).set('content-type', 'application/xml').send(fixture('apple-health/export-sample.xml')).expect(200)
     const { url } = (await agent.post('/api/providers/google-health/connect').set('Origin', ORIGIN)).body as { url: string }
     await agent.get(`/api/providers/google-health/callback?code=SUPER-SECRET-CODE&state=${new URL(url).searchParams.get('state')}`).expect(303)
@@ -357,7 +369,7 @@ describe('log hygiene', () => {
 
     const logs = sink.text()
     expect(logs.length).toBeGreaterThan(0)
-    for (const forbidden of ['secret.person@example.com', PASSWORD, 'SUPER-SECRET-CODE', 'LEAKCHECK', 'shh-secret', '"value":', '0.97', 'Test’s Apple Watch']) {
+    for (const forbidden of ['secret.person@example.com', token, token.slice(-24), 'SUPER-SECRET-CODE', 'LEAKCHECK', 'shh-secret', '"value":', '0.97', 'Test’s Apple Watch']) {
       expect(logs).not.toContain(forbidden)
     }
     expect(logs).toContain('"path":"/api/providers/google-health/callback"') // path kept, query string stripped

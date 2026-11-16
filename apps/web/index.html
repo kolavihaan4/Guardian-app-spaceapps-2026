@@ -2,19 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="si-disclosure" content="Development assisted by Codex and Claude. Code and data provenance: /si-provenance.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="only light" />
     <!-- The design is light-only. This asks the Dark Reader extension not to recolour the page. -->
     <meta name="darkreader-lock" />
     <meta name="theme-color" content="#14273b" />
-    <meta name="description" content="Guardian Space Agency: a health assistant for astronauts on the space station, the Moon, Mars and in deep space. A NASA Space Apps 2026 prototype, not a diagnostic tool." />
+    <meta name="description" content="Guardian: a health assistant for astronauts on the space station, the Moon, Mars and in deep space. A NASA Space Apps 2026 prototype, not a diagnostic tool." />
     <link rel="icon" href="/home/assets/favicon.png" type="image/png" />
     <link rel="apple-touch-icon" href="/home/assets/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap" />
     <link rel="stylesheet" href="/home/css/sitenav.css" />
-    <title>Guardian · Crew health</title>
+    <title>Guardian · User health</title>
     <script>
       // The bare address is the public home page; the app's own pages all carry a #/route.
       if (!location.hash || location.hash === '#' || location.hash === '#/') location.replace('/home/index.html')
@@ -31,7 +32,8 @@
         }
       })()
     </script>
-  </head>
+  <link rel="stylesheet" href="/home/css/tour.css" />
+</head>
   <body>
     <div class="scenery" id="scenery" aria-hidden="true"></div>
     <div id="root"></div>
@@ -42,10 +44,14 @@
     </div>
     <!-- The logo mark, opening animation and scenery come from the home site's own scripts. -->
     <script src="/home/js/icons.js"></script>
+    <script src="/home/vendor/supabase-js-2.118.0.js"></script>
+    <script src="/home/js/auth.js"></script>
+    <script src="/home/js/env.js"></script>
     <script src="/home/js/sitenav.js"></script>
     <script src="/home/js/scenery.js"></script>
     <script src="/home/js/mark.js"></script>
     <script src="/home/js/loader.js"></script>
+    <script src="/home/js/tour.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

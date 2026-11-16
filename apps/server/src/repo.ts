@@ -46,10 +46,23 @@ export class Repo {
   constructor(readonly db: Db) {}
 
   // ── users ────────────────────────────────────────────────────────────────
-  createUser(u: { id: string; email: string; passwordHash: string }): void {
-    this.db
-      .prepare('INSERT INTO users (id, email, password_hash, demo_mode, created_at) VALUES (?, ?, ?, 1, ?)')
-      .run(u.id, u.email, u.passwordHash, now())
+  /**
+   * The local row for a Supabase user, created on first sight and keyed by the Supabase user id.
+   * Passwords live in Supabase, so `password_hash` is left empty. An account from before Supabase
+   * sign-in may still hold the same email; it cannot be signed in to any more and must not block
+   * this one, so the new row then stores a placeholder (the email shown always comes from Supabase).
+   */
+  userForSupabase(id: string, email: string): UserRow {
+    const row = this.userById(id)
+    if (row) {
+      if (email && row.email.toLowerCase() !== email.toLowerCase() && !this.userByEmail(email)) {
+        this.db.prepare('UPDATE users SET email = ? WHERE id = ?').run(email, id)
+      }
+      return row
+    }
+    const stored = email && !this.userByEmail(email) ? email : `${id}@users.invalid`
+    this.db.prepare("INSERT OR IGNORE INTO users (id, email, password_hash, demo_mode, created_at) VALUES (?, ?, '', 1, ?)").run(id, stored, now())
+    return this.userById(id)!
   }
   userByEmail(email: string): UserRow | undefined {
     return this.db.prepare('SELECT * FROM users WHERE email = ?').get(email) as UserRow | undefined
@@ -62,22 +75,6 @@ export class Repo {
   }
   deleteUser(userId: string): void {
     this.db.prepare('DELETE FROM users WHERE id = ?').run(userId) // cascades to everything
-  }
-
-  // ── sessions ─────────────────────────────────────────────────────────────
-  createSession(idHash: string, userId: string, expiresAt: string): void {
-    this.db.prepare('INSERT INTO sessions (id_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)').run(idHash, userId, now(), expiresAt)
-  }
-  sessionUser(idHash: string): UserRow | undefined {
-    return this.db
-      .prepare('SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.id_hash = ? AND s.expires_at > ?')
-      .get(idHash, now()) as UserRow | undefined
-  }
-  deleteSession(idHash: string): void {
-    this.db.prepare('DELETE FROM sessions WHERE id_hash = ?').run(idHash)
-  }
-  deleteUserSessions(userId: string): void {
-    this.db.prepare('DELETE FROM sessions WHERE user_id = ?').run(userId)
   }
 
   // ── OAuth state (CSRF + PKCE) ──────────────────────────────────────────────

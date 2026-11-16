@@ -1,265 +1,36 @@
-import { METRIC_INFO, type Metric, type MetricType, type SleepData, type VitalsResponse } from '@astrovitals/shared'
-import { useMemo, useState } from 'react'
-import { DailyBarChart, SleepStagesChart, TimeSeriesChart } from '../components/charts'
-import { Card, ErrorNote, fmtDate, fmtDateTime, Loading, QualityNote, SourceBadge, timeAgo, useAsync } from '../components/common'
-import { api } from '../lib/api'
-import { dailySum, DAY, formatValue, latest, seriesBySource } from '../lib/series'
+import '../user-vitals.css'
+import { useEffect, useMemo, useState } from 'react'
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAxis, YAxis } from 'recharts'
+import { Card, ErrorNote, Loading, useAsync, VitalsTabs } from '../components/common'
+import { auth } from '../lib/auth'
+import { cardReadings, VITAL_CHOICES, type VitalKey } from '../lib/cardVitals'
 
-const TILES: MetricType[] = ['heart_rate', 'resting_heart_rate', 'spo2', 'respiratory_rate', 'skin_temperature', 'skin_temperature_deviation', 'hrv_rmssd', 'hrv_sdnn']
-const HISTORY: MetricType[] = ['resting_heart_rate', 'hrv_rmssd', 'hrv_sdnn', 'spo2', 'respiratory_rate', 'skin_temperature', 'skin_temperature_deviation']
-
-export function useRange(defaultDays = 7) {
-  const [days, setDays] = useState(defaultDays)
-  const range = useMemo(() => {
-    const to = new Date()
-    return { days, from: new Date(to.getTime() - days * DAY).toISOString(), to: to.toISOString() }
-  }, [days])
-  return { ...range, setDays }
-}
-
-export function RangePicker({ days, setDays, options = [1, 7, 14, 30] }: { days: number; setDays: (d: number) => void; options?: number[] }) {
-  return (
-    <div className="row" role="group" aria-label="Time range">
-      {options.map((d) => (
-        <button key={d} type="button" aria-pressed={days === d} className={days === d ? 'primary' : ''} onClick={() => setDays(d)}>
-          {d === 1 ? '24 h' : `${d} days`}
-        </button>
-      ))}
-    </div>
-  )
-}
-
-function VitalTile({ type, metrics }: { type: MetricType; metrics: Metric[] }) {
-  const m = latest(metrics, type)
-  const info = METRIC_INFO[type]
-  if (!m) return null
-  return (
-    <div className="card tile">
-      <div className="label">{info.label}</div>
-      <div className="value">
-        {formatValue(type, m.value)}
-        <span className="unit">{info.unit}</span>
-      </div>
-      <div className="stack" style={{ gap: 4 }}>
-        <SourceBadge source={m.source} simulated={m.simulated} />
-        <span className="meta">
-          {m.aggregation === 'daily' ? `Daily value for ${fmtDate(m.timestamp.slice(0, 10))}` : `${fmtDateTime(m.timestamp)} (${timeAgo(m.timestamp)})`}
-          {m.raw ? ` · original ${m.raw.value} ${m.raw.unit}` : ''}
-        </span>
-        <QualityNote quality={m.quality} />
-      </div>
-    </div>
-  )
-}
-
-function sleepNights(sleep: SleepData[]) {
-  return sleep.map((s) => {
-    const h = (stage: string) => s.stages.filter((x) => x.stage === stage).reduce((a, x) => a + (Date.parse(x.end) - Date.parse(x.start)) / 3_600_000, 0)
-    return { date: s.end.slice(0, 10), deep: h('deep'), light: h('light'), rem: h('rem'), awake: h('awake'), asleep: s.stages.length ? h('asleep') : s.minutesAsleep / 60 }
-  })
-}
-
-function MetricTable({ metrics, type }: { metrics: Metric[]; type: MetricType }) {
-  const rows = metrics.filter((m) => m.metricType === type).slice(-500).reverse()
-  return (
-    <table className="data">
-      <thead>
-        <tr>
-          <th>Time (original)</th>
-          <th>Value</th>
-          <th>Source</th>
-          <th>Quality</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((m, i) => (
-          <tr key={i}>
-            <td>{m.timestamp}</td>
-            <td>
-              {formatValue(type, m.value)} {m.unit}
-              {m.raw ? ` (raw ${m.raw.value} ${m.raw.unit})` : ''}
-            </td>
-            <td>{m.simulated ? 'SIMULATED · ' : ''}{m.sourceDetail ?? m.source}</td>
-            <td>{m.quality?.status ?? 'ok'}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  )
-}
-
-export function DashboardPage() {
-  const { days, from, to, setDays } = useRange(7)
-  const vitals = useAsync(() => api.vitals(from, to), [from, to])
-  return (
-    <div>
-      <div className="row" style={{ justifyContent: 'space-between', marginBottom: 12 }}>
-        <h1>Crew vitals</h1>
-        <RangePicker days={days} setDays={setDays} />
-      </div>
-      {vitals.error ? <ErrorNote error={vitals.error} retry={vitals.reload} /> : null}
-      {vitals.loading && !vitals.data ? <Loading what="vitals" /> : null}
-      {vitals.data ? <VitalsView v={vitals.data} /> : null}
-    </div>
-  )
-}
-
-function VitalsView({ v }: { v: VitalsResponse }) {
-  if (!v.sources.length) {
-    return (
-      <div className="card">
-        <h2>No wearable data yet</h2>
-        <p>
-          Connect a source on the <a href="#/connections">Connections</a> page (Apple Health export works with any Apple Watch today), or turn on demo mode in{' '}
-          <a href="#/privacy">Settings</a> to explore with clearly labelled simulated data.
-        </p>
-      </div>
-    )
-  }
-  const flagged = v.metrics.filter((m) => m.quality && m.quality.status !== 'ok')
-  const hr = seriesBySource(v.metrics, 'heart_rate')
-  const stepRows = v.sources.map((s) => ({ source: s.provider, simulated: s.simulated, points: dailySum(v.metrics, 'steps', s.provider, s.simulated) })).filter((r) => r.points.length)
-  const kcalRows = v.sources.map((s) => ({ source: s.provider, simulated: s.simulated, points: dailySum(v.metrics, 'active_energy', s.provider, s.simulated) })).filter((r) => r.points.length)
-
-  return (
-    <>
-      <div className="row" style={{ marginBottom: 10 }}>
-        <span className="muted">Showing:</span>
-        {v.sources.map((s) => (
-          <SourceBadge key={s.provider} source={s.provider} simulated={s.simulated} />
-        ))}
-      </div>
-
-      <section className="section">
-        <h2>Current vitals</h2>
-        <div className="grid tiles">
-          {TILES.map((t) => (
-            <VitalTile key={t} type={t} metrics={v.metrics} />
-          ))}
-          {(() => {
-            const today = v.activity.filter((a) => a.date === v.activity.at(-1)?.date)
-            return today.map((a) => (
-              <div className="card tile" key={`act-${a.source}`}>
-                <div className="label">Activity · {fmtDate(a.date)}</div>
-                <div className="value">
-                  {a.steps?.toLocaleString() ?? '—'}
-                  <span className="unit">steps</span>
-                </div>
-                <div className="meta">{a.activeEnergyKcal !== undefined ? `${a.activeEnergyKcal} active kcal` : ''}</div>
-                <SourceBadge source={a.source} simulated={a.simulated} />
-              </div>
-            ))
-          })()}
-        </div>
-      </section>
-
-      <section className="section grid">
-        <Card title="Heart rate" table={<MetricTable metrics={v.metrics} type="heart_rate" />}>
-          <TimeSeriesChart series={hr} type="heart_rate" />
-        </Card>
-      </section>
-
-      <section className="section">
-        <h2>History</h2>
-        <div className="grid two">
-          {HISTORY.filter((t) => v.metrics.some((m) => m.metricType === t)).map((t) => (
-            <Card key={t} title={METRIC_INFO[t].label} table={<MetricTable metrics={v.metrics} type={t} />}>
-              <TimeSeriesChart series={seriesBySource(v.metrics, t)} type={t} small />
-              <p className="muted" style={{ fontSize: '0.78rem' }}>{METRIC_INFO[t].description}</p>
-            </Card>
-          ))}
-        </div>
-      </section>
-
-      <section className="section grid two">
-        {v.sources
-          .filter((s) => v.sleep.some((x) => x.source === s.provider))
-          .map((s) => {
-            const sessions = v.sleep.filter((x) => x.source === s.provider && x.simulated === s.simulated)
-            const nights = sleepNights(sessions)
-            return (
-              <Card
-                key={`sleep-${s.provider}`}
-                title={<>Sleep <SourceBadge source={s.provider} simulated={s.simulated} /></>}
-                table={
-                  <table className="data">
-                    <thead><tr><th>Start</th><th>End</th><th>Asleep</th><th>Awake</th></tr></thead>
-                    <tbody>{sessions.map((x) => <tr key={x.start}><td>{x.start}</td><td>{x.end}</td><td>{(x.minutesAsleep / 60).toFixed(1)} h</td><td>{x.minutesAwake ?? '—'} min</td></tr>)}</tbody>
-                  </table>
-                }
-              >
-                <SleepStagesChart nights={nights} />
-              </Card>
-            )
-          })}
-        {stepRows.length ? (
-          <Card title="Steps per day" table={<DailyTable rows={stepRows} unit="steps" />}>
-            <DailyBarChart rows={stepRows} unit="steps" />
-          </Card>
-        ) : null}
-        {kcalRows.length ? (
-          <Card title="Active energy per day" table={<DailyTable rows={kcalRows} unit="kcal" />}>
-            <DailyBarChart rows={kcalRows} unit="kcal" />
-          </Card>
-        ) : null}
-      </section>
-
-      <section className="section grid two">
-        <Card title="Workouts / exercise sessions">
-          {v.workouts.length ? (
-            <ul className="list">
-              {[...v.workouts].reverse().map((w) => (
-                <li key={`${w.source}${w.start}`}>
-                  <strong>{w.displayName}</strong>
-                  <span className="muted">{fmtDateTime(w.start)} · {Math.round((Date.parse(w.end) - Date.parse(w.start)) / 60000)} min</span>
-                  {w.energyKcal !== undefined ? <span>{Math.round(w.energyKcal)} kcal</span> : null}
-                  {w.averageHeartRate !== undefined ? <span>avg {w.averageHeartRate} bpm</span> : null}
-                  <SourceBadge source={w.source} simulated={w.simulated} />
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="empty">No workouts in this range.</div>
-          )}
-        </Card>
-        <Card title="Data-quality flags">
-          {flagged.length ? (
-            <ul className="list">
-              {flagged.slice(-30).reverse().map((m, i) => (
-                <li key={i}>
-                  <QualityNote quality={m.quality} />
-                  <span>
-                    {METRIC_INFO[m.metricType].label}: {m.value} {m.unit}
-                  </span>
-                  <span className="muted">{m.timestamp}</span>
-                  <SourceBadge source={m.source} simulated={m.simulated} />
-                  <small style={{ flexBasis: '100%' }}>{m.quality?.note}</small>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="empty">No readings flagged in this range.</div>
-          )}
-          <p className="muted" style={{ fontSize: '0.78rem' }}>
-            Flags describe measurement plausibility (sensor fit, motion, sync or unit errors). They are not health findings and are not a substitute for medical care.
-          </p>
-        </Card>
-      </section>
-    </>
-  )
-}
-
-export function DailyTable({ rows, unit }: { rows: { source: string; simulated: boolean; points: { date: string; value: number | null }[] }[]; unit: string }) {
-  return (
-    <table className="data">
-      <thead><tr><th>Date</th><th>Source</th><th>{unit}</th></tr></thead>
-      <tbody>
-        {rows.flatMap((r) =>
-          r.points.map((p) => (
-            <tr key={`${r.source}${p.date}`}><td>{p.date}</td><td>{r.simulated ? 'SIMULATED · ' : ''}{r.source}</td><td>{p.value === null ? '—' : Math.round(p.value).toLocaleString()}</td></tr>
-          )),
-        )}
-      </tbody>
-    </table>
-  )
+const dateLabel=(time:number)=>new Date(time).toLocaleDateString(undefined,{month:'short',day:'numeric'})
+const fullDate=(time:number)=>new Date(time).toLocaleString()
+export function DashboardPage(){
+  const [key,setKey]=useState<VitalKey>('heartRate')
+  useEffect(()=>{const previous=document.title;document.title='User vitals · Guardian';return()=>{document.title=previous}},[])
+  const cards=useAsync(()=>auth.cards(),[])
+  useEffect(()=>{const refresh=()=>cards.reload();window.addEventListener('focus',refresh);return()=>window.removeEventListener('focus',refresh)},[cards.reload])
+  const choice=VITAL_CHOICES.find(v=>v.key===key)!
+  const rows=useMemo(()=>cardReadings(cards.data??[],key),[cards.data,key])
+  const newest=rows.at(-1)
+  const value=(row:typeof newest)=>!row?'—':key==='bloodPressure'?`${row.top}/${row.bottom}`:key==='mood'?row.mood:String(row.value)
+  return <div className="user-vitals">
+    <VitalsTabs current="dashboard"/>
+    <header className="user-vitals-head"><div><p className="user-vitals-kicker">YOUR SAVED READINGS</p><h1>User vitals</h1><p>See how your readings change over time, using the cards saved to your account.</p></div><a className="button primary" href="/home/index.html#/dashboard">Log a reading</a></header>
+    <Card title="Your readings over time" actions={<button type="button" onClick={cards.reload} disabled={cards.loading}>Refresh</button>}>
+      <div className="user-vitals-controls"><label htmlFor="vital-choice">Which vital would you like to see?<select id="vital-choice" value={key} onChange={e=>setKey(e.target.value as VitalKey)}>{VITAL_CHOICES.map(v=><option value={v.key} key={v.key}>{v.label}</option>)}</select></label><p>{choice.description}</p></div>
+      {cards.error?<ErrorNote error={new Error('Your cards could not be loaded. Please try again.')} retry={cards.reload}/>:null}
+      {cards.loading&&!cards.data?<Loading what="your saved readings"/>:null}
+      {cards.data&&!cards.error?<><div className="user-vitals-summary"><div><span>Latest {choice.label.toLowerCase()}</span><strong>{value(newest)} <small>{newest?choice.unit:''}</small></strong><span>{newest?fullDate(newest.time):'No saved reading yet'}</span></div><div><span>Saved entries</span><strong>{rows.length}</strong><span>Each dot comes from one card.</span></div></div>
+      {rows.length?<><p className="user-vitals-explain">Read left to right to follow the dates.{key==='bloodPressure'?' Blue shows the top number; green shows the bottom number.':key==='mood'?' Each row shows the mood you wrote.':' Higher points mean a higher recorded value.'} Select a dot to see its reading.</p>
+      <div className="user-vitals-chart" key={key} role="img" aria-label={`${choice.label} from ${rows.length} saved cards`}>
+        <ResponsiveContainer>{key==='mood'?<ScatterChart margin={{top:16,right:24,bottom:20,left:8}}><CartesianGrid stroke="var(--grid)"/><XAxis dataKey="time" type="number" domain={['dataMin','dataMax']} tickFormatter={dateLabel} minTickGap={45}/><YAxis dataKey="mood" type="category" allowDuplicatedCategory={false} width={100} tick={{fontSize:11}}/><Tooltip cursor={false} content={({payload})=>{const row=payload?.[0]?.payload;return row?<div className="user-vitals-tooltip"><strong>{row.mood}</strong><div>{fullDate(row.time)}</div><small>{row.title}</small></div>:null}}/><Scatter data={rows} fill="var(--accent)" isAnimationActive={false}/></ScatterChart>:<LineChart data={rows} margin={{top:16,right:24,bottom:20,left:8}}><CartesianGrid stroke="var(--grid)" vertical={false}/><XAxis dataKey="time" type="number" domain={['dataMin','dataMax']} tickFormatter={dateLabel} minTickGap={45} tick={{fontSize:11}}/><YAxis width={50} domain={['auto','auto']} tick={{fontSize:11}}/><Tooltip labelFormatter={t=>fullDate(Number(t))} formatter={(v,name)=>[`${v} ${choice.unit}`,name]} contentStyle={{background:'#fff',borderRadius:10,border:'1px solid var(--border)'}}/>{(key==='bloodPressure'?['top','bottom']:['value']).map((field,i)=><Line key={field} dataKey={field} name={field==='top'?'Top number':field==='bottom'?'Bottom number':choice.label} type="linear" stroke={i?'#27896b':'#2a78d6'} strokeWidth={2} dot={{r:4,strokeWidth:2,fill:'#fff'}} activeDot={{r:6}} connectNulls={false} isAnimationActive={false}/>)}</LineChart>}</ResponsiveContainer>
+      </div><div className="user-vitals-axis"><span>Dates of your saved cards →</span><span>{choice.unit? `Values in ${choice.unit}`:'Your mood descriptions'}</span></div>
+      {rows.length===1?<p className="user-vitals-note">You have one reading. Save another card to see how it changes.</p>:null}
+      <details className="user-vitals-table"><summary>See the exact readings</summary><div className="table-wrap"><table className="data"><thead><tr><th>Date and time</th><th>{choice.label}</th><th>Card</th></tr></thead><tbody>{[...rows].reverse().map(r=><tr key={r.id}><td>{fullDate(r.time)}</td><td>{value(r)} {choice.unit}</td><td>{r.title}</td></tr>)}</tbody></table></div></details></>:<div className="user-vitals-empty"><h2>No {choice.label.toLowerCase()} readings yet</h2><p>Choose another vital above, or save a card with this reading to start your graph.</p><a href="/home/index.html#/dashboard">Go to Log vitals →</a></div>}
+      <p className="user-vitals-note">Only saved card readings are shown. Missing or unsupported values are left out. Lines join recorded entries; they do not show measurements between them. <a href="/home/index.html#/cards">View or edit your cards</a>.</p></>:null}
+    </Card>
+  </div>
 }
