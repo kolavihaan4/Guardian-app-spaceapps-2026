@@ -20,6 +20,8 @@ import {
   type TriageResponse,
 } from '@astrovitals/shared'
 import { Router, type Request, type Response } from 'express'
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { z } from 'zod'
 import type { AppContext } from '../context.ts'
 
@@ -116,8 +118,48 @@ export const TriageResponseSchema = z.object({
   ground_support_reason: z.string().nullable(),
 })
 
+// Which model writes the explanation. The rules decide the status and the escalation either way.
+//   mlx (default): the fine-tuned model, round 2 of ai/training (adapters/v2, on the Mac that trained
+//     it), served by mlx_lm exactly as it was scored: `npm run model`, see ai/README.md.
+//   ollama: the untuned astrovitals-triage model from ai/Modelfile, or OLLAMA_TRIAGE_MODEL.
+const TRIAGE_BACKEND = process.env.TRIAGE_BACKEND === 'ollama' ? 'ollama' : 'mlx'
+const MLX_URL = process.env.MLX_URL ?? 'http://localhost:8080'
 const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://localhost:11434'
 const OLLAMA_MODEL = process.env.OLLAMA_TRIAGE_MODEL ?? 'astrovitals-triage'
+// The fine-tuned model was trained with this system prompt word for word; mlx_lm has no Modelfile to hold it.
+const FINE_TUNED_SYSTEM_PROMPT = readFileSync(resolve(import.meta.dirname, '../../../../ai/training/system_prompt.txt'), 'utf8').trim()
+
+/** The model's answer to one triage request, as JSON text with any thinking block in front of it removed. */
+async function askModel(content: string, signal: AbortSignal): Promise<string> {
+  const post = (url: string, body: unknown) =>
+    fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal, body: JSON.stringify(body) })
+  let text: string | undefined
+  if (TRIAGE_BACKEND === 'mlx') {
+    // The request ai/training/evaluate.py scored: the trained system prompt, thinking off, the likeliest token every time.
+    const res = await post(`${MLX_URL}/v1/chat/completions`, {
+      messages: [
+        { role: 'system', content: FINE_TUNED_SYSTEM_PROMPT },
+        { role: 'user', content },
+      ],
+      temperature: 0,
+      max_tokens: 1100,
+      chat_template_kwargs: { enable_thinking: false },
+    })
+    if (!res.ok) throw new Error(`mlx_lm returned HTTP ${res.status}`)
+    text = ((await res.json()) as { choices?: { message?: { content?: string } }[] }).choices?.[0]?.message?.content
+  } else {
+    const res = await post(`${OLLAMA_URL}/api/chat`, {
+      model: OLLAMA_MODEL,
+      stream: false,
+      think: false,
+      format: z.toJSONSchema(TriageResponseSchema),
+      messages: [{ role: 'user', content }],
+    })
+    if (!res.ok) throw new Error(`Ollama returned HTTP ${res.status}`)
+    text = ((await res.json()) as { message?: { content?: string } }).message?.content
+  }
+  return (text ?? '{}').split('</think>').pop() ?? '{}'
+}
 
 export interface ComputedVitalFacts {
   /** Heart rate against the personal preflight median and, when at rest, the 60–100 bpm resting adult range. */
@@ -676,39 +718,17 @@ export function aiRoutes(ctx: AppContext): Router {
     const payload = parsed.data
     const bpFacts = computeVitalFacts(payload)
     const controller = new AbortController()
-    // The model's answers took a median of 7.75 s and at most 10.5 s when measured, so an 8-second
-    // cut-off made it close to chance whether the model or the rule engine answered.
-    const timeout = setTimeout(() => controller.abort(), 12_000)
+    // The fine-tuned model writes its rule checklist before the rest, so it is slower than the untuned
+    // one (median 7.75 s, at most 10.5 s). It took a median of 11.1 s and at most 18.1 s on the
+    // validation cases, where a 12-second cut-off sent about a third of the answers to the rule engine.
+    const timeout = setTimeout(() => controller.abort(), 20_000)
 
     try {
-      const ollamaRes = await fetch(`${OLLAMA_URL}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          model: OLLAMA_MODEL,
-          stream: false,
-          think: false,
-          format: z.toJSONSchema(TriageResponseSchema),
-          messages: [
-            {
-              role: 'user',
-              content: JSON.stringify({ ...payload, computed_facts: bpFacts }),
-            },
-          ],
-        }),
-      })
-
-      if (!ollamaRes.ok) {
-        throw new Error(`Ollama returned HTTP ${ollamaRes.status}`)
-      }
-
-      const data = (await ollamaRes.json()) as { message?: { content?: string } }
-      const rawContent = data.message?.content ?? '{}'
+      const rawContent = await askModel(JSON.stringify({ ...payload, computed_facts: bpFacts }), controller.signal)
       const validatedOutput = TriageResponseSchema.parse(JSON.parse(rawContent))
 
       const out: TriageEnvelope = {
-        source: 'Qwen3-8B explanation, decisions by onboard rules',
+        source: `${TRIAGE_BACKEND === 'mlx' ? 'Fine-tuned Qwen3-8B' : 'Qwen3-8B'} explanation, decisions by onboard rules`,
         disclaimer:
           'Not a medical device. Exploratory crew decision-support prototype only; does not diagnose, treat, or prescribe.',
         triage: applyRuleDecisions(attachComputedFacts(validatedOutput, bpFacts), buildDeterministicFallback(payload), payload.available_tools),

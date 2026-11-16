@@ -4,7 +4,8 @@ Run from ai/training:
 
   .venv/bin/python evaluate.py mlx --adapter adapters/v2 --name tuned     # the fine-tuned model
   .venv/bin/python evaluate.py mlx --name base-mlx                        # the same base model, untuned
-  .venv/bin/python evaluate.py ollama --model astrovitals-triage --name base-ollama   # as served today
+  .venv/bin/python evaluate.py ollama --model astrovitals-triage --name base-ollama   # the untuned model
+  .venv/bin/python evaluate.py mlx-server --name served    # what the app asks: the model behind `npm run model`
 
 Held-out set (data/heldout.jsonl): hand-written boundary cases with expectations written from the
 cited thresholds. Validation set (data/valid.jsonl): random cases labelled by the rule engine, not
@@ -123,16 +124,30 @@ def ollama_answerer(model, url):
     return answer
 
 
+def mlx_server_answerer(url):
+    """The model behind mlx_lm's server (npm run model), asked exactly as apps/server/src/routes/ai.ts asks it."""
+    system = (HERE / "system_prompt.txt").read_text(encoding="utf-8").strip()
+
+    def answer(user):
+        body = {"messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                "temperature": 0, "max_tokens": 1100, "chat_template_kwargs": {"enable_thinking": False}}
+        req = urllib.request.Request(f"{url}/v1/chat/completions", data=json.dumps(body).encode(), headers={"Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=180) as res:
+            return json.loads(res.read())["choices"][0]["message"]["content"]
+
+    return answer
+
+
 def pct(n, d):
     return f"{n}/{d} ({100 * n / d:.1f}%)" if d else "n/a"
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("backend", choices=["mlx", "ollama"])
+    ap.add_argument("backend", choices=["mlx", "ollama", "mlx-server"])
     ap.add_argument("--adapter")
     ap.add_argument("--model", default="astrovitals-triage")
-    ap.add_argument("--url", default="http://localhost:11434")
+    ap.add_argument("--url", help="default http://localhost:11434 for ollama, http://localhost:8080 for mlx-server")
     ap.add_argument("--name", required=True)
     ap.add_argument("--limit", type=int, help="only the first N cases of each set (smoke test)")
     ap.add_argument("--skip-valid", action="store_true")
@@ -152,7 +167,12 @@ def main():
         if args.valid_limit:
             valid = valid[: args.valid_limit]
         sets = (("heldout", held), ("valid", valid))
-    answer = mlx_answerer(args.adapter) if args.backend == "mlx" else ollama_answerer(args.model, args.url)
+    if args.backend == "mlx":
+        answer = mlx_answerer(args.adapter)
+    elif args.backend == "ollama":
+        answer = ollama_answerer(args.model, args.url or "http://localhost:11434")
+    else:
+        answer = mlx_server_answerer(args.url or "http://localhost:8080")
 
     (HERE / "runs").mkdir(exist_ok=True)
     log = open(HERE / f"runs/{args.name}.jsonl", "w", encoding="utf-8")
