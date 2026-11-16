@@ -126,6 +126,9 @@ const TRIAGE_BACKEND = process.env.TRIAGE_BACKEND === 'ollama' ? 'ollama' : 'mlx
 const MLX_URL = process.env.MLX_URL ?? 'http://localhost:8080'
 const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://localhost:11434'
 const OLLAMA_MODEL = process.env.OLLAMA_TRIAGE_MODEL ?? 'astrovitals-triage'
+// How long to wait for the model before the rule engine answers alone. 20 s suits the fine-tuned
+// model on a Mac or an L4 GPU; a slower machine, such as a T4, needs more.
+const MODEL_TIMEOUT_MS = Number(process.env.TRIAGE_MODEL_TIMEOUT_MS) || 20_000
 // The fine-tuned model was trained with this system prompt word for word; mlx_lm has no Modelfile to hold it.
 const FINE_TUNED_SYSTEM_PROMPT = readFileSync(resolve(import.meta.dirname, '../../../../ai/training/system_prompt.txt'), 'utf8').trim()
 
@@ -721,7 +724,7 @@ export function aiRoutes(ctx: AppContext): Router {
     // The fine-tuned model writes its rule checklist before the rest, so it is slower than the untuned
     // one (median 7.75 s, at most 10.5 s). It took a median of 11.1 s and at most 18.1 s on the
     // validation cases, where a 12-second cut-off sent about a third of the answers to the rule engine.
-    const timeout = setTimeout(() => controller.abort(), 20_000)
+    const timeout = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS)
 
     try {
       const rawContent = await askModel(JSON.stringify({ ...payload, computed_facts: bpFacts }), controller.signal)
