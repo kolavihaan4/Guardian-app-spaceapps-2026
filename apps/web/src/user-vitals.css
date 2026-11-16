@@ -1,0 +1,27 @@
+.user-vitals { display:grid; gap:24px; padding:12px 0; }
+.user-vitals-head { display:flex; align-items:center; justify-content:space-between; gap:24px; }
+.user-vitals-kicker { font-size:10px; letter-spacing:.14em; font-weight:600; color:var(--accent-dark); margin-bottom:8px; }
+.user-vitals-head h1 { margin:0 0 12px; }
+.user-vitals-head p { color:var(--text-secondary); max-width:650px; line-height:1.7; }
+.user-vitals-head a { text-decoration:none; flex-shrink:0; }
+.user-vitals > .card { padding:26px; }
+.user-vitals-controls { display:flex; align-items:center; gap:32px; margin:20px 0; }
+.user-vitals-controls label { flex:0 0 280px; gap:10px; }
+.user-vitals-controls p { font-size:13px; line-height:1.7; color:var(--text-secondary); max-width:600px; }
+.user-vitals-summary { display:grid; grid-template-columns:2fr 1fr; gap:20px; margin:24px 0; }
+.user-vitals-summary > div { display:grid; gap:8px; padding:22px; background:rgba(255,255,255,.45); border:1px solid var(--border); border-radius:14px; }
+.user-vitals-summary span { font-size:12px; color:var(--text-secondary); }
+.user-vitals-summary strong { font-size:28px; font-weight:550; overflow-wrap:anywhere; }
+.user-vitals-summary small { font-size:12px; font-weight:400; }
+.user-vitals-chart { height:330px; width:100%; min-width:0; }
+.user-vitals-explain { font-size:13px; line-height:1.7; margin-bottom:18px; }
+.user-vitals-axis { display:flex; justify-content:space-between; gap:16px; font-size:11px; color:var(--text-secondary); }
+.user-vitals-note { font-size:12px; color:var(--text-secondary); line-height:1.7; margin-top:20px; }
+.user-vitals-table { margin:24px 0; }
+.user-vitals-table summary { cursor:pointer; color:var(--accent-dark); font-size:13px; }
+.user-vitals-tooltip { padding:12px; border:1px solid var(--border); border-radius:10px; background:white; font-size:12px; }
+.user-vitals-empty { padding:36px 18px; text-align:center; border-radius:14px; background:var(--surface-2); }
+.user-vitals-empty p { margin:14px auto; max-width:440px; color:var(--text-secondary); }
+@media(prefers-reduced-motion:no-preference) { .user-vitals-summary>div { transition:transform .2s,box-shadow .2s; }.user-vitals-chart { animation:user-chart-in .22s ease; } @keyframes user-chart-in { from {opacity:.3; transform:translateY(4px)} to {opacity:1;transform:none} } }
+@media(hover:hover) and (prefers-reduced-motion:no-preference) { .user-vitals-summary>div:hover {transform:translateY(-2px);box-shadow:var(--shadow)} }
+@media(max-width:650px) { .user-vitals-head,.user-vitals-controls {flex-direction:column;align-items:stretch;gap:16px}.user-vitals-controls label{flex:auto}.user-vitals-summary{grid-template-columns:1fr}.user-vitals>.card{padding:18px}.user-vitals-chart{height:270px} }

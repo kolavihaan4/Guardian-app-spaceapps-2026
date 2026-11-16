@@ -8,7 +8,6 @@ import type { AppContext } from './context.ts'
 import { HttpError, UpstreamError } from './lib/errors.ts'
 import { safePath } from './lib/logger.ts'
 import { aiRoutes } from './routes/ai.ts'
-import { authRoutes } from './routes/auth.ts'
 import { datasetRoutes } from './routes/datasets.ts'
 import { ingestRoutes } from './routes/ingest.ts'
 import { meRoutes } from './routes/me.ts'
@@ -29,7 +28,8 @@ export function createApp(ctx: AppContext, opts: { staticDir?: string } = {}): E
           // APOD images (new + legacy hosts). No third-party scripts at all.
           imgSrc: ["'self'", 'data:', 'https://assets.science.nasa.gov', 'https://science.nasa.gov', 'https://apod.nasa.gov'],
           styleSrc: ["'self'", "'unsafe-inline'"], // chart library sets inline style attributes
-          connectSrc: ["'self'"],
+          // the page signs in and keeps its cards with Supabase directly
+          connectSrc: ["'self'", new URL(ctx.cfg.SUPABASE_URL).origin],
           frameAncestors: ["'none'"],
           formAction: ["'self'"],
           upgradeInsecureRequests: ctx.cfg.isProduction ? [] : null,
@@ -56,11 +56,10 @@ export function createApp(ctx: AppContext, opts: { staticDir?: string } = {}): E
   })
 
   // Companion-app ingestion: bearer token, larger JSON bodies, its own limiter. Mounted before the
-  // cookie/Origin middleware because it is not a browser endpoint.
+  // sign-in/Origin middleware because it is not a browser endpoint.
   app.use('/api/ingest', limiter(60_000, 60), express.json({ limit: '5mb' }), ingestRoutes(ctx))
 
   app.use('/api', limiter(60_000, 300), express.json({ limit: '100kb' }), loadUser(ctx), requireSameOrigin(ctx))
-  app.use('/api/auth', limiter(15 * 60_000, 30), authRoutes(ctx))
   app.use('/api/me', requireAuth, meRoutes(ctx))
   app.use('/api/providers', providerRoutes(ctx))
   app.use('/api/vitals', requireAuth, vitalsRoutes(ctx))
@@ -69,7 +68,7 @@ export function createApp(ctx: AppContext, opts: { staticDir?: string } = {}): E
   app.use('/api/ai', requireAuth, aiRoutes(ctx))
   app.use('/api', (_req, _res, next) => next(new HttpError(404, 'not_found', 'Unknown API route')))
 
-  // Production: serve the built React app from the same origin (cookies stay first-party).
+  // Production: serve the built React app from the same origin.
   const dir = opts.staticDir ?? resolve(import.meta.dirname, '../../web/dist')
   if (existsSync(dir)) {
     app.use(express.static(dir, { index: false, maxAge: '1h' }))

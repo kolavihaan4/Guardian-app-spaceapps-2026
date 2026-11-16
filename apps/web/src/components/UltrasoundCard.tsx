@@ -16,25 +16,25 @@ export const ULTRASOUND_CHECKS: UltrasoundCheck[] = [
   {
     id: 'jugular',
     region: 'head_neuro',
-    title: 'Jugular vein ultrasound',
-    summary: 'Outlines the internal jugular vein in a cross-section scan of the neck and measures it. In weightlessness blood shifts toward the head, and this vein can swell or flow sluggishly.',
-    measures: ['Vein cross-section area', 'Flattening (probe pressure check)', 'Vein-to-artery size ratio', 'Scan quality flag'],
+    title: 'Neck vein scan',
+    summary: 'Shows the outline and size of a large vein in the neck. In weightlessness, blood moves toward the head, and this vein may widen or drain more slowly.',
+    measures: ['Size of the vein in the scan', 'Whether the scanner probe may be pressing too hard', 'Vein size compared with the nearby artery', 'Whether the image is clear enough to use'],
     frames: [{ id: 'transverse', label: 'Neck cross-section', hint: 'Probe across the neck, skin at the top of the image' }],
     note: 'Measures shape and size only. It does not show blood flow or clots.',
   },
   {
     id: 'heart',
     region: 'chest_cardio',
-    title: 'Heart ultrasound',
-    summary: 'Outlines the left ventricle in four frames and estimates the ejection fraction: how much of its blood the heart pumps out with each beat.',
-    measures: ['Left ventricle outline', 'Volume when full and when emptied', 'Ejection fraction'],
+    title: 'Heart scan',
+    summary: 'Uses four scan images to outline the heart’s main pumping chamber and estimate how much blood it pushes out with each beat.',
+    measures: ['Outline of the heart’s main pumping chamber', 'Amount of blood before and after a beat', 'Share of blood pumped out with each beat'],
     frames: [
       { id: '2ch_ed', label: '2-chamber, full', hint: 'Two-chamber view at the end of filling' },
       { id: '2ch_es', label: '2-chamber, emptied', hint: 'Two-chamber view at the end of the beat' },
       { id: '4ch_ed', label: '4-chamber, full', hint: 'Four-chamber view at the end of filling' },
       { id: '4ch_es', label: '4-chamber, emptied', hint: 'Four-chamber view at the end of the beat' },
     ],
-    note: 'An estimate from a research model, not a clinical echo report.',
+    note: 'An estimate from a research model, not a medical ultrasound report.',
   },
 ]
 
@@ -136,7 +136,7 @@ export function UltrasoundCard({ region }: { region: BodyRegionId }) {
     <section className="us-card" aria-labelledby={`us-${check.id}`}>
       <div className="us-head">
         <div>
-          <span className="eyebrow">Ultrasound check</span>
+          <span className="eyebrow">Ultrasound images</span>
           <h3 id={`us-${check.id}`}>{check.title}</h3>
         </div>
         <span className="badge">{filled} of {check.frames.length} {check.frames.length === 1 ? 'frame' : 'frames'}</span>
@@ -167,7 +167,7 @@ export function UltrasoundCard({ region }: { region: BodyRegionId }) {
       {error ? <div className="banner error" role="alert">{error}</div> : null}
 
       <div>
-        <small>What the analysis reports:</small>
+        <small>What the scan check measures:</small>
         <ul className="compact-list">
           {check.measures.map((m) => (
             <li key={m}>{m}</li>
@@ -176,7 +176,7 @@ export function UltrasoundCard({ region }: { region: BodyRegionId }) {
       </div>
 
       <div className="us-actions">
-        <button type="button" className="primary" disabled>Analyse scan</button>
+        <button type="button" className="primary" disabled>Check these images</button>
         <small role="status">
           {ready ? 'Frames are ready. ' : ''}The analysis service is not connected yet, so scans cannot be analysed. Images stay on this device.
         </small>

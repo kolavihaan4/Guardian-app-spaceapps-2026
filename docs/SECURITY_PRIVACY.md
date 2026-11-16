@@ -10,10 +10,10 @@ where it lives in the code, and what a production deployment still needs. It is 
 | Secrets | All secrets come from environment variables, validated at startup (process exits with a clear message if missing/malformed). Nothing secret is bundled into the web app. | `apps/server/src/config.ts`, `.env.example` |
 | Token storage | OAuth access/refresh tokens and PKCE verifiers encrypted with **AES-256-GCM** (random 96-bit IV, auth tag, versioned `v1.` envelope, AAD binds each ciphertext to its user + provider row). | `lib/crypto.ts` (`SecretBox`), `googleHealth.ts` |
 | Hashed identifiers | Session ids, OAuth `state` values and companion device tokens are stored only as HMAC-SHA256 (keyed by `DEVICE_TOKEN_PEPPER`), so a database leak alone cannot replay them. | `auth.ts`, `routes/providers.ts` |
-| Passwords | scrypt (N=16384, r=8, p=1), constant-time compare; ≥ 12 characters; timing equalized for unknown emails. | `lib/crypto.ts`, `routes/auth.ts` |
+| Passwords | Held by Supabase Auth, never by this server; ≥ 8 characters, checked in the page before sending and by Supabase. | `public/home/js/auth.js` |
 | OAuth 2.0 | Authorization code + **PKCE S256**, single-use 10-minute `state`, **session binding** (the user who completes the callback must be the user who started it), exact redirect URI, `access_type=offline` for refresh, server-side token exchange, read-only least-privilege scopes, revocation on disconnect / account deletion. | `wearables/providers/googleHealth.ts` |
-| Sessions | httpOnly, SameSite=Lax cookie; `Secure` + `__Host-` prefix in production; server-side expiry (`SESSION_TTL_HOURS`). | `auth.ts` |
-| CSRF | SameSite=Lax plus strict `Origin`/`Referer` check on every state-changing cookie-authenticated request. | `auth.ts` (`requireSameOrigin`) |
+| Sessions | Supabase access tokens sent as `Authorization: Bearer`; the server verifies each with Supabase (`/auth/v1/user`), caching good answers 60 s by a hash of the token, never the token. | `auth.ts` |
+| CSRF | Bearer tokens are not sent by the browser on its own; a strict `Origin`/`Referer` check on every state-changing request remains as a second line. | `auth.ts` (`requireSameOrigin`) |
 | AuthZ | Every health query is scoped by `user_id`; all health and NASA routes require a session; ingest requires a device token. | `repo.ts`, `app.ts` |
 | Input validation | Zod schemas for env, params, query, bodies and the ingest payload (`.strict()`, size caps); body limits 100 KB (5 MB ingest); XML import streamed with type checks. Validation errors never echo values. | `auth.ts` `parse()`, routes |
 | SSRF | Upstream hosts are fixed configuration; user input only supplies validated dates, numbers and a slug. | `nasa/service.ts`, `lib/http.ts` |

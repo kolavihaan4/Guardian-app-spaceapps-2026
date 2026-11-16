@@ -1,18 +1,18 @@
 # REST API
 
-Base: same origin as the web app (`/api`). JSON in/out. Cookie-authenticated routes require the
-`av_session` cookie (`__Host-av_session` in production); state-changing requests must carry an
+Base: same origin as the web app (`/api`). JSON in/out. Signed-in routes require
+`Authorization: Bearer <Supabase access token>`; state-changing requests must also carry an
 `Origin` (or `Referer`) equal to `APP_ORIGIN`. Errors: `{ "error": "<code>", "message": "…", "details"?: […] }`.
 Validation errors list paths and messages but never echo submitted values.
 
 ## Auth
-| Method & path | Body | Notes |
-|---|---|---|
-| `POST /api/auth/register` | `{ email, password }` (≥ 12 chars) | 201 + session cookie |
-| `POST /api/auth/login` | `{ email, password }` | timing-equalized for unknown emails |
-| `POST /api/auth/logout` | – | deletes the session |
+Sign-up, sign-in and sign-out are Supabase Auth, called from the page (`apps/web/public/home/js/auth.js`);
+this server has no password routes. It checks each bearer token by calling
+`GET {SUPABASE_URL}/auth/v1/user` with the publishable key, caches good answers for 60 s (keyed by a
+SHA-256 of the token), and maps the Supabase user id to a local user row created on first sight.
+Supabase unreachable: 502. A person's cards live in Supabase (`public.cards`, row level security), not here.
 
-Rate limits: 30 auth requests / 15 min / IP; 300 API requests / min / IP; 60 ingest requests / min / IP.
+Rate limits: 300 API requests / min / IP; 60 ingest requests / min / IP.
 
 ## Account & privacy
 | Method & path | Notes |

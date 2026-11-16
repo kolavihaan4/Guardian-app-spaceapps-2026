@@ -1,0 +1,69 @@
+/* Hazards page only: preserve Guardian's glass panels, sage accents and scenery. */
+.hazards-page { display: grid; gap: 36px; padding: 12px 0; }
+.hazards-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.hazards-eyebrow { margin: 0 0 10px; color: var(--accent-dark); font-size: 10px; font-weight: 650; letter-spacing: .14em; }
+.hazards-intro { margin: 12px 0 0; color: var(--text-secondary); font-size: 15px; }
+.hazards-citations { flex-shrink: 0; font-size: 12px; font-weight: 600; text-decoration: none; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+.hazards-overview > h2, .hazards-section-heading h2 { font-size: 18px; }
+.hazards-section-note { margin: 8px 0 22px; color: var(--text-secondary); max-width: 720px; font-size: 13px; }
+.hazards-page .hazard-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 24px; align-items: stretch; }
+.hazards-page .hazard-grid > .card { grid-column: span 2; display: flex; flex-direction: column; padding: 24px; }
+.hazards-page .hazard-grid > .card:nth-child(n+4) { grid-column: span 3; }
+.hazards-page .hazard-grid .card-head { margin-bottom: 16px; }
+.hazards-page .hazard-grid h3 { display: flex; align-items: center; gap: 12px; line-height: 1.4; }
+.hazard-number { flex-shrink: 0; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: rgba(var(--accent-rgb), .11); color: var(--accent-dark); font-size: 11px; }
+.hazards-page .hazard-summary { margin: 0 0 14px; color: var(--text-primary); font-size: 14px; line-height: 1.7; }
+.hazard-support { margin: 0 0 20px; color: var(--text-secondary); font-size: 12px; line-height: 1.7; }
+.hazard-source { display: inline-flex; align-self: flex-start; gap: 8px; margin-top: auto; font-size: 11px; font-weight: 600; text-decoration: none; }
+.hazard-source:hover, .hazards-citations:hover { text-decoration: underline; }
+.hazards-data { display: grid; gap: 24px; }
+.hazards-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+.hazards-section-heading .hazards-section-note { margin-bottom: 0; }
+.hazards-page .hazards-date { padding: 7px 11px; background: rgba(var(--accent-rgb), .09); color: var(--accent-dark); }
+.hazards-page .card { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background-color .2s ease; }
+.hazards-data > .card, .hazards-context-grid > .card { padding: 26px; }
+.hazards-page .card-head { gap: 10px 14px; margin-bottom: 16px; }
+.hazards-page .card-head > h3 { font-size: 15px; }
+.hazards-page .card-head .badge { white-space: normal; overflow-wrap: anywhere; }
+.hazards-page .card-head select { width: min(100%, 300px); }
+.hazards-explainer { margin: 0 0 18px; font-size: 13px; color: var(--text-secondary); line-height: 1.7; max-width: 900px; }
+.hazards-caption { font-size: 11.5px; color: var(--text-secondary); line-height: 1.65; margin: 14px 0 0; }
+.hazards-latest { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 14px; margin: 10px 0 18px; }
+.hazards-latest strong { font-size: 24px; font-weight: 550; line-height: 1.2; color: var(--text-primary); }
+.hazards-latest small { font-size: 12px; font-weight: 400; }
+.hazards-latest > span { font-size: 11px; color: var(--text-secondary); }
+.hazards-weather-grid, .hazards-environment-grid, .hazards-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.hazards-weather-grid { gap: 32px; margin-top: 26px; }
+.hazards-weather-grid > div { min-width: 0; }
+.hazards-weather-grid h3 { margin-bottom: 10px; }
+.hazards-weather-grid .chart { height: 240px; }
+.hazards-metric { min-width: 0; padding: 20px; border: 1px solid rgba(97, 126, 147, .13); border-radius: 12px; background: rgba(255, 255, 255, .4); }
+.hazards-metric h3 { margin-bottom: 8px; }
+.hazards-metric .hazards-explainer { min-height: 44px; margin-bottom: 12px; font-size: 12px; }
+.hazards-context-grid { align-items: start; }
+.hazards-context-grid .apod img { width: 100%; max-height: 320px; object-fit: contain; border-radius: 10px; background: rgba(28, 49, 70, .04); }
+.hazards-context-grid .apod p { font-size: 13px; line-height: 1.7; }
+.hazards-page .loading-screen { min-height: 180px; padding: 24px; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .hazards-page .card:hover { transform: translateY(-3px); border-color: rgba(var(--accent-rgb), .3); box-shadow: 0 12px 30px rgba(44, 76, 102, .11); background-color: rgba(250, 252, 254, .85); }
+}
+.hazards-page .card:focus-within { border-color: rgba(var(--accent-rgb), .45); }
+@media (max-width: 1050px) {
+  .hazards-page .hazard-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hazards-page .hazard-grid > .card, .hazards-page .hazard-grid > .card:nth-child(n+4) { grid-column: auto; }
+  .hazards-page .hazard-grid > .card:last-child { grid-column: 1 / -1; }
+  .hazards-weather-grid, .hazards-context-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 650px) {
+  .hazards-page { gap: 28px; }
+  .hazards-header, .hazards-section-heading { align-items: flex-start; flex-direction: column; gap: 16px; }
+  .hazards-page .hazard-grid, .hazards-environment-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .hazards-page .hazard-grid > .card, .hazards-data > .card, .hazards-context-grid > .card { padding: 20px; }
+  .hazards-metric { padding: 16px; }
+  .hazards-page .card-head .spacer { display: none; }
+  .hazards-page .card-head > h3 { flex-basis: 100%; }
+  .hazards-page .hazard-grid .card-head > h3 { flex-basis: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hazards-page .card { transition: none; }
+}

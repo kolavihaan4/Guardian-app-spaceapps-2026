@@ -1,3 +1,4 @@
+import { REGION_COPY } from '../lib/triageCopy'
 import { BODY_REGIONS, type BodyRegionId } from '@astrovitals/shared'
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
@@ -287,10 +288,10 @@ export default function Body3D({ selected, pain, onSelect, onUnavailable }: Prop
         ref={mountRef}
         className="body-3d-canvas"
         role="img"
-        aria-label={`Rotatable 3D body. Selected region: ${BODY_REGIONS[selected].name}. Use the region buttons below to choose a region with the keyboard.`}
+        aria-label={`Rotatable 3D body. Selected region: ${REGION_COPY[selected].name}. Use the region buttons below to choose a region with the keyboard.`}
       />
       <p className="body-3d-hint" aria-live="polite">
-        {!ready ? 'Loading 3D body…' : hovered ? BODY_REGIONS[hovered].name : 'Drag to turn · click a region'}
+        {!ready ? 'Loading 3D body…' : hovered ? REGION_COPY[hovered].name : 'Drag to turn · click a region'}
       </p>
       <div className="body-3d-views" role="group" aria-label="Turn the body to a view">
         {VIEWS.map((view) => (

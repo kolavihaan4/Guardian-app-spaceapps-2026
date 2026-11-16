@@ -1,7 +1,9 @@
 import type { MeResponse } from '@astrovitals/shared'
 import { useState } from 'react'
 import { ErrorNote } from '../components/common'
+import { forgetSavedLocation } from '../guardian'
 import { api } from '../lib/api'
+import { auth } from '../lib/auth'
 
 export function PrivacyPage({ me, onChange, onSignedOut }: { me: MeResponse; onChange: () => void; onSignedOut: () => void }) {
   const [error, setError] = useState<Error>()
@@ -16,16 +18,37 @@ export function PrivacyPage({ me, onChange, onSignedOut }: { me: MeResponse; onC
       setError(e as Error)
     }
   }
+  // the server's copy (health data) and the cards kept with the account in Supabase, in one file
+  const download = async () => {
+    setError(undefined)
+    try {
+      const [data, cards] = await Promise.all([api.exportData(), auth.cards()])
+      const url = URL.createObjectURL(new Blob([JSON.stringify({ ...data, cards }, null, 2)], { type: 'application/json' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'guardian-export.json'
+      document.body.append(a)
+      a.click()
+      a.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+      setMsg('Your data has been downloaded.')
+    } catch (e) {
+      setError(e as Error)
+    }
+  }
   return (
     <div className="stack">
-      <h1>Settings &amp; privacy</h1>
+      <h1>Your account and data</h1>
+      <p>
+        <a href="/home/index.html#/settings">← Back to Settings</a>
+      </p>
       {msg ? <div className="banner" role="status">{msg}</div> : null}
       {error ? <ErrorNote error={error} /> : null}
 
       <section className="card stack">
         <h2>Demo mode</h2>
         <p>
-          Demo mode adds a <strong>simulated</strong> wearable so the dashboard can be explored without a device. Simulated data is generated on request, never stored, and
+          Demo mode adds <strong>simulated</strong> health data so the Vitals pages can be explored. Simulated data is generated on request, never stored, and
           always labelled SIMULATED (dashed lines, purple badges). It never represents a real person.
         </p>
         <label style={{ display: 'flex', gap: 8, alignItems: 'center', color: 'var(--text-primary)' }}>
@@ -37,17 +60,23 @@ export function PrivacyPage({ me, onChange, onSignedOut }: { me: MeResponse; onC
       <section className="card stack">
         <h2>Your data</h2>
         <ul style={{ margin: 0, paddingLeft: '1.2rem' }}>
-          <li>Wearable measurements are kept for <strong>{me.retentionDays} days</strong>, then deleted automatically.</li>
-          <li>OAuth tokens are encrypted at rest (AES-256-GCM); sessions and device tokens are stored only as keyed hashes.</li>
+          <li>Health measurements are kept for <strong>{me.retentionDays} days</strong>, then deleted automatically.</li>
+          <li>Your cards are kept with your account, and only you can read them.</li>
+          <li>Sign-in is handled by Supabase: Guardian’s server never sees or stores your password.</li>
           <li>Health values are never written to application logs and never used for advertising or shared.</li>
-          <li>Disconnecting a source revokes its access (where the platform supports it) and deletes the data it provided.</li>
         </ul>
         <div className="row">
-          <a className="button" href="/api/me/export" download>
+          <button className="button" onClick={download}>
             Download my data (JSON)
-          </a>
-          <button className="danger" onClick={() => window.confirm('Delete all stored wearable data? Connections stay in place.') && act(() => api.deleteHealthData(), 'All stored wearable data deleted.')}>
-            Delete all wearable data
+          </button>
+          <button
+            className="danger"
+            onClick={() =>
+              window.confirm('Delete all stored health data and all your cards?') &&
+              act(() => api.deleteHealthData().then(() => auth.deleteAllCards()).then(() => forgetSavedLocation(me.user.id)), 'All stored health data and your cards were deleted.')
+            }
+          >
+            Delete all health data
           </button>
         </div>
       </section>
@@ -56,12 +85,12 @@ export function PrivacyPage({ me, onChange, onSignedOut }: { me: MeResponse; onC
         <h2>Account</h2>
         <p className="muted">Signed in as {me.user.email}.</p>
         <div className="row">
-          <button onClick={() => api.logout().finally(onSignedOut)}>Sign out</button>
+          <button onClick={() => auth.signOut().finally(onSignedOut)}>Sign out</button>
           <button
             className="danger"
             onClick={() => {
-              if (window.prompt('Type DELETE to permanently delete your account, all data and all connections.') === 'DELETE') {
-                api.deleteAccount().then(onSignedOut, (e: Error) => setError(e))
+              if (window.prompt('Type DELETE to permanently delete your account and all its data.') === 'DELETE') {
+                auth.deleteAccount().then(() => { forgetSavedLocation(me.user.id); onSignedOut() }, (e: Error) => setError(e))
               }
             }}
           >

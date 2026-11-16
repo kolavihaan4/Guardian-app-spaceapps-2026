@@ -21,7 +21,13 @@ const schema = z.object({
   DEVICE_TOKEN_PEPPER: base64Key,
 
   RETENTION_DAYS: z.coerce.number().int().min(1).max(3650).default(90),
-  SESSION_TTL_HOURS: z.coerce.number().int().min(1).max(24 * 30).default(12),
+
+  // Sign-in is Supabase Auth: the project's URL and its publishable (public) key. Never a secret key.
+  SUPABASE_URL: z.url().refine((v) => /^https?:\/\//.test(v), 'must be an http(s) URL'),
+  SUPABASE_PUBLISHABLE_KEY: z
+    .string()
+    .min(1, 'is required: the project\'s publishable key')
+    .refine((v) => !v.startsWith('sb_secret_'), 'must be the publishable key, never a secret key'),
 
   NASA_API_KEY: z.string().default('DEMO_KEY'),
   NASA_DONKI_BASE: z.url().default('https://ccmc.gsfc.nasa.gov/DONKI-API/get'),
@@ -53,7 +59,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
   }
   const cfg = parsed.data
   if (cfg.NODE_ENV === 'production' && !cfg.APP_ORIGIN.startsWith('https://')) {
-    throw new Error('APP_ORIGIN must be https:// in production (session cookies are Secure).')
+    throw new Error('APP_ORIGIN must be https:// in production.')
   }
   return { ...cfg, isProduction: cfg.NODE_ENV === 'production' }
 }
