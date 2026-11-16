@@ -18,6 +18,7 @@
     "ultrasound": "node --env-file-if-exists=.env scripts/ultrasound.mjs",
     "build": "npm run build -w @astrovitals/web",
     "start": "npm run start -w @astrovitals/server",
+    "model": "cd ai/training && .venv/bin/python -m mlx_lm server --model base/Qwen3-8B-4bit --adapter-path adapters/v2 --port 8080 --allowed-origins http://localhost:8787",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
     "test:watch": "vitest",
